@@ -1,2 +1,2 @@
-cmake -DGeant4_DIR=/local/cdms/geant4.10.01.p02-install/lib64/Geant4-10.1.2/ /home/phys/villaa/k100_geant/k100Sim_v2/
+cmake -DGeant4_DIR=/local/cdms/geant4.10.01.p02-install/lib64/Geant4-10.1.2/ /home/phys/villaa/k100_geant/k100Sim/
 make
