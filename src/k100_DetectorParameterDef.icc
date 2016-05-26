@@ -1,0 +1,113 @@
+// ------------------------------------------------
+//
+// k100_NR_DetectorParameterDef.icc 
+//
+// ------------------------------------------------
+
+// ---------------------
+//    Detector Box
+// ---------------------
+
+//NOTE: This file has been corrected to represent the new G103a 100mm Ge crystal. All original values have been retained in comments. 
+
+// -- Tower Parameters box --
+microHair = 1e-6*mm;
+
+// "Copper Upper Tower" Parameters
+zPcut[0]=-5.3108*cm;  zPcut[1]= 5.3108*cm;
+rIcut[0]=3.0771*cm;   rIcut[1]=3.0771*cm;
+rOcut[0]=3.9428*cm;   rOcut[1]=3.9428*cm;
+
+// Lower cap of the "copper upper tower" Parameters
+zPclc[0]=-0.2425*cm; zPclc[1]= 0.2425*cm;
+rIclc[0]=0*cm;       rIclc[1]=0*cm;
+rOclc[0]=3.9428*cm;  rOclc[1]=3.9428*cm;
+
+// Connector Tube Parameters
+rIctu = 2.6924*cm;   // Rinner of Cu tube
+rOctu = 2.794*cm;   // Router of Cu tube
+zHctu = 4.48691*cm; // Half Length of Cu tube
+
+// Base of Connector Tube Parameters
+rIrb = 2.8067*cm;   // Rinner of Cu tube
+rOrb = 3.429*cm;   // Router of Cu tube
+zHrb = 0.2405*cm; // Half Length of Cu tube
+
+// Upper cap of the detector housing Parameters
+zPudh[0]=-0.3277*cm; zPudh[1]= 0.3277*cm;	//Corrected zPudh[0]=-0.0685*cm; zPudh[1]= 0.0685*cm;
+rIudh[0]=0*cm;       rIudh[1]=0*cm;		//Corrected rIudh[0]=0*cm;       rIudh[1]=0*cm;
+rOudh[0]=5.334*cm; rOudh[1]=5.334*cm;		//Corrected rOudh[0]=4.08397*cm; rOudh[1]=4.08397*cm;
+
+// The side detector housing
+zPsdh[0]=-1.8174*cm;  zPsdh[1]= 1.8174*cm;	//Corrected zPsdh[0]=-3.6385*cm;  zPsdh[1]= 3.6385*cm;
+rIsdh[0]= 5.1308*cm;  rIsdh[1]= 5.1308*cm;	//Corrected rIsdh[0]= 3.8692*cm;  rIsdh[1]= 3.8692*cm;
+rOsdh[0]= 5.334*cm; rOsdh[1]= 5.334*cm;		//Corrected rOsdh[0]= 4.08397*cm; rOsdh[1]= 4.08397*cm;
+
+// The lower cap of the detector housing
+zPldh[0]=-0.3175*cm;  zPldh[1]= 0.3175*cm;	//Corrected zPldh[0]=-0.07584*cm;  zPldh[1]= 0.07584*cm;
+rIldh[0]=0*cm;         rIldh[1]=0*cm;		//Corrected rIldh[0]=0*cm;         rIldh[1]=0*cm;
+rOldh[0]=5.334*cm;   rOldh[1]=5.334*cm;		//Corected rOldh[0]=4.08397*cm;   rOldh[1]=4.08397*cm;
+						// NOTE: It seems that actual radius is 4.058*cm by design prints
+// Side Coax
+sdcx_widthH = 1.4*cm;
+sdcx_thicknessH = 0.065*cm;
+sdcx_lenH[0]=5.294*cm; //4.86*cm;
+sdcx_lenH[1]=5.294*cm; //5.64*cm;
+sdcx_lenH[2]=5.294*cm; //6.31*cm;
+sdcx_lenH[3]=5.294*cm; //6.99*cm;
+sdcx_lenH[4]=5.294*cm; //7.66*cm;
+sdcx_lenH[5]=5.294*cm; //8.34*cm;
+sdcx_radius = 4.18*cm;
+
+// Tower Size
+Tower_zPcut[0]= (zPcut[0] + zPclc[0] - zHctu  - zHrb/2 + zPudh[0] + zPsdh[0] + zPldh[0] - 1*microHair); 
+Tower_zPcut[1]= (zPcut[1] + zPclc[1] + zHctu  + zHrb/2 + zPudh[1] + zPsdh[1] + zPldh[1] + 1*microHair);
+Tower_rIcut[0]= 0.*cm; Tower_rIcut[1]= 0.*cm;
+Tower_rOcut[0]= (rOsdh[0] + 0.2*cm + 1*microHair); /// The 0.2 is to allow for the side coax thickness, it will be replaced by a variable
+Tower_rOcut[1]= (sdcx_radius + sdcx_thicknessH + 1*microHair);
+
+
+
+//-------------------
+// Tower x-y coordinates
+//-------------------
+
+Tower_Center_Z = 11.9122*cm - (Tower_zPcut[1] - zPcut[1]); // This line places the tower center at the same position as in the original (Harry Nelson) code
+Tower_Center_Z = 3.2797*cm; // This line is just the numerical value of the line above it
+//////Tower_Bottom_Z = Tower_Center_Z - Tower_zPcut[1]; // Absolute reference to tower bottom!! Should be calculated from above quantities
+
+xtow[0]=8.32368*cm;
+xtow[1]=8.32368*cm;
+xtow[2]=0.0*cm;
+xtow[3]=0.0*cm;
+xtow[4]=0.0*cm;
+
+ytow[0]=-4.80568*cm;
+ytow[1]=4.80568*cm;
+ytow[2]=9.61136*cm;
+ytow[3]=-9.61136*cm;
+ytow[4]=0.0*cm;
+  
+ztow[0]=Tower_Center_Z;
+ztow[1]=Tower_Center_Z;
+ztow[2]=Tower_Center_Z;
+ztow[3]=Tower_Center_Z;
+ztow[4]=Tower_Center_Z;
+  
+
+Zip_Househeight=2.74142*cm;
+DetBoxShim = 0.1*micrometer;
+
+// -----------------------
+
+// -- Detector box items --
+
+// -----------------------
+Zip_Rout = 5.0*cm; //Corrected from 3.81*cm; 
+Zip_z = 1.312*2.54*cm; //Corrected from 2.54*cm; 
+Zip_Flat_R1 = Zip_Rout*0.983744; //Corrected from  Zip_Rout*0.9473333;
+Zip_Flat_R2 = Zip_Rout; //Corrected from Zip_Rout*0.9906666;
+// -----------------------
+
+
+
