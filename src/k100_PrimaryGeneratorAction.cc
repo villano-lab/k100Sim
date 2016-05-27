@@ -38,7 +38,7 @@ k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction()
   particleGun = new G4ParticleGun();
 
   //set overall rotation to be consistent with geometry
-  particleGun->SetParticlePosition(G4ThreeVector(0.0*m,0.0*m,0.0*m));
+  particleGun->SetParticlePosition(G4ThreeVector(0.0*m,0.0*m,1.0*cm));
   G4ThreeVector row1 = G4ThreeVector(1,0,0);
   G4ThreeVector row2 = G4ThreeVector(0,0,1.0);
   G4ThreeVector row3 = G4ThreeVector(0,-1.0,0);

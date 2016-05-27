@@ -101,6 +101,9 @@ G4bool k100_ZipSD::ProcessHits(G4Step* aStep, G4TouchableHistory* /*ROhist*/)
   dataVector[20-1] = aStep->GetPreStepPoint()->GetPosition().z();
   dataVector[21-1] = aStep->GetPreStepPoint()->GetGlobalTime();
 
+  //for(int i=0;i<21;i++){
+  //  G4cout << "vector[" << i << "]: " << dataVector[i] << G4endl;
+  //}
   /*
      1. EV (starts with 1)
      2. DT (detector #)

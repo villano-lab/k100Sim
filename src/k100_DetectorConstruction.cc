@@ -718,7 +718,9 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4int collID = -1; collID = SDman->GetCollectionID(detectorZipSDname);
     k100_ZipSD* azipSD1;
     if(collID<0){ 
+      ConstructGenericSensitiveInt=1; 
       azipSD1 = new k100_ZipSD(detectorZipSDname, towerNb);
+      k100CollName[detectorZipSDname] = towerNb;
       SDman->AddNewDetector(azipSD1);
     }
     //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
