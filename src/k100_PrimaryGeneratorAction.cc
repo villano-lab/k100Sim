@@ -75,8 +75,8 @@ void k100_PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   }*/
 
    particleGun->SetParticleDefinition(G4Neutron::Definition()); 
-   std::vector<G4double> adirection = GenerateRandomDirection();
-   particleGun->SetParticleMomentumDirection(G4ThreeVector(adirection[0],adirection[1],adirection[2]));
+   std::vector<G4double> angles = GenerateRandomDirection();
+   particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
    particleGun->SetParticleEnergy(8.0);
    particleGun->GeneratePrimaryVertex(anEvent);
   
