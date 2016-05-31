@@ -35,6 +35,7 @@ public:
   void SetConstructVetoBool(G4bool newVal)       {ConstructVetoBool = newVal;}
   void SetConstructShieldsBool(G4bool newVal)    {ConstructShieldsBool = newVal;}
   void SetConstructIceBoxBool(G4bool newVal)     {ConstructIceBoxBool = newVal;}
+  void SetConstructThermalNeutronBoxBool(G4bool newVal)  {ConstructThermalNeutronBoxBool = newVal;}
   void SetNbOfTowers(G4int newVal)               {NbOfTowers = newVal;}
   void SetNbOfZips(G4int newVal)                 {NbOfZips = newVal;}
 
@@ -48,12 +49,14 @@ public:
   G4int GetNbOfZips()             {return NbOfZips;}
 
   G4bool GetConstructGenericGeometryBool()      {return ConstructGenericGeometryBool;}
+  G4bool GetConstructThermalNeutronBoxBool()      {return ConstructThermalNeutronBoxBool;}
   G4int GetConstructGenericTrackerInt() {return ConstructGenericTrackerInt;}
   G4int GetConstructGenericSensitiveInt() {return ConstructGenericSensitiveInt;}
   std::map<G4String,G4int> *GetSensitiveList() { return &k100CollName;}
   G4int    GetNSensitive() {return k100CollName.size();}
 
   G4bool ConstructGenericGeometryBool;
+  G4bool ConstructThermalNeutronBoxBool;
   G4int ConstructGenericTrackerInt;
   G4int ConstructGenericSensitiveInt;
   G4int DesignNo;
@@ -102,6 +105,7 @@ private:
   void ConstructVeto(G4LogicalVolume*  logicalWorld);
   void ConstructShields(G4LogicalVolume*  logicalWorld);
   void ConstructIceBox(G4LogicalVolume*  logicalWorld);
+  void ConstructThermalNeutronBox(G4VPhysicalVolume*  world);
   void FillTheTower(G4VPhysicalVolume* physicalTower, G4int towerNb);
 
 #include "k100_DetectorParameterDef.hh"

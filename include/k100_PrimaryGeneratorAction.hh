@@ -52,6 +52,8 @@ private:
   G4RotationMatrix *xrot;
   //G4GeneralParticleSource* particleGun;
 
+  //helpful functions
+  std::vector<G4double> GenerateRandomDirection();
 
 };
 

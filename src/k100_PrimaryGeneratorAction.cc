@@ -20,6 +20,7 @@
 #include "G4ThreeVector.hh"
 #include "G4Neutron.hh"
 #include "G4Gamma.hh"
+#include "G4Neutron.hh"
 
 #include "Randomize.hh"
 #include <math.h>
@@ -38,7 +39,7 @@ k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction()
   particleGun = new G4ParticleGun();
 
   //set overall rotation to be consistent with geometry
-  particleGun->SetParticlePosition(G4ThreeVector(0.0*m,0.0*m,1.0*cm));
+  particleGun->SetParticlePosition(G4ThreeVector(0.0*m,0.0*m,-120.0*cm));
   G4ThreeVector row1 = G4ThreeVector(1,0,0);
   G4ThreeVector row2 = G4ThreeVector(0,0,1.0);
   G4ThreeVector row3 = G4ThreeVector(0,-1.0,0);
@@ -73,9 +74,24 @@ void k100_PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
        anEvent->SetEventAborted();
   }*/
 
-   particleGun->SetParticleDefinition(G4Gamma::Definition()); 
-   particleGun->SetParticleMomentumDirection(G4ThreeVector(1.0,0.0,0.0));
-   particleGun->SetParticleEnergy(1.0);
+   particleGun->SetParticleDefinition(G4Neutron::Definition()); 
+   std::vector<G4double> adirection = GenerateRandomDirection();
+   particleGun->SetParticleMomentumDirection(G4ThreeVector(adirection[0],adirection[1],adirection[2]));
+   particleGun->SetParticleEnergy(8.0);
    particleGun->GeneratePrimaryVertex(anEvent);
   
+}
+std::vector<G4double> k100_PrimaryGeneratorAction::GenerateRandomDirection()
+{
+  std::vector<G4double> angles;
+  G4double rand1,rand2;
+  rand1=G4UniformRand();
+  rand2=G4UniformRand();
+  angles.push_back(rand2*2*pi);            //phi
+  G4double costhet = 2*rand1-1.0;
+  angles.push_back(costhet);                 //costhet
+  angles.push_back(sqrt(1 - costhet*costhet)); //sinthet
+
+  return angles;
+
 }

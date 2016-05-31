@@ -50,7 +50,8 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 {
 
   // -------- The World ---------
-  world_x = 250.*cm; world_y = 250.*cm; world_z = 250.*cm;
+  //world_x = 250.*cm; world_y = 250.*cm; world_z = 250.*cm;
+  world_x = 250.*cm; world_y = 250.*cm; world_z = 500.*cm;
   
 #include "k100_DetectorParameterDef.icc"
   
@@ -68,6 +69,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructVetoBool = false;
   ConstructShieldsBool = true;
   ConstructIceBoxBool = true;
+  ConstructThermalNeutronBoxBool = true;
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
   DrawSolidTowerBool = false; 
@@ -1026,6 +1028,7 @@ void k100_DetectorConstruction::ConstructEverything(G4LogicalVolume*  logicalWor
   if(ConstructVetoBool)    {ConstructVeto(logicalWorld);}
   if(ConstructShieldsBool) {ConstructShields(logicalWorld);}
   if(ConstructIceBoxBool)  {ConstructIceBox(logicalWorld);}
+  if(ConstructThermalNeutronBoxBool)  {ConstructThermalNeutronBox(physicalWorld);}
 
 } // ends ConstructEverything
 
@@ -1599,3 +1602,54 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
 } // ends IceBox Construction
 
 // ---------------- end of class ---------------
+void k100_DetectorConstruction::ConstructThermalNeutronBox(G4VPhysicalVolume *world)
+{
+        //displacement in world
+	G4ThreeVector disp = G4ThreeVector(0.0,0.0,-1200); //2m down
+
+	//define dimensions
+	G4double leadThick = 50.8;
+	G4double polyD = 500.0;
+	G4double polyThick = 500.0;
+
+	//create a lead cylinder
+	G4Tubs* leadCylinder = new G4Tubs("leadCyl_S",0.0,polyD/2+leadThick,polyThick/2.0+leadThick/2.0,0.0,2*pi);
+	G4LogicalVolume* logicalLeadCylinder;
+        logicalLeadCylinder = new G4LogicalVolume(leadCylinder,shieldPbMat,"polyCyl_L",0,0,0);
+	G4VPhysicalVolume* cylinderLeadWorld = new G4PVPlacement(0, 
+								disp,
+								"leadCyl_P",
+								logicalLeadCylinder,
+								world,
+								false,
+								0);
+
+	// Visualization attributes
+	G4VisAttributes* VisAttLeadCyl = new G4VisAttributes(G4Colour(3.,3.,3.));
+	VisAttLeadCyl->SetForceWireframe(false);  //I want a Wireframe of the me
+	logicalLeadCylinder->SetVisAttributes(VisAttLeadCyl);  
+	// Make Invisible
+	//logicalLeadCylinder->SetVisAttributes(G4VisAttributes::Invisible);
+	
+        //create a poly cylinder
+	G4ThreeVector polydisp = G4ThreeVector(0.0,0.0,leadThick/2.0);
+	G4Tubs* polyCylinder = new G4Tubs("polyCyl_S",0.0,polyD/2,polyThick/2.0,0.0,2*pi);
+	G4LogicalVolume* logicalPolyCylinder;
+        logicalPolyCylinder = new G4LogicalVolume(polyCylinder,polyMat,"polyCyl_L",0,0,0);
+	G4VPhysicalVolume* cylinderPolyWorld = new G4PVPlacement(0, 
+								polydisp,
+								"polyCyl_P",
+								logicalPolyCylinder,
+								cylinderLeadWorld,
+								false,
+								0);
+
+	// Visualization attributes
+	G4VisAttributes* VisAttPolyCyl = new G4VisAttributes(G4Colour(7.,3.,0.));
+	VisAttPolyCyl->SetForceWireframe(false);  //I want a Wireframe of the me
+	logicalPolyCylinder->SetVisAttributes(VisAttPolyCyl);  
+	// Make Invisible
+	//logicalPolyCylinder->SetVisAttributes(G4VisAttributes::Invisible);
+
+        return;
+}
