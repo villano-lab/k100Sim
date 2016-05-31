@@ -99,7 +99,7 @@ void k100_EventAction::EndOfEventAction(const G4Event* evt)
           G4HCofThisEvent* HCE = evt->GetHCofThisEvent();
           k100_StdHitsCollection* GHC = 0;
           if (HCE) {
-             G4cout << "\n>>> (EndofEventAction) HCE NumColls = " << HCE->GetNumberOfCollections() << G4endl;
+             //G4cout << "\n>>> (EndofEventAction) HCE NumColls = " << HCE->GetNumberOfCollections() << G4endl;
              if(k100_Detector->GetConstructGenericSensitiveInt()>0) {
 	       GHC = (k100_StdHitsCollection*)(HCE->GetHC(ID));
              }      

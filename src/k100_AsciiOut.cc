@@ -52,7 +52,7 @@ void k100_AsciiOut::WriteHeaderToFile()
   for (G4int ii=0; ii<NumDet; ii++) {
     //dataFileOutput << DetNames[ii] << "\t";
   }
-  dataFileOutput << G4endl;
+  //dataFileOutput << G4endl;
   
   for (G4int ii=0; ii<NumVars; ii++) {
     dataFileOutput << VariableNames[ii] << "\t";
