@@ -191,12 +191,13 @@ int main(int argc, char** argv) {
   runManager->SetUserInitialization(new k100_DetectorConstruction());
   runManager->SetUserInitialization(new Shielding_ComptonsUpdate);
 
-  // set manditory user action class
-  // UserAction Classes
+  // UserAction Classes============
+  // event generator
   k100_PrimaryGeneratorAction* myPrimaryEventGenerator=new k100_PrimaryGeneratorAction();
   runManager->SetUserAction(myPrimaryEventGenerator);
-  k100_RunAction* pRunAction = new k100_RunAction(myPrimaryEventGenerator);
 
+  //run action
+  k100_RunAction* pRunAction = new k100_RunAction();
   runManager->SetUserAction(pRunAction);
   runManager->SetUserAction(new k100_EventAction(pRunAction));
 

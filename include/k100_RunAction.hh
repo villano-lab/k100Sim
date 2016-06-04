@@ -21,13 +21,12 @@ class G4Run;
 
 class k100_DataStorage;
 class k100_RunActionMessenger;
-class k100_PrimaryGeneratorAction;
 
 class k100_RunAction : public G4UserRunAction
 {
 public :
 
-  k100_RunAction(k100_PrimaryGeneratorAction*);
+  k100_RunAction();
   ~k100_RunAction();
 
 public :
@@ -60,7 +59,6 @@ private :
   G4bool   OutputDataToFile;
   G4int    runN;
   long     randSeed;
-  k100_PrimaryGeneratorAction* thisgenerator;
 
 };
 

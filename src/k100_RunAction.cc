@@ -21,13 +21,12 @@
 #include "k100_RunActionMessenger.hh"
 #include "k100_DetectorConstruction.hh"
 #include "k100_DataStorage.hh"
-#include "k100_PrimaryGeneratorAction.hh"
 #include <sys/time.h>
 #include <time.h>
 char filename[200];
 
 
-k100_RunAction::k100_RunAction(k100_PrimaryGeneratorAction* generator)
+k100_RunAction::k100_RunAction()
 {
   
   
@@ -44,7 +43,6 @@ k100_RunAction::k100_RunAction(k100_PrimaryGeneratorAction* generator)
   OutputDataToFile = true;
   DrawEventCmd = true;
   SaltPillOutCmd = false;
-  thisgenerator=generator;
 
   runMessenger = new k100_RunActionMessenger(this);  
 }
