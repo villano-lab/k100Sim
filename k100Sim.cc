@@ -233,9 +233,9 @@ int main(int argc, char** argv) {
   session->SessionStart();
 
 #ifdef G4VIS_USE
-  //delete visManager;
+  delete visManager;
 #endif
-  //delete runManager;
+  delete runManager;
 
   return 0;
 }

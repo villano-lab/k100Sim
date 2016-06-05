@@ -44,6 +44,11 @@
 #include "k100_ZipSD.hh"
 #include "k100_VetoSD.hh"
 
+#include "G4GeometryManager.hh"
+#include "G4PhysicalVolumeStore.hh"
+#include "G4LogicalVolumeStore.hh"
+#include "G4SolidStore.hh"
+
 // ------------------------------------------------
 
 k100_DetectorConstruction::k100_DetectorConstruction()
@@ -154,7 +159,14 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 
 k100_DetectorConstruction::~k100_DetectorConstruction()
 {
-  // Don't have anything here to delete
+  //delete the messenger
+  delete detectorMessenger;
+
+  // Clean old geometry, if any
+  G4GeometryManager::GetInstance()->OpenGeometry();
+  G4PhysicalVolumeStore::GetInstance()->Clean();
+  G4LogicalVolumeStore::GetInstance()->Clean();
+  G4SolidStore::GetInstance()->Clean();
 }
 
 // ------------------------------------------------
@@ -420,7 +432,6 @@ void k100_DetectorConstruction::DefineMaterials()
 
 void k100_DetectorConstruction::UpdateGeometry()
 {
-  delete DetectorRegion; // otherwise this causes segmentation faults.
 
   G4RunManager::GetRunManager()->DefineWorldVolume(Construct());
   G4RunManager::GetRunManager()->GeometryHasBeenModified();
@@ -432,6 +443,14 @@ void k100_DetectorConstruction::UpdateGeometry()
 
 G4VPhysicalVolume* k100_DetectorConstruction::Construct()
 {
+
+  // Clean old geometry, if any
+  //
+  G4GeometryManager::GetInstance()->OpenGeometry();
+  G4PhysicalVolumeStore::GetInstance()->Clean();
+  G4LogicalVolumeStore::GetInstance()->Clean();
+  G4SolidStore::GetInstance()->Clean();
+
   // ------------ Construct the Physical world ---------------
 
   // Construct the World

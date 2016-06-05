@@ -106,6 +106,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseVeto)     {k100_Detector->SetConstructVetoBool(false);}
     else if(newValue == caseShields)  {k100_Detector->SetConstructShieldsBool(false);}
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(false);}
+
   }
 
   if( command == DrawSolidBox) { 
