@@ -451,6 +451,15 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
   G4LogicalVolumeStore::GetInstance()->Clean();
   G4SolidStore::GetInstance()->Clean();
 
+  // Prepare to declare sensitive detectors
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+  //deactivate the sensitive detectors
+  std::map<G4String,G4int>::iterator it;
+  for(it=k100CollName.begin();it!=k100CollName.end();++it){
+    SDman->Activate(it->first,false);
+  }
+
   // ------------ Construct the Physical world ---------------
 
   // Construct the World
@@ -738,12 +747,10 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4String detectorZipSDname = "tower1";
     G4int collID = -1; collID = SDman->GetCollectionID(detectorZipSDname);
     k100_ZipSD* azipSD1;
-    if(collID<0){ 
-      ConstructGenericSensitiveInt=1; 
-      azipSD1 = new k100_ZipSD(detectorZipSDname, towerNb);
-      k100CollName[detectorZipSDname] = towerNb;
-      SDman->AddNewDetector(azipSD1);
-    }
+    ConstructGenericSensitiveInt=1; 
+    azipSD1 = new k100_ZipSD(detectorZipSDname, towerNb);
+    k100CollName[detectorZipSDname] = towerNb;
+    SDman->AddNewDetector(azipSD1);
     //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
     logicalZip1->SetSensitiveDetector(azipSD1);
   }
