@@ -8,6 +8,7 @@
 #define k100_ZipParameterisation_H 1
 
 #include "globals.hh"
+#include "G4ThreeVector.hh"
 #include "G4PhysicalConstants.hh"
 #include "G4VPVParameterisation.hh"
 
@@ -53,6 +54,9 @@ public:
 
   void ComputeDimensions (G4Tubs&,const G4int,const G4VPhysicalVolume*) const ;
 
+  //get the coordinates for each copy
+  G4ThreeVector GetCoordinates(G4int copyNo) {return k100ZipParCoords[copyNo];}
+
 private:  // Dummy declarations to get rid of warnings ...
 
   void ComputeDimensions (G4Box & detectorPixel, const G4int copyNo, const G4VPhysicalVolume* physVol) const {};
@@ -66,6 +70,7 @@ private:  // Dummy declarations to get rid of warnings ...
   void ComputeDimensions (G4Hype&,const G4int,const G4VPhysicalVolume*) const {}
   void ComputeDimensions (G4Polycone&,const G4int,const G4VPhysicalVolume*) const {}
   void ComputeDimensions (G4Polyhedra&,const G4int,const G4VPhysicalVolume*) const {}
+
 
   virtual G4Material* ComputeMaterial(const G4int copyNo, G4VPhysicalVolume* physVol, const G4VTouchable *parentTouch=0);
 
@@ -81,6 +86,12 @@ private:
   G4Material* zipSi;
   G4bool DrawSolidZipBool;
   G4int towerNumber;
+
+  //set the coordinates for a copy
+  void SetCoordinates(G4int copyNo, G4ThreeVector vec);
+
+  //map to coordinates of copies
+  mutable std::map<G4int,G4ThreeVector> k100ZipParCoords;
 };
 
 // ------------------------------------------------

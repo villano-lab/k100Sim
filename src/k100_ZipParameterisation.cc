@@ -59,6 +59,7 @@ void k100_ZipParameterisation::ComputeTransformation(const G4int copyNo,
   G4double Xposition = 0;
   G4double Yposition = 0;
   G4ThreeVector origin(Xposition,Yposition,Zposition);
+  k100ZipParCoords[copyNo] = origin;
   physVol->SetTranslation(origin);
   physVol->SetRotation(0);
 
@@ -105,5 +106,9 @@ G4Material*  k100_ZipParameterisation::ComputeMaterial(const G4int copyNo, G4VPh
   }
   
   return physVol->GetLogicalVolume()->GetMaterial();
+}
+void  k100_ZipParameterisation::SetCoordinates(G4int copyNo, G4ThreeVector vec ) 
+{
+  k100ZipParCoords[copyNo] = vec; 
 }
 

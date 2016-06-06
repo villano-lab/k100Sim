@@ -74,12 +74,22 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructVetoBool = false;
   ConstructShieldsBool = true;
   ConstructIceBoxBool = true;
-  ConstructThermalNeutronBoxBool = true;
+  ConstructThermalNeutronBoxBool = false;
+  ConstructShieldTestEnvironmentBool = false;
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
   DrawSolidTowerBool = false; 
   DrawSolidVetoBool = false;
   DrawSolidShieldsBool = false; DrawSolidIceBoxBool = false;
+
+  //more complicated parameters
+  shieldTestParams.xcntr = -100.0*cm;
+  shieldTestParams.ycntr = 0.0*cm;
+  shieldTestParams.zcntr = 0.0*cm;
+  shieldTestParams.sizel = 10.0*cm;
+  shieldTestParams.sizew = 10.0*cm;
+  shieldTestParams.sizethk = 10.0*cm;
+  shieldTestParams.shieldmaterial = polyMat;
 
   // ---------Material Definition--------------
   DefineMaterials();
@@ -495,6 +505,33 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
 
 // ------------------------------------------------
 // ------------------------------------------------
+void k100_DetectorConstruction::SetConstructShieldTestEnvironmentParams(G4double xcntr,G4double ycntr,G4double zcntr,G4double sizel,G4double sizew,G4double sizethk)
+{
+  shieldTestParams.xcntr = xcntr;
+  shieldTestParams.ycntr = ycntr;
+  shieldTestParams.zcntr = zcntr;
+  shieldTestParams.sizel = sizel;
+  shieldTestParams.sizew = sizew;
+  shieldTestParams.sizethk = sizethk;
+
+}
+G4String k100_DetectorConstruction::GetConstructShieldTestEnvironmentMat()
+{
+  return shieldTestParams.shieldmaterial->GetName();
+}
+void k100_DetectorConstruction::SetConstructShieldTestEnvironmentMat(G4String mat)
+{
+  if(mat=="Lead"){
+    shieldTestParams.shieldmaterial = shieldPbMat;
+  }
+  else if(mat=="Poly"){
+    shieldTestParams.shieldmaterial = polyMat;
+  }
+  else{  //default to poly material
+    shieldTestParams.shieldmaterial = polyMat;
+  }
+
+}
 
 void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetectorBox)
 {
@@ -673,7 +710,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
   VisAttZip->SetForceSolid(DrawSolidZipBool); 
 
   // Using the parameterisation defined in the PixelParameteriation class.
-  G4VPVParameterisation* zipParam = 
+  zipParam = 
     new k100_ZipParameterisation(NbZipsPerTower,   // NoZips/Tower
 				 Zip_Househeight, // Z spacing of centers
 				 Zip_Rout,       // Zip Radius
@@ -1055,6 +1092,7 @@ void k100_DetectorConstruction::ConstructEverything(G4LogicalVolume*  logicalWor
   if(ConstructShieldsBool) {ConstructShields(logicalWorld);}
   if(ConstructIceBoxBool)  {ConstructIceBox(logicalWorld);}
   if(ConstructThermalNeutronBoxBool)  {ConstructThermalNeutronBox(physicalWorld);}
+  if(ConstructShieldTestEnvironmentBool)  {ConstructShieldTestEnvironment(physicalWorld);}
 
 } // ends ConstructEverything
 
@@ -1678,4 +1716,15 @@ void k100_DetectorConstruction::ConstructThermalNeutronBox(G4VPhysicalVolume *wo
 	//logicalPolyCylinder->SetVisAttributes(G4VisAttributes::Invisible);
 
         return;
+}
+void k100_DetectorConstruction::ConstructShieldTestEnvironment(G4VPhysicalVolume *world)
+{
+        //Get the coordinates of copies
+	G4ThreeVector detorigin = zipParam->GetCoordinates(1);
+
+	//create the simple rectangular shield
+	G4Box* shieldBox = new G4Box("shieldBox_S",shieldTestParams.sizel/2.0,shieldTestParams.sizew/2.0,shieldTestParams.sizethk/2.0);
+	G4LogicalVolume* logicalShieldBox;
+        logicalShieldBox = new G4LogicalVolume(shieldBox,shieldTestParams.shieldmaterial,"shieldBox_L",0,0,0);
+
 }
