@@ -47,9 +47,10 @@ public:
   void SetConstructVetoBool(G4bool newVal)       {ConstructVetoBool = newVal;}
   void SetConstructShieldsBool(G4bool newVal)    {ConstructShieldsBool = newVal;}
   void SetConstructIceBoxBool(G4bool newVal)     {ConstructIceBoxBool = newVal;}
-  void SetConstructThermalNeutronBoxBool(G4bool newVal)  {ConstructThermalNeutronBoxBool = newVal;}
+  void SetConstructThermalNeutronBoxBool(G4bool newVal)  {ConstructThermalNeutronBoxBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentBool(G4bool newVal)      {ConstructShieldTestEnvironmentBool = newVal;}
-  void SetConstructShieldTestEnvironmentParams(G4double xcntr,G4double ycntr,G4double zcntr,G4double sizel,G4double sizew,G4double sizethk);
+  void SetConstructShieldTestEnvironmentPos(G4double xcntr,G4double ycntr,G4double zcntr);
+  void SetConstructShieldTestEnvironmentSize(G4double sizel,G4double sizew,G4double sizethk);
   void SetConstructShieldTestEnvironmentMat(G4String mat);
   void SetNbOfTowers(G4int newVal)               {NbOfTowers = newVal;}
   void SetNbOfZips(G4int newVal)                 {NbOfZips = newVal;}

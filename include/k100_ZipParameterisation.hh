@@ -55,7 +55,7 @@ public:
   void ComputeDimensions (G4Tubs&,const G4int,const G4VPhysicalVolume*) const ;
 
   //get the coordinates for each copy
-  G4ThreeVector GetCoordinates(G4int copyNo) {return k100ZipParCoords[copyNo];}
+  G4ThreeVector GetCoordinates(G4int copyNo);
 
 private:  // Dummy declarations to get rid of warnings ...
 

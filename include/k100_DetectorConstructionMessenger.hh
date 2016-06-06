@@ -14,6 +14,8 @@ class G4UIdirectory;
 class G4UIcmdWithAString;
 class G4UIcmdWithAnInteger;
 class G4UIcmdWithABool;
+class G4UIcmdWith3VectorAndUnit;
+class G4UIcmdWithoutParameter;
 
 class k100_DetectorConstruction;
 
@@ -33,9 +35,13 @@ private:
 
   // Detector Element Activation
 
+  G4UIcmdWithoutParameter* UpdateGeometryCmd;
   G4UIcmdWithAString*     DetectorActivateCmd;
   G4UIcmdWithAString*     DetectorDeActivateCmd;
   G4UIcmdWithAnInteger*   NbTowersCmd;
+  G4UIcmdWith3VectorAndUnit*   GPSShieldPositionCmd;
+  G4UIcmdWith3VectorAndUnit*   GPSShieldSizeCmd;
+  G4UIcmdWithAString*     GPSShieldMatCmd;
 
   G4UIcmdWithAString*     DrawSolidBox;
   G4UIcmdWithAString*     DrawFrameBox;

@@ -37,6 +37,13 @@ k100_ZipParameterisation::k100_ZipParameterisation(G4int    NbZipsPerTower,
   DrawSolidZipBool = solidZipBool;
   towerNumber = towerNb;
 
+  //FIXME kludge to get the shield set up for copyNo zero
+  G4int copyNo = 0;
+  G4double Zposition = (2.5 - copyNo)*fZSpacing;
+  G4double Xposition = 0;
+  G4double Yposition = 0;
+  G4ThreeVector origin(Xposition,Yposition,Zposition);
+  k100ZipParCoords[copyNo] = origin;
   if (fZSpacing < ZipDepth) {
 //    G4Exception("k100_ZipParameterisation construction: Thickness>Spacing");
   }
@@ -55,6 +62,7 @@ k100_ZipParameterisation::~k100_ZipParameterisation()
 void k100_ZipParameterisation::ComputeTransformation(const G4int copyNo,
 						     G4VPhysicalVolume* physVol) const
 {
+  G4cout << "computing transformation for copyNo: " << copyNo << G4endl;
   G4double Zposition = (2.5 - copyNo)*fZSpacing;
   G4double Xposition = 0;
   G4double Yposition = 0;
@@ -106,6 +114,17 @@ G4Material*  k100_ZipParameterisation::ComputeMaterial(const G4int copyNo, G4VPh
   }
   
   return physVol->GetLogicalVolume()->GetMaterial();
+}
+G4ThreeVector k100_ZipParameterisation::GetCoordinates(G4int copyNo)
+{
+
+   G4cout << "got into k100_ZipParameterisation: " << k100ZipParCoords[0].x() << G4endl;
+   if(k100ZipParCoords.find(copyNo) != k100ZipParCoords.end()){
+     G4cout << "got into FIRST IF k100_ZipParameterisation" << G4endl;
+     return k100ZipParCoords[copyNo];
+   }
+   else
+     return G4ThreeVector(0,0,0);
 }
 void  k100_ZipParameterisation::SetCoordinates(G4int copyNo, G4ThreeVector vec ) 
 {

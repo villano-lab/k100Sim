@@ -75,24 +75,26 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructShieldsBool = true;
   ConstructIceBoxBool = true;
   ConstructThermalNeutronBoxBool = false;
-  ConstructShieldTestEnvironmentBool = false;
+  SetConstructShieldTestEnvironmentBool(false); //note, requires construct ZIP bool
+
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
   DrawSolidTowerBool = false; 
   DrawSolidVetoBool = false;
   DrawSolidShieldsBool = false; DrawSolidIceBoxBool = false;
 
-  //more complicated parameters
-  shieldTestParams.xcntr = -100.0*cm;
-  shieldTestParams.ycntr = 0.0*cm;
-  shieldTestParams.zcntr = 0.0*cm;
-  shieldTestParams.sizel = 10.0*cm;
-  shieldTestParams.sizew = 10.0*cm;
-  shieldTestParams.sizethk = 10.0*cm;
-  shieldTestParams.shieldmaterial = polyMat;
 
   // ---------Material Definition--------------
   DefineMaterials();
+
+  //more complicated parameters
+  shieldTestParams.xcntr = 100.0*cm;
+  shieldTestParams.ycntr = 0.0*cm;
+  shieldTestParams.zcntr = 100.0*cm;
+  shieldTestParams.sizel = 10.0*cm;
+  shieldTestParams.sizew = 10.0*cm;
+  shieldTestParams.sizethk = 10.0*cm;
+  shieldTestParams.shieldmaterial = polyMat; //MUST be after DefineMaterials()
 
 
   // ---------Detector Names--------------
@@ -499,17 +501,25 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
   if(ConstructTowerBool) {ConstructTower(physicalWorld);}
   //  if(ConstructExperimentBool)  {ConstructDl();}
   // --------- End Construct the whole shebang --------------
+  
+  //FIXME construct stuff that can't be constructed before tower
+  if(ConstructShieldTestEnvironmentBool)  {ConstructShieldTestEnvironment(physicalWorld);}
+
 
   return physicalWorld;
 } // ends Construct (for physical world, trigger for others)
 
 // ------------------------------------------------
 // ------------------------------------------------
-void k100_DetectorConstruction::SetConstructShieldTestEnvironmentParams(G4double xcntr,G4double ycntr,G4double zcntr,G4double sizel,G4double sizew,G4double sizethk)
+void k100_DetectorConstruction::SetConstructShieldTestEnvironmentPos(G4double xcntr,G4double ycntr,G4double zcntr)
 {
   shieldTestParams.xcntr = xcntr;
   shieldTestParams.ycntr = ycntr;
   shieldTestParams.zcntr = zcntr;
+
+}
+void k100_DetectorConstruction::SetConstructShieldTestEnvironmentSize(G4double sizel,G4double sizew,G4double sizethk)
+{
   shieldTestParams.sizel = sizel;
   shieldTestParams.sizew = sizew;
   shieldTestParams.sizethk = sizethk;
@@ -1092,7 +1102,6 @@ void k100_DetectorConstruction::ConstructEverything(G4LogicalVolume*  logicalWor
   if(ConstructShieldsBool) {ConstructShields(logicalWorld);}
   if(ConstructIceBoxBool)  {ConstructIceBox(logicalWorld);}
   if(ConstructThermalNeutronBoxBool)  {ConstructThermalNeutronBox(physicalWorld);}
-  if(ConstructShieldTestEnvironmentBool)  {ConstructShieldTestEnvironment(physicalWorld);}
 
 } // ends ConstructEverything
 
@@ -1719,12 +1728,30 @@ void k100_DetectorConstruction::ConstructThermalNeutronBox(G4VPhysicalVolume *wo
 }
 void k100_DetectorConstruction::ConstructShieldTestEnvironment(G4VPhysicalVolume *world)
 {
-        //Get the coordinates of copies
-	G4ThreeVector detorigin = zipParam->GetCoordinates(1);
+        //Get the coordinates of copies and source point and things
+	G4ThreeVector detorigin = zipParam->GetCoordinates(0);  //is the first one 1 or 0?
+	G4ThreeVector point(shieldTestParams.xcntr,shieldTestParams.ycntr,shieldTestParams.zcntr);
+	G4ThreeVector relative = point - detorigin;
+
+	//Do the appropriate rotations
+	G4RotationMatrix *shieldrot = new G4RotationMatrix;
+	shieldrot->rotateZ(-relative.phi());
+	shieldrot->rotateY(-relative.theta());
 
 	//create the simple rectangular shield
 	G4Box* shieldBox = new G4Box("shieldBox_S",shieldTestParams.sizel/2.0,shieldTestParams.sizew/2.0,shieldTestParams.sizethk/2.0);
 	G4LogicalVolume* logicalShieldBox;
         logicalShieldBox = new G4LogicalVolume(shieldBox,shieldTestParams.shieldmaterial,"shieldBox_L",0,0,0);
+	G4VPhysicalVolume* shieldBoxWorld = new G4PVPlacement(shieldrot, 
+								point,
+								"shieldBox_P",
+								logicalShieldBox,
+								world,
+								false,
+								0);
 
+	// Visualization attributes
+	G4VisAttributes* VisAttShieldBox = new G4VisAttributes(G4Colour(7.,3.,0.));
+	VisAttShieldBox->SetForceWireframe(false);  //I want a Wireframe of the me
+	logicalShieldBox->SetVisAttributes(VisAttShieldBox);  
 }
