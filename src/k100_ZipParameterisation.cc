@@ -62,7 +62,6 @@ k100_ZipParameterisation::~k100_ZipParameterisation()
 void k100_ZipParameterisation::ComputeTransformation(const G4int copyNo,
 						     G4VPhysicalVolume* physVol) const
 {
-  G4cout << "computing transformation for copyNo: " << copyNo << G4endl;
   G4double Zposition = (2.5 - copyNo)*fZSpacing;
   G4double Xposition = 0;
   G4double Yposition = 0;
@@ -118,9 +117,7 @@ G4Material*  k100_ZipParameterisation::ComputeMaterial(const G4int copyNo, G4VPh
 G4ThreeVector k100_ZipParameterisation::GetCoordinates(G4int copyNo)
 {
 
-   G4cout << "got into k100_ZipParameterisation: " << k100ZipParCoords[0].x() << G4endl;
    if(k100ZipParCoords.find(copyNo) != k100ZipParCoords.end()){
-     G4cout << "got into FIRST IF k100_ZipParameterisation" << G4endl;
      return k100ZipParCoords[copyNo];
    }
    else
