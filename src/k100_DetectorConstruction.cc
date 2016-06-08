@@ -1729,9 +1729,16 @@ void k100_DetectorConstruction::ConstructThermalNeutronBox(G4VPhysicalVolume *wo
 void k100_DetectorConstruction::ConstructShieldTestEnvironment(G4VPhysicalVolume *world)
 {
         //Get the coordinates of copies and source point and things
-	G4ThreeVector detorigin = zipParam->GetCoordinates(0);  //is the first one 1 or 0?
+	G4ThreeVector stackrel_detorigin = zipParam->GetCoordinates(0);  //is the first one is 0
+	G4double towerassy_shift = -6.5*cm;
+	G4double zipstack_shift = -(Tower_zPcut[0] - (zPldh[1] - zPldh[0]) - zPsdh[1] -Zip_z/2.0); //negative because tower is flipped
+	G4double instack_shift = -stackrel_detorigin.z(); //negative because tower is flipped
+	G4ThreeVector detorigin = G4ThreeVector(0,0,towerassy_shift + zipstack_shift +instack_shift);
 	G4ThreeVector point(shieldTestParams.xcntr,shieldTestParams.ycntr,shieldTestParams.zcntr);
 	G4ThreeVector relative = point - detorigin;
+
+	G4cout << "xdet: " << detorigin.x() << " ydet: " << detorigin.y() << " zdet: " << detorigin.z() << G4endl;
+	G4cout << "towerassy_shift: " << towerassy_shift << " zipstack_shift: " << zipstack_shift << " instack_shift: " << instack_shift << G4endl;
 
 	//Do the appropriate rotations
 	G4RotationMatrix *shieldrot = new G4RotationMatrix;
