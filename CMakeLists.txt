@@ -49,7 +49,11 @@ target_link_libraries(k100Sim ${Geant4_LIBRARIES})
 # relies on these scripts being in the current working directory.
 #
 set(K100SIM_SCRIPTS
-  srcCloseup.mac
+  macros/srcCloseup.mac
+  macros/srcRayTrace.mac
+  macros/pubeTest.mac
+  sources/pube.dat
+  sources/pube_skim.dat
   )
 
 foreach(_script ${K100SIM_SCRIPTS})
