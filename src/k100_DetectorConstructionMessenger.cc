@@ -8,6 +8,8 @@
 #include "G4UIcmdWithAString.hh"
 #include "G4UIcmdWithAnInteger.hh"
 #include "G4UIcmdWithABool.hh"
+#include "G4UIcmdWith3VectorAndUnit.hh"
+#include "G4UIcmdWithoutParameter.hh"
 
 #include "k100_DetectorConstructionMessenger.hh"
 #include "k100_DetectorConstruction.hh"
@@ -27,8 +29,15 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   //
   k100_detDir = new G4UIdirectory("/CDMS/rendering/");
   k100_detDir->SetGuidance("CDMS Detector Rendering.");
+  //
+  k100_detDir = new G4UIdirectory("/CDMS/genericShield/");
+  k100_detDir->SetGuidance("CDMS k100 generic shield construction.");
 
   // Turn various components on/off
+
+
+  UpdateGeometryCmd = new G4UIcmdWithoutParameter("/CDMS/updateGeometry",this);
+  UpdateGeometryCmd->SetGuidance("Rebuild the geometry.");
 
   DetectorActivateCmd = new G4UIcmdWithAString("/CDMS/detector/activate",this);
   DetectorActivateCmd->SetGuidance("Activate CDMS Detector Element.");
@@ -46,6 +55,19 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorDeActivateCmd->SetParameterName("choice",false);
   DetectorDeActivateCmd->AvailableForStates(G4State_Idle);
 
+  //set parameters for generic shielding for quick sims
+  GPSShieldPositionCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/genericShield/setPosition",this);
+  GPSShieldPositionCmd->SetGuidance("Set position for generic rectangular shielding.");
+  GPSShieldPositionCmd->SetParameterName("Dx","Dy","Dz",true,true);
+  GPSShieldPositionCmd->SetRange("Dx != 0 || Dy != 0 || Dz != 0"); //FIXME actually might want to put more constraints? no overlap?
+
+  GPSShieldSizeCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/genericShield/setSize",this);
+  GPSShieldSizeCmd->SetGuidance("Set Size for generic rectangular shielding.");
+  GPSShieldSizeCmd->SetParameterName("Length","Width","Thickness",true,true);
+  GPSShieldSizeCmd->SetRange("Length != 0 && Width != 0 && Thickness != 0"); //none of these can be zero
+
+  GPSShieldMatCmd = new G4UIcmdWithAString("/CDMS/genericShield/setMat",this);
+  GPSShieldMatCmd->SetGuidance("Set a material, options: 'Lead', 'Poly'");
   // Select between Solid / WireFrame drawing mode
 
   DrawSolidBox = new G4UIcmdWithAString("/CDMS/rendering/solid",this);
@@ -91,6 +113,12 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   G4String caseVeto = "Veto";
   G4String caseShields = "Shields";
   G4String caseIceBox = "IceBox";
+  G4String caseThermalNeutronBucket = "ShieldBucket";
+  G4String caseGPSShielding = "GPSShielding";
+
+  if( command == UpdateGeometryCmd ) { 
+    k100_Detector->UpdateGeometry();
+  }
 
   if( command == DetectorActivateCmd ) { 
     if(newValue == caseZips)          {k100_Detector->SetConstructZipBool(true);}
@@ -98,6 +126,8 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseVeto)     {k100_Detector->SetConstructVetoBool(true);}
     else if(newValue == caseShields)  {k100_Detector->SetConstructShieldsBool(true);}
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(true);}
+    else if(newValue == caseThermalNeutronBucket)   {k100_Detector->SetConstructThermalNeutronBoxBool(true);}
+    else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(true);}
   }
 
   if( command == DetectorDeActivateCmd ) { 
@@ -106,6 +136,23 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseVeto)     {k100_Detector->SetConstructVetoBool(false);}
     else if(newValue == caseShields)  {k100_Detector->SetConstructShieldsBool(false);}
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(false);}
+    else if(newValue == caseThermalNeutronBucket)   {k100_Detector->SetConstructThermalNeutronBoxBool(false);}
+    else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(false);}
+
+  }
+
+  if( command == GPSShieldPositionCmd ) { 
+    G4ThreeVector pos = GPSShieldPositionCmd->GetNew3VectorValue(newValue);
+    k100_Detector->SetConstructShieldTestEnvironmentPos(pos.x(),pos.y(),pos.z());
+  }
+
+  if( command == GPSShieldSizeCmd ) { 
+    G4ThreeVector sz = GPSShieldSizeCmd->GetNew3VectorValue(newValue);
+    k100_Detector->SetConstructShieldTestEnvironmentSize(sz.x(),sz.y(),sz.z());
+  }
+
+  if( command == GPSShieldMatCmd ) { 
+    k100_Detector->SetConstructShieldTestEnvironmentMat(newValue);
   }
 
   if( command == DrawSolidBox) { 

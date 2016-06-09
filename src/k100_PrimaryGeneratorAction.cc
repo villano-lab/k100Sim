@@ -29,7 +29,8 @@
 #include "k100_DetectorConstruction.hh"
 #include "k100_EventInfo.hh"
 
-k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction()
+k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction(G4bool useGun):
+sourceGun(useGun)
 {
   
   //Get the geometry
@@ -37,6 +38,9 @@ k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction()
 
   //set basic particle gun
   particleGun = new G4ParticleGun();
+
+  //set up a more intricate generator
+  particleSource = new G4GeneralParticleSource();
 
   //set overall rotation to be consistent with geometry
   particleGun->SetParticlePosition(G4ThreeVector(0.0*m,0.0*m,-120.0*cm));
@@ -50,6 +54,7 @@ k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction()
 k100_PrimaryGeneratorAction::~k100_PrimaryGeneratorAction()
 {
   delete particleGun;
+  delete particleSource;
 }
 void k100_PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
@@ -74,11 +79,17 @@ void k100_PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
        anEvent->SetEventAborted();
   }*/
 
-   particleGun->SetParticleDefinition(G4Neutron::Definition()); 
-   std::vector<G4double> angles = GenerateRandomDirection();
-   particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
-   particleGun->SetParticleEnergy(8.0);
-   particleGun->GeneratePrimaryVertex(anEvent);
+   if(sourceGun){
+     particleGun->SetParticleDefinition(G4Neutron::Definition()); 
+     std::vector<G4double> angles = GenerateRandomDirection();
+     particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
+     particleGun->SetParticleEnergy(8.0);
+     particleGun->GeneratePrimaryVertex(anEvent);
+   }
+   else
+   {
+     particleSource->GeneratePrimaryVertex(anEvent);
+   }
   
 }
 std::vector<G4double> k100_PrimaryGeneratorAction::GenerateRandomDirection()

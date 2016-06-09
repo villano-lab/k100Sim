@@ -44,6 +44,11 @@
 #include "k100_ZipSD.hh"
 #include "k100_VetoSD.hh"
 
+#include "G4GeometryManager.hh"
+#include "G4PhysicalVolumeStore.hh"
+#include "G4LogicalVolumeStore.hh"
+#include "G4SolidStore.hh"
+
 // ------------------------------------------------
 
 k100_DetectorConstruction::k100_DetectorConstruction()
@@ -69,15 +74,27 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructVetoBool = false;
   ConstructShieldsBool = true;
   ConstructIceBoxBool = true;
-  ConstructThermalNeutronBoxBool = true;
+  ConstructThermalNeutronBoxBool = false;
+  SetConstructShieldTestEnvironmentBool(false); //note, requires construct ZIP bool
+
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
   DrawSolidTowerBool = false; 
   DrawSolidVetoBool = false;
   DrawSolidShieldsBool = false; DrawSolidIceBoxBool = false;
 
+
   // ---------Material Definition--------------
   DefineMaterials();
+
+  //more complicated parameters
+  shieldTestParams.xcntr = 100.0*cm;
+  shieldTestParams.ycntr = 0.0*cm;
+  shieldTestParams.zcntr = 100.0*cm;
+  shieldTestParams.sizel = 10.0*cm;
+  shieldTestParams.sizew = 10.0*cm;
+  shieldTestParams.sizethk = 10.0*cm;
+  shieldTestParams.shieldmaterial = polyMat; //MUST be after DefineMaterials()
 
 
   // ---------Detector Names--------------
@@ -154,7 +171,14 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 
 k100_DetectorConstruction::~k100_DetectorConstruction()
 {
-  // Don't have anything here to delete
+  //delete the messenger
+  delete detectorMessenger;
+
+  // Clean old geometry, if any
+  G4GeometryManager::GetInstance()->OpenGeometry();
+  G4PhysicalVolumeStore::GetInstance()->Clean();
+  G4LogicalVolumeStore::GetInstance()->Clean();
+  G4SolidStore::GetInstance()->Clean();
 }
 
 // ------------------------------------------------
@@ -420,7 +444,6 @@ void k100_DetectorConstruction::DefineMaterials()
 
 void k100_DetectorConstruction::UpdateGeometry()
 {
-  delete DetectorRegion; // otherwise this causes segmentation faults.
 
   G4RunManager::GetRunManager()->DefineWorldVolume(Construct());
   G4RunManager::GetRunManager()->GeometryHasBeenModified();
@@ -432,6 +455,23 @@ void k100_DetectorConstruction::UpdateGeometry()
 
 G4VPhysicalVolume* k100_DetectorConstruction::Construct()
 {
+
+  // Clean old geometry, if any
+  //
+  G4GeometryManager::GetInstance()->OpenGeometry();
+  G4PhysicalVolumeStore::GetInstance()->Clean();
+  G4LogicalVolumeStore::GetInstance()->Clean();
+  G4SolidStore::GetInstance()->Clean();
+
+  // Prepare to declare sensitive detectors
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+  //deactivate the sensitive detectors
+  std::map<G4String,G4int>::iterator it;
+  for(it=k100CollName.begin();it!=k100CollName.end();++it){
+    SDman->Activate(it->first,false);
+  }
+
   // ------------ Construct the Physical world ---------------
 
   // Construct the World
@@ -461,12 +501,47 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
   if(ConstructTowerBool) {ConstructTower(physicalWorld);}
   //  if(ConstructExperimentBool)  {ConstructDl();}
   // --------- End Construct the whole shebang --------------
+  
+  //FIXME construct stuff that can't be constructed before tower
+  if(ConstructShieldTestEnvironmentBool)  {ConstructShieldTestEnvironment(physicalWorld);}
+
 
   return physicalWorld;
 } // ends Construct (for physical world, trigger for others)
 
 // ------------------------------------------------
 // ------------------------------------------------
+void k100_DetectorConstruction::SetConstructShieldTestEnvironmentPos(G4double xcntr,G4double ycntr,G4double zcntr)
+{
+  shieldTestParams.xcntr = xcntr;
+  shieldTestParams.ycntr = ycntr;
+  shieldTestParams.zcntr = zcntr;
+
+}
+void k100_DetectorConstruction::SetConstructShieldTestEnvironmentSize(G4double sizel,G4double sizew,G4double sizethk)
+{
+  shieldTestParams.sizel = sizel;
+  shieldTestParams.sizew = sizew;
+  shieldTestParams.sizethk = sizethk;
+
+}
+G4String k100_DetectorConstruction::GetConstructShieldTestEnvironmentMat()
+{
+  return shieldTestParams.shieldmaterial->GetName();
+}
+void k100_DetectorConstruction::SetConstructShieldTestEnvironmentMat(G4String mat)
+{
+  if(mat=="Lead"){
+    shieldTestParams.shieldmaterial = shieldPbMat;
+  }
+  else if(mat=="Poly"){
+    shieldTestParams.shieldmaterial = polyMat;
+  }
+  else{  //default to poly material
+    shieldTestParams.shieldmaterial = polyMat;
+  }
+
+}
 
 void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetectorBox)
 {
@@ -645,7 +720,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
   VisAttZip->SetForceSolid(DrawSolidZipBool); 
 
   // Using the parameterisation defined in the PixelParameteriation class.
-  G4VPVParameterisation* zipParam = 
+  zipParam = 
     new k100_ZipParameterisation(NbZipsPerTower,   // NoZips/Tower
 				 Zip_Househeight, // Z spacing of centers
 				 Zip_Rout,       // Zip Radius
@@ -719,12 +794,10 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4String detectorZipSDname = "tower1";
     G4int collID = -1; collID = SDman->GetCollectionID(detectorZipSDname);
     k100_ZipSD* azipSD1;
-    if(collID<0){ 
-      ConstructGenericSensitiveInt=1; 
-      azipSD1 = new k100_ZipSD(detectorZipSDname, towerNb);
-      k100CollName[detectorZipSDname] = towerNb;
-      SDman->AddNewDetector(azipSD1);
-    }
+    ConstructGenericSensitiveInt=1; 
+    azipSD1 = new k100_ZipSD(detectorZipSDname, towerNb);
+    k100CollName[detectorZipSDname] = towerNb;
+    SDman->AddNewDetector(azipSD1);
     //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
     logicalZip1->SetSensitiveDetector(azipSD1);
   }
@@ -1652,4 +1725,40 @@ void k100_DetectorConstruction::ConstructThermalNeutronBox(G4VPhysicalVolume *wo
 	//logicalPolyCylinder->SetVisAttributes(G4VisAttributes::Invisible);
 
         return;
+}
+void k100_DetectorConstruction::ConstructShieldTestEnvironment(G4VPhysicalVolume *world)
+{
+        //Get the coordinates of copies and source point and things
+	G4ThreeVector stackrel_detorigin = zipParam->GetCoordinates(0);  //is the first one is 0
+	G4double towerassy_shift = -6.5*cm;
+	G4double zipstack_shift = -(Tower_zPcut[0] - (zPldh[1] - zPldh[0]) - zPsdh[1] -Zip_z/2.0); //negative because tower is flipped
+	G4double instack_shift = -stackrel_detorigin.z(); //negative because tower is flipped
+	G4ThreeVector detorigin = G4ThreeVector(0,0,towerassy_shift + zipstack_shift +instack_shift);
+	G4ThreeVector point(shieldTestParams.xcntr,shieldTestParams.ycntr,shieldTestParams.zcntr);
+	G4ThreeVector relative = point - detorigin;
+
+	G4cout << "xdet: " << detorigin.x() << " ydet: " << detorigin.y() << " zdet: " << detorigin.z() << G4endl;
+	G4cout << "towerassy_shift: " << towerassy_shift << " zipstack_shift: " << zipstack_shift << " instack_shift: " << instack_shift << G4endl;
+
+	//Do the appropriate rotations
+	G4RotationMatrix *shieldrot = new G4RotationMatrix;
+	shieldrot->rotateZ(-relative.phi());
+	shieldrot->rotateY(-relative.theta());
+
+	//create the simple rectangular shield
+	G4Box* shieldBox = new G4Box("shieldBox_S",shieldTestParams.sizel/2.0,shieldTestParams.sizew/2.0,shieldTestParams.sizethk/2.0);
+	G4LogicalVolume* logicalShieldBox;
+        logicalShieldBox = new G4LogicalVolume(shieldBox,shieldTestParams.shieldmaterial,"shieldBox_L",0,0,0);
+	G4VPhysicalVolume* shieldBoxWorld = new G4PVPlacement(shieldrot, 
+								point,
+								"shieldBox_P",
+								logicalShieldBox,
+								world,
+								false,
+								0);
+
+	// Visualization attributes
+	G4VisAttributes* VisAttShieldBox = new G4VisAttributes(G4Colour(7.,3.,0.));
+	VisAttShieldBox->SetForceWireframe(false);  //I want a Wireframe of the me
+	logicalShieldBox->SetVisAttributes(VisAttShieldBox);  
 }

@@ -25,6 +25,12 @@
 /vis/modeling/trajectories/drawByParticleID-0/setRGBA neutron 1 0.45 0.08 1
 /vis/scene/endOfEventAction accumulate
 
+#make a generic generator
+/gps/particle gamma
+/gps/position 0 0 -100.0 cm
+/gps/pos/type Point
+/gps/ang/type iso
+/gps/ene/mono 2 MeV
 
 #make a raytrace model
 #/vis/rayTracer/eyePosition 1 1 1 m

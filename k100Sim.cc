@@ -56,6 +56,7 @@ void print_usage (FILE* stream, int exit_code)
   fprintf (stream, "Usage:  %s options [ inputfile(s) ]\n", program_name);
   fprintf (stream,
 	   //"\n"
+           "  -c, --customgen                    use custom particle generator \n"
            "  -o, --outfile       <filename>     name the output file \n"
            "  -q, --quiet         <level>        quiet printing \n"
            "                                     optional argument integer > 0 \n"
@@ -84,9 +85,11 @@ int main(int argc, char** argv) {
   uint quietness=0;
   bool quiet=false;
   bool dataquiet=false;
+  bool customgen=false;
    
   const struct option longopts[] =
   {
+    {"customgen",     no_argument,  0, 'c'},
     {"outfile",     required_argument,  0, 'o'},
     {"quiet",     optional_argument,  0, 'q'},
     {"silent",    no_argument,        0, 's'},
@@ -103,11 +106,14 @@ int main(int argc, char** argv) {
 
   while(iarg != -1)
   {
-    iarg = getopt_long(argc, argv, "+o:q::sv::V", longopts, &index);
+    iarg = getopt_long(argc, argv, "+co:q::sv::V", longopts, &index);
 
     switch (iarg)
     {
 
+      case 'c':
+        customgen = true;
+        break;
 
       case 'o':
         outputfile = optarg;
@@ -144,7 +150,7 @@ int main(int argc, char** argv) {
           break;
 
       case 'V':
-        printf("Version: %s\n", "__GIT_VERSION");
+        printf("Version: %s\n", __GIT_VERSION);
         return 0;
         break;
 
@@ -193,7 +199,7 @@ int main(int argc, char** argv) {
 
   // UserAction Classes============
   // event generator
-  k100_PrimaryGeneratorAction* myPrimaryEventGenerator=new k100_PrimaryGeneratorAction();
+  k100_PrimaryGeneratorAction* myPrimaryEventGenerator=new k100_PrimaryGeneratorAction(customgen); //sourceGun is the custom generator  
   runManager->SetUserAction(myPrimaryEventGenerator);
 
   //run action
@@ -227,9 +233,9 @@ int main(int argc, char** argv) {
   session->SessionStart();
 
 #ifdef G4VIS_USE
-  //delete visManager;
+  delete visManager;
 #endif
-  //delete runManager;
+  delete runManager;
 
   return 0;
 }

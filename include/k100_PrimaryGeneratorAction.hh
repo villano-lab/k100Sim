@@ -37,7 +37,7 @@ class k100_PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 
 public:
 
-  k100_PrimaryGeneratorAction();
+  k100_PrimaryGeneratorAction(G4bool useGun=false);
   ~k100_PrimaryGeneratorAction();
 
 public:
@@ -49,11 +49,15 @@ private:
   k100_DetectorConstruction *Ndet; 
 
   G4ParticleGun* particleGun;
+  G4GeneralParticleSource*      particleSource;	  
   G4RotationMatrix *xrot;
   //G4GeneralParticleSource* particleGun;
 
   //helpful functions
   std::vector<G4double> GenerateRandomDirection();
+
+  //useful variables
+  G4bool                        sourceGun; // false for GeneralParticleSource
 
 };
 
