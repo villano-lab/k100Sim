@@ -5,10 +5,12 @@
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 project(K100SIM)
 
-SET(CMAKE_BUILD_TYPE None)
-set(GIT_VERSION  "$(sh -c 'git describe --abbrev=4 --always')")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__GIT_VERSION=\"${GIT_VERSION}\"")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GIT_VERSION=\"${GIT_VERSION}\"")
+set(CMAKE_BUILD_TYPE None)
+message(${CMAKE_CURRENT_SOURCE_DIR})
+execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND exec git describe --abbrev=0 --always OUTPUT_VARIABLE GIT_VERSION)
+message("${GIT_VERSION}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__GIT_VERSION=\\\"${GIT_VERSION}\\\"")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GIT_VERSION=\\\"${GIT_VERSION}\\\"")
 
 #----------------------------------------------------------------------------
 # Find Geant4 package, activating all available UI and Vis drivers by default

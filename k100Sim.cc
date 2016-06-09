@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
           break;
 
       case 'V':
-        printf("Version: %s\n", "__GIT_VERSION");
+        printf("Version: %s\n", __GIT_VERSION);
         return 0;
         break;
 
