@@ -1750,7 +1750,7 @@ void k100_DetectorConstruction::ConstructShieldTestEnvironment(G4VPhysicalVolume
 	G4LogicalVolume* logicalShieldBox;
         logicalShieldBox = new G4LogicalVolume(shieldBox,shieldTestParams.shieldmaterial,"shieldBox_L",0,0,0);
 	G4VPhysicalVolume* shieldBoxWorld = new G4PVPlacement(shieldrot, 
-								point - (relative.unit()*shieldTestParams.sizethk/2.0), //put source at edge of shielding
+								point - (relative.unit()*shieldTestParams.sizethk/2.0), //put source at edge of shielding always
 								"shieldBox_P",
 								logicalShieldBox,
 								world,
