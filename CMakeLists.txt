@@ -6,11 +6,15 @@ cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 project(K100SIM)
 
 set(CMAKE_BUILD_TYPE None)
-message(${CMAKE_CURRENT_SOURCE_DIR})
-execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND git describe --abbrev=0 --always OUTPUT_VARIABLE GIT_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
-message("${GIT_VERSION}")
+message("cmake install prefix: ${CMAKE_INSTALL_PREFIX}")
+message("source directory: ${CMAKE_CURRENT_SOURCE_DIR}")
+set(G4WORKDIR "$ENV{G4WORKDIR}")
+message("prefix directory: ${G4WORKDIR}")
+execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND git describe --abbrev=100 --always OUTPUT_VARIABLE GIT_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("git version: ${GIT_VERSION}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__GIT_VERSION=\\\"${GIT_VERSION}\\\"")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GIT_VERSION=\\\"${GIT_VERSION}\\\"")
+
 
 #----------------------------------------------------------------------------
 # Find Geant4 package, activating all available UI and Vis drivers by default
@@ -75,6 +79,15 @@ add_custom_target(K100SIM DEPENDS k100Sim)
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
-install(TARGETS k100Sim DESTINATION bin)
+install(TARGETS k100Sim 
+	RUNTIME DESTINATION ${G4WORKDIR}/bin/Linux-g++)
 
+#----------------------------------------------------------------------------
+# uninstall target
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
 
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
