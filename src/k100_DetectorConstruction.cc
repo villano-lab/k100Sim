@@ -74,8 +74,9 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructVetoBool = false;
   ConstructShieldsBool = true;
   ConstructIceBoxBool = true;
-  ConstructThermalNeutronBoxBool = false;
+  SetConstructThermalNeutronBoxBool(false); //note, requires construct ZIP bool
   SetConstructShieldTestEnvironmentBool(false); //note, requires construct ZIP bool
+  SetConstructSimpleGammaCoinBool(false); //note, requires construct ZIP bool
 
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
@@ -90,12 +91,17 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   //more complicated parameters
   shieldTestParams.xcntr = 100.0*cm;
   shieldTestParams.ycntr = 0.0*cm;
-  shieldTestParams.zcntr = 100.0*cm;
+  shieldTestParams.zcntr = 0.0*cm;
   shieldTestParams.sizel = 10.0*cm;
   shieldTestParams.sizew = 10.0*cm;
   shieldTestParams.sizethk = 10.0*cm;
   shieldTestParams.shieldmaterial = polyMat; //MUST be after DefineMaterials()
 
+  gammaCoinParams.xcntr = -100.0*cm; //start off opposed to shield test
+  gammaCoinParams.ycntr = 0.0*cm;
+  gammaCoinParams.zcntr = 0.0*cm;
+  gammaCoinParams.sizer = 2.54*3*cm;
+  gammaCoinParams.sizethk = 5.0*cm;
 
   // ---------Detector Names--------------
   DetCollName = new char*[30];  TowCollName = new char*[5];     DetMaterials = new G4int [30];
@@ -471,6 +477,7 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
   for(it=k100CollName.begin();it!=k100CollName.end();++it){
     SDman->Activate(it->first,false);
   }
+  k100CollName.clear();
 
   // ------------ Construct the Physical world ---------------
 
@@ -504,6 +511,7 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
   
   //FIXME construct stuff that can't be constructed before tower
   if(ConstructShieldTestEnvironmentBool)  {ConstructShieldTestEnvironment(physicalWorld);}
+  if(ConstructSimpleGammaCoinBool)  {ConstructSimpleGammaCoin(physicalWorld);}
 
 
   return physicalWorld;
@@ -525,10 +533,6 @@ void k100_DetectorConstruction::SetConstructShieldTestEnvironmentSize(G4double s
   shieldTestParams.sizethk = sizethk;
 
 }
-G4String k100_DetectorConstruction::GetConstructShieldTestEnvironmentMat()
-{
-  return shieldTestParams.shieldmaterial->GetName();
-}
 void k100_DetectorConstruction::SetConstructShieldTestEnvironmentMat(G4String mat)
 {
   if(mat=="Lead"){
@@ -541,6 +545,23 @@ void k100_DetectorConstruction::SetConstructShieldTestEnvironmentMat(G4String ma
     shieldTestParams.shieldmaterial = polyMat;
   }
 
+}
+void k100_DetectorConstruction::SetConstructSimpleGammaCoinPos(G4double xcntr,G4double ycntr,G4double zcntr)
+{
+  gammaCoinParams.xcntr = xcntr;
+  gammaCoinParams.ycntr = ycntr;
+  gammaCoinParams.zcntr = zcntr;
+
+}
+void k100_DetectorConstruction::SetConstructSimpleGammaCoinSize(G4double sizer,G4double sizethk)
+{
+  gammaCoinParams.sizer = sizer;
+  gammaCoinParams.sizethk = sizethk;
+
+}
+G4String k100_DetectorConstruction::GetConstructShieldTestEnvironmentMat()
+{
+  return shieldTestParams.shieldmaterial->GetName();
 }
 
 void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetectorBox)
@@ -828,7 +849,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     k100_ZipSD* azipSD2;
     if(collID<0){ 
       azipSD2 = new k100_ZipSD(detectorZipSDname, towerNb);
-      SDman->AddNewDetector(azipSD2);
+      //SDman->AddNewDetector(azipSD2);
     }
     //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
     logicalZip2->SetSensitiveDetector(azipSD2);
@@ -860,7 +881,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     k100_ZipSD* azipSD3;
     if(collID<0){ 
       azipSD3 = new k100_ZipSD(detectorZipSDname, towerNb);
-      SDman->AddNewDetector(azipSD3);
+      //SDman->AddNewDetector(azipSD3);
     }
     //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
     logicalZip3->SetSensitiveDetector(azipSD3);
@@ -891,7 +912,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     k100_ZipSD* azipSD4;
     if(collID<0){ 
       azipSD4 = new k100_ZipSD(detectorZipSDname, towerNb);
-      SDman->AddNewDetector(azipSD4);
+      //SDman->AddNewDetector(azipSD4);
     }
     //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
     logicalZip4->SetSensitiveDetector(azipSD4);
@@ -922,7 +943,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     k100_ZipSD* azipSD5;
     if(collID<0){ 
       azipSD5 = new k100_ZipSD(detectorZipSDname, towerNb);
-      SDman->AddNewDetector(azipSD5);
+      //SDman->AddNewDetector(azipSD5);
     }
     //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
     logicalZip5->SetSensitiveDetector(azipSD5);
@@ -1730,7 +1751,7 @@ void k100_DetectorConstruction::ConstructShieldTestEnvironment(G4VPhysicalVolume
 {
         //Get the coordinates of copies and source point and things
 	G4ThreeVector stackrel_detorigin = zipParam->GetCoordinates(0);  //is the first one is 0
-	G4double towerassy_shift = -6.5*cm;
+	G4double towerassy_shift = -6.5*cm; //FIXME hard-coded?
 	G4double zipstack_shift = -(Tower_zPcut[0] - (zPldh[1] - zPldh[0]) - zPsdh[1] -Zip_z/2.0); //negative because tower is flipped
 	G4double instack_shift = -stackrel_detorigin.z(); //negative because tower is flipped
 	G4ThreeVector detorigin = G4ThreeVector(0,0,towerassy_shift + zipstack_shift +instack_shift);
@@ -1761,4 +1782,58 @@ void k100_DetectorConstruction::ConstructShieldTestEnvironment(G4VPhysicalVolume
 	G4VisAttributes* VisAttShieldBox = new G4VisAttributes(G4Colour(7.,3.,0.));
 	VisAttShieldBox->SetForceWireframe(false);  //I want a Wireframe of the me
 	logicalShieldBox->SetVisAttributes(VisAttShieldBox);  
+}
+void k100_DetectorConstruction::ConstructSimpleGammaCoin(G4VPhysicalVolume *world)
+{
+        //Get the coordinates of copies and source point and things
+	G4ThreeVector stackrel_detorigin = zipParam->GetCoordinates(0);  //is the first one is 0
+	G4double towerassy_shift = -6.5*cm; //FIXME hard-coded?
+	G4double zipstack_shift = -(Tower_zPcut[0] - (zPldh[1] - zPldh[0]) - zPsdh[1] -Zip_z/2.0); //negative because tower is flipped
+	G4double instack_shift = -stackrel_detorigin.z(); //negative because tower is flipped
+	G4ThreeVector detorigin = G4ThreeVector(0,0,towerassy_shift + zipstack_shift +instack_shift);
+	G4ThreeVector point(gammaCoinParams.xcntr,gammaCoinParams.ycntr,gammaCoinParams.zcntr);
+	G4ThreeVector relative = point - detorigin;
+
+	G4cout << "xdet: " << detorigin.x() << " ydet: " << detorigin.y() << " zdet: " << detorigin.z() << G4endl;
+	G4cout << "towerassy_shift: " << towerassy_shift << " zipstack_shift: " << zipstack_shift << " instack_shift: " << instack_shift << G4endl;
+
+	//Do the appropriate rotations
+	G4RotationMatrix *gammadetrot = new G4RotationMatrix;
+	gammadetrot->rotateZ(-relative.phi());
+	gammadetrot->rotateY(-relative.theta());
+
+	//create the simple rectangular shield
+	G4Tubs* GeGammaCyl = new G4Tubs("GeGammaCyl_S",0.0,gammaCoinParams.sizer,gammaCoinParams.sizethk/2.0,0,2*pi);
+	G4LogicalVolume* logicalGeGammaCyl;
+        logicalGeGammaCyl = new G4LogicalVolume(GeGammaCyl,zipGeMat,"GeGammaCyl_L",0,0,0);
+	G4VPhysicalVolume* GeGammaCylWorld = new G4PVPlacement(gammadetrot, 
+								point - (relative.unit()*gammaCoinParams.sizethk/2.0), //put source at edge of shielding
+								"shieldBox_P",
+								logicalGeGammaCyl,
+								world,
+								false,
+								0);
+
+	// Visualization attributes
+	//G4VisAttributes* VisAttGeGammaCyl = new G4VisAttributes(G4Colour(128.0/255.0,0/255.,0/255.));
+        G4VisAttributes* VisAttGeGammaCyl = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+	VisAttGeGammaCyl->SetForceWireframe(false);  //I want a Wireframe of the me
+	logicalGeGammaCyl->SetVisAttributes(VisAttGeGammaCyl);  
+
+	//------------------------------------------------ 
+        // Sensitive detectors
+        //------------------------------------------------ 
+    
+        // Prepare to declare sensitive detectors
+        G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+        G4String detectorZipSDname = "gammaCoin1";
+        G4int collID = -1; collID = SDman->GetCollectionID(detectorZipSDname);
+        k100_ZipSD* azipSD1;
+        ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+        azipSD1 = new k100_ZipSD(detectorZipSDname, k100CollName.size()+1);
+        k100CollName[detectorZipSDname] = k100CollName.size()+1;
+        SDman->AddNewDetector(azipSD1);
+        logicalGeGammaCyl->SetSensitiveDetector(azipSD1);
+  
 }
