@@ -58,6 +58,7 @@ set(K100SIM_SCRIPTS
   macros/srcCloseup.mac
   macros/srcRayTrace.mac
   macros/pubeTest.mac
+  macros/pube_coin.mac
   sources/pube.dat
   sources/pube_skim.dat
   )
