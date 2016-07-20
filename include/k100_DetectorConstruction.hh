@@ -28,6 +28,15 @@ class k100_ZipParameterisation;
     G4Material* shieldmaterial;
   };
 
+  //complicated parameters for complex options (gamma coincidence)
+  struct GammaCoin {
+    G4double xcntr;
+    G4double ycntr;
+    G4double zcntr;
+    G4double sizer;
+    G4double sizethk;
+  };
+
 // ------------------------------------------------
 
 class k100_DetectorConstruction : public G4VUserDetectorConstruction
@@ -48,10 +57,13 @@ public:
   void SetConstructShieldsBool(G4bool newVal)    {ConstructShieldsBool = newVal;}
   void SetConstructIceBoxBool(G4bool newVal)     {ConstructIceBoxBool = newVal;}
   void SetConstructThermalNeutronBoxBool(G4bool newVal)  {ConstructThermalNeutronBoxBool = newVal&&ConstructZipBool;} //requires construction of Zips
-  void SetConstructShieldTestEnvironmentBool(G4bool newVal)      {ConstructShieldTestEnvironmentBool = newVal;}
+  void SetConstructShieldTestEnvironmentBool(G4bool newVal)      {ConstructShieldTestEnvironmentBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentPos(G4double xcntr,G4double ycntr,G4double zcntr);
   void SetConstructShieldTestEnvironmentSize(G4double sizel,G4double sizew,G4double sizethk);
   void SetConstructShieldTestEnvironmentMat(G4String mat);
+  void SetConstructSimpleGammaCoinBool(G4bool newVal)  {ConstructSimpleGammaCoinBool = newVal&&ConstructZipBool;} //requires construction of Zips
+  void SetConstructSimpleGammaCoinPos(G4double xcntr,G4double ycntr,G4double zcntr);
+  void SetConstructSimpleGammaCoinSize(G4double sizer, G4double sizethk);
   void SetNbOfTowers(G4int newVal)               {NbOfTowers = newVal;}
   void SetNbOfZips(G4int newVal)                 {NbOfZips = newVal;}
 
@@ -69,6 +81,8 @@ public:
   G4bool GetConstructShieldTestEnvironmentBool()      {return ConstructShieldTestEnvironmentBool;}
   struct ShieldTest GetConstructShieldTestEnvironmentParams() {return shieldTestParams;}
   G4String GetConstructShieldTestEnvironmentMat();
+  G4bool GetConstructSimpleGammaCoinBool()      {return ConstructSimpleGammaCoinBool;}
+  struct GammaCoin GetConstructSimpleGammaCoinParams() {return gammaCoinParams;}
   G4int GetConstructGenericTrackerInt() {return ConstructGenericTrackerInt;}
   G4int GetConstructGenericSensitiveInt() {return ConstructGenericSensitiveInt;}
   std::map<G4String,G4int> *GetSensitiveList() { return &k100CollName;}
@@ -114,6 +128,7 @@ private:
   G4bool ConstructGenericGeometryBool;
   G4bool ConstructThermalNeutronBoxBool;
   G4bool ConstructShieldTestEnvironmentBool;
+  G4bool ConstructSimpleGammaCoinBool;
   G4int ConstructGenericTrackerInt;
   G4int ConstructGenericSensitiveInt;
   G4int DesignNo;
@@ -123,6 +138,7 @@ private:
 
   //structs for grouped parameters
   ShieldTest shieldTestParams;
+  GammaCoin  gammaCoinParams;
 
   void DefineMaterials();
   void ConstructDetector();
@@ -135,6 +151,7 @@ private:
   void ConstructIceBox(G4LogicalVolume*  logicalWorld);
   void ConstructThermalNeutronBox(G4VPhysicalVolume*  world);
   void ConstructShieldTestEnvironment(G4VPhysicalVolume*  world);
+  void ConstructSimpleGammaCoin(G4VPhysicalVolume*  world);
   void FillTheTower(G4VPhysicalVolume* physicalTower, G4int towerNb);
 
 #include "k100_DetectorParameterDef.hh"

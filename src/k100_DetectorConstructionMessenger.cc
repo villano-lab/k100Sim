@@ -32,6 +32,9 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   //
   k100_detDir = new G4UIdirectory("/CDMS/genericShield/");
   k100_detDir->SetGuidance("CDMS k100 generic shield construction.");
+  //
+  k100_detDir = new G4UIdirectory("/CDMS/gammaCoin/");
+  k100_detDir->SetGuidance("CDMS k100 outside-cryostat gamma coincidence detector.");
 
   // Turn various components on/off
 
@@ -62,13 +65,24 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   GPSShieldPositionCmd->SetRange("Dx != 0 || Dy != 0 || Dz != 0"); //FIXME actually might want to put more constraints? no overlap?
 
   GPSShieldSizeCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/genericShield/setSize",this);
-  GPSShieldSizeCmd->SetGuidance("Set Size for generic rectangular shielding.");
+  GPSShieldSizeCmd->SetGuidance("Set size for generic rectangular shielding.");
   GPSShieldSizeCmd->SetParameterName("Length","Width","Thickness",true,true);
   GPSShieldSizeCmd->SetRange("Length != 0 && Width != 0 && Thickness != 0"); //none of these can be zero
 
   GPSShieldMatCmd = new G4UIcmdWithAString("/CDMS/genericShield/setMat",this);
   GPSShieldMatCmd->SetGuidance("Set a material, options: 'Lead', 'Poly'");
   // Select between Solid / WireFrame drawing mode
+
+  // Set parameters for gamma-coincidence detector
+  GeGammaCoinPositionCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/gammaCoin/setPosition",this);
+  GeGammaCoinPositionCmd->SetGuidance("Set position for HPGe coincidence detector.");
+  GeGammaCoinPositionCmd->SetParameterName("Dx","Dy","Dz",true,true);
+  GeGammaCoinPositionCmd->SetRange("Dx != 0 || Dy != 0 || Dz != 0"); //FIXME actually might want to put more constraints? no overlap?
+
+  GeGammaCoinSizeCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/gammaCoin/setSize",this);
+  GeGammaCoinSizeCmd->SetGuidance("Set size for HPGe coincidence detector.");
+  GeGammaCoinSizeCmd->SetParameterName("Radius","Thickness","Nothing",true,true);
+  GeGammaCoinSizeCmd->SetRange("Radius != 0 && Thickness != 0"); //none of these can be zero
 
   DrawSolidBox = new G4UIcmdWithAString("/CDMS/rendering/solid",this);
   DrawSolidBox->SetGuidance("Draw solid box for this detector element.");
@@ -115,6 +129,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   G4String caseIceBox = "IceBox";
   G4String caseThermalNeutronBucket = "ShieldBucket";
   G4String caseGPSShielding = "GPSShielding";
+  G4String caseHPGeCoincidence = "HPGeCoincidence";
 
   if( command == UpdateGeometryCmd ) { 
     k100_Detector->UpdateGeometry();
@@ -128,6 +143,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(true);}
     else if(newValue == caseThermalNeutronBucket)   {k100_Detector->SetConstructThermalNeutronBoxBool(true);}
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(true);}
+    else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(true);}
   }
 
   if( command == DetectorDeActivateCmd ) { 
@@ -138,6 +154,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(false);}
     else if(newValue == caseThermalNeutronBucket)   {k100_Detector->SetConstructThermalNeutronBoxBool(false);}
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(false);}
+    else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(false);}
 
   }
 
@@ -153,6 +170,16 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
 
   if( command == GPSShieldMatCmd ) { 
     k100_Detector->SetConstructShieldTestEnvironmentMat(newValue);
+  }
+
+  if( command == GeGammaCoinPositionCmd ) { 
+    G4ThreeVector pos = GeGammaCoinPositionCmd->GetNew3VectorValue(newValue);
+    k100_Detector->SetConstructSimpleGammaCoinPos(pos.x(),pos.y(),pos.z());
+  }
+
+  if( command == GeGammaCoinSizeCmd ) { 
+    G4ThreeVector sz = GeGammaCoinSizeCmd->GetNew3VectorValue(newValue);
+    k100_Detector->SetConstructSimpleGammaCoinSize(sz.x(),sz.y());
   }
 
   if( command == DrawSolidBox) { 

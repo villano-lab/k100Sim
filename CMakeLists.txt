@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 project(K100SIM)
 
 set(CMAKE_BUILD_TYPE None)
+#set(WITH_GEANT4_UIVIS OFF)
 message("cmake install prefix: ${CMAKE_INSTALL_PREFIX}")
 message("source directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 set(G4WORKDIR "$ENV{G4WORKDIR}")
@@ -23,8 +24,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GIT_VERSION=\\\"${GIT_VERSION}\\\"")
 #
 option(WITH_GEANT4_UIVIS "Build example with Geant4 UI and Vis drivers" ON)
 if(WITH_GEANT4_UIVIS)
+  message("using visualization")
   find_package(Geant4 REQUIRED ui_all vis_all)
 else()
+  message("NOT using visualization")
   find_package(Geant4 REQUIRED)
 endif()
 
@@ -58,6 +61,7 @@ set(K100SIM_SCRIPTS
   macros/srcCloseup.mac
   macros/srcRayTrace.mac
   macros/pubeTest.mac
+  macros/pube_coin.mac
   sources/pube.dat
   sources/pube_skim.dat
   )
