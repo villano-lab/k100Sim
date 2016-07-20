@@ -210,11 +210,17 @@ void k100_DetectorConstruction::DefineMaterials()
   // Define Hydrogen
   G4Element* elementH=new G4Element(name="Hydrogen", symbol="H", z=1., a=1.01*g/mole);
 
+  // Define Deuterium 
+  G4Element* elementD=new G4Element(name="Deuterium", symbol="D", z=1., a=2.014*g/mole);
+
   // Define Helium
   G4Element* elementHe = new G4Element(name="Helium", symbol="He", z=2., a=4.003*g/mole);
 
   // Define Carbon
   G4Element* elementC=new G4Element(name="Carbon", symbol="C", z=6., a=12.011*g/mole);
+
+  // Define Oxygen 
+  G4Element* elementO=new G4Element(name="Oxygen", symbol="O", z=8., a=15.9994*g/mole);
 
   // Define Silicon
   G4Element* elementSi = new G4Element(name="Silicon", symbol="Si", z=14., a=28.09*g/mole);
@@ -315,6 +321,16 @@ void k100_DetectorConstruction::DefineMaterials()
   G4Material* Scint =new G4Material(name="Scintillator",density = 1.032*g/cm3, ncomponents=2) ;
   Scint->AddElement(elementH, natoms=11);
   Scint->AddElement(elementC, natoms=10);
+
+  // H2O 
+  G4Material* h2o=new G4Material(name="H2O", density = 1.0*g/cm3, ncomponents=2);
+  h2o->AddElement(elementH,natoms=2);
+  h2o->AddElement(elementO,natoms=1);
+
+  // D2O 
+  G4Material* d2o=new G4Material(name="D2O", density = 1.11*g/cm3, ncomponents=2);
+  d2o->AddElement(elementD,natoms=2);
+  d2o->AddElement(elementO,natoms=1);
 
   // Poly
   G4Material* poly=new G4Material(name="Poly", density = 0.935*g/cm3, ncomponents=2);
@@ -430,6 +446,8 @@ void k100_DetectorConstruction::DefineMaterials()
   towerMat = Copper;
   scintMat = Scint;
   polyMat = poly;
+  d2oMat = d2o;
+  h2oMat = h2o;
   shieldCuMat = Copper;
   shieldPbMat = Lead;
   iceboxCuMat = Copper;
@@ -540,6 +558,12 @@ void k100_DetectorConstruction::SetConstructShieldTestEnvironmentMat(G4String ma
   }
   else if(mat=="Poly"){
     shieldTestParams.shieldmaterial = polyMat;
+  }
+  else if(mat=="D2O"){
+    shieldTestParams.shieldmaterial = d2oMat;
+  }
+  else if(mat=="H2O"){
+    shieldTestParams.shieldmaterial = h2oMat;
   }
   else{  //default to poly material
     shieldTestParams.shieldmaterial = polyMat;

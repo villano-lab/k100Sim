@@ -110,6 +110,7 @@ private:
 
   G4Material *zipGeMat, *zipSiMat, *towerMat, *scintMat;
   G4Material* polyMat, *mumetalMat;
+  G4Material* d2oMat, *h2oMat;
   G4Material* shieldCuMat, *shieldPbMat;
   G4Material* iceboxCuMat;
   G4Material* defaultMat;
