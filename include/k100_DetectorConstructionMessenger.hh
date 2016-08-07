@@ -44,6 +44,7 @@ private:
   G4UIcmdWithAString*     GPSShieldMatCmd;
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinPositionCmd;
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinSizeCmd;
+  G4UIcmdWithAString*     SimpleGammaCoinMatCmd;
 
   G4UIcmdWithAString*     DrawSolidBox;
   G4UIcmdWithAString*     DrawFrameBox;

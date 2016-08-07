@@ -84,6 +84,9 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   GeGammaCoinSizeCmd->SetParameterName("Radius","Thickness","Nothing",true,true);
   GeGammaCoinSizeCmd->SetRange("Radius != 0 && Thickness != 0"); //none of these can be zero
 
+  SimpleGammaCoinMatCmd = new G4UIcmdWithAString("/CDMS/gammaCoin/setMat",this);
+  SimpleGammaCoinMatCmd->SetGuidance("Set a material, options: 'HPGe', 'NaI', 'Scint'");
+
   DrawSolidBox = new G4UIcmdWithAString("/CDMS/rendering/solid",this);
   DrawSolidBox->SetGuidance("Draw solid box for this detector element.");
   DrawSolidBox->SetGuidance("Choices are : Zips/Towers/Veto/Shields/IceBox .");
@@ -180,6 +183,10 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   if( command == GeGammaCoinSizeCmd ) { 
     G4ThreeVector sz = GeGammaCoinSizeCmd->GetNew3VectorValue(newValue);
     k100_Detector->SetConstructSimpleGammaCoinSize(sz.x(),sz.y());
+  }
+
+  if( command == SimpleGammaCoinMatCmd ) { 
+    k100_Detector->SetConstructSimpleGammaCoinMat(newValue);
   }
 
   if( command == DrawSolidBox) { 
