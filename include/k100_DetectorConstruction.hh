@@ -35,6 +35,7 @@ class k100_ZipParameterisation;
     G4double zcntr;
     G4double sizer;
     G4double sizethk;
+    G4Material* coinmaterial;
   };
 
 // ------------------------------------------------
@@ -64,6 +65,7 @@ public:
   void SetConstructSimpleGammaCoinBool(G4bool newVal)  {ConstructSimpleGammaCoinBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructSimpleGammaCoinPos(G4double xcntr,G4double ycntr,G4double zcntr);
   void SetConstructSimpleGammaCoinSize(G4double sizer, G4double sizethk);
+  void SetConstructSimpleGammaCoinMat(G4String mat);
   void SetNbOfTowers(G4int newVal)               {NbOfTowers = newVal;}
   void SetNbOfZips(G4int newVal)                 {NbOfZips = newVal;}
 
@@ -83,6 +85,7 @@ public:
   G4String GetConstructShieldTestEnvironmentMat();
   G4bool GetConstructSimpleGammaCoinBool()      {return ConstructSimpleGammaCoinBool;}
   struct GammaCoin GetConstructSimpleGammaCoinParams() {return gammaCoinParams;}
+  G4String GetConstructSimpleGammaCoinMat();
   G4int GetConstructGenericTrackerInt() {return ConstructGenericTrackerInt;}
   G4int GetConstructGenericSensitiveInt() {return ConstructGenericSensitiveInt;}
   std::map<G4String,G4int> *GetSensitiveList() { return &k100CollName;}
@@ -110,7 +113,7 @@ private:
 
   G4Material *zipGeMat, *zipSiMat, *towerMat, *scintMat;
   G4Material* polyMat, *mumetalMat;
-  G4Material* d2oMat, *h2oMat;
+  G4Material* d2oMat, *h2oMat, *naiMat;
   G4Material* shieldCuMat, *shieldPbMat;
   G4Material* iceboxCuMat;
   G4Material* defaultMat;

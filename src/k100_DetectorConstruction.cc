@@ -102,6 +102,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   gammaCoinParams.zcntr = 0.0*cm;
   gammaCoinParams.sizer = 2.54*3*cm;
   gammaCoinParams.sizethk = 5.0*cm;
+  gammaCoinParams.coinmaterial = zipGeMat; //MUST be after DefineMaterials()
 
   // ---------Detector Names--------------
   DetCollName = new char*[30];  TowCollName = new char*[5];     DetMaterials = new G4int [30];
@@ -222,6 +223,9 @@ void k100_DetectorConstruction::DefineMaterials()
   // Define Oxygen 
   G4Element* elementO=new G4Element(name="Oxygen", symbol="O", z=8., a=15.9994*g/mole);
 
+  // Define Sodium
+  G4Element* elementNa = new G4Element(name="Sodium", symbol="Na", z=11., a=22.9898*g/mole);
+
   // Define Silicon
   G4Element* elementSi = new G4Element(name="Silicon", symbol="Si", z=14., a=28.09*g/mole);
 
@@ -233,6 +237,9 @@ void k100_DetectorConstruction::DefineMaterials()
 
   // Define Germanium   
   G4Element* elementGe = new G4Element(name="Germanium", symbol="Ge", z=32., a=72.61*g/mole);
+
+  // Define Iodine   
+  G4Element* elementI = new G4Element(name="Iodine", symbol="I", z=53., a=126.90447*g/mole);
 
   // Define Lead
   G4Element* elementPb = new G4Element(name="Lead",symbol="Pb", z=82., a=207.2*g/mole);
@@ -276,6 +283,11 @@ void k100_DetectorConstruction::DefineMaterials()
   // Germanium 
   G4Material* Germanium = new G4Material(name="Germanium", density = 5.323*g/cm3, ncomponents=1);
   Germanium->AddElement(elementGe, natoms=1);
+
+  // Sodium Iodide 
+  G4Material* NaI = new G4Material(name="NaI", density = 3.67*g/cm3, ncomponents=2);
+  NaI->AddElement(elementNa, natoms=1);
+  NaI->AddElement(elementI, natoms=1);
 
   // Copper
   G4Material* Copper = new G4Material(name="Copper", density = 8.920*g/cm3, ncomponents=1);
@@ -448,6 +460,7 @@ void k100_DetectorConstruction::DefineMaterials()
   polyMat = poly;
   d2oMat = d2o;
   h2oMat = h2o;
+  naiMat = NaI;
   shieldCuMat = Copper;
   shieldPbMat = Lead;
   iceboxCuMat = Copper;
@@ -583,9 +596,29 @@ void k100_DetectorConstruction::SetConstructSimpleGammaCoinSize(G4double sizer,G
   gammaCoinParams.sizethk = sizethk;
 
 }
+void k100_DetectorConstruction::SetConstructSimpleGammaCoinMat(G4String mat)
+{
+  if(mat=="NaI"){
+    gammaCoinParams.coinmaterial = naiMat;
+  }
+  else if(mat=="HPGe"){
+    gammaCoinParams.coinmaterial = zipGeMat;
+  }
+  else if(mat=="Scint"){
+    gammaCoinParams.coinmaterial = scintMat;
+  }
+  else{  //default to HPGe 
+    gammaCoinParams.coinmaterial = zipGeMat;
+  }
+
+}
 G4String k100_DetectorConstruction::GetConstructShieldTestEnvironmentMat()
 {
   return shieldTestParams.shieldmaterial->GetName();
+}
+G4String k100_DetectorConstruction::GetConstructSimpleGammaCoinMat()
+{
+  return gammaCoinParams.coinmaterial->GetName();
 }
 
 void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetectorBox)
@@ -1829,7 +1862,7 @@ void k100_DetectorConstruction::ConstructSimpleGammaCoin(G4VPhysicalVolume *worl
 	//create the simple rectangular shield
 	G4Tubs* GeGammaCyl = new G4Tubs("GeGammaCyl_S",0.0,gammaCoinParams.sizer,gammaCoinParams.sizethk/2.0,0,2*pi);
 	G4LogicalVolume* logicalGeGammaCyl;
-        logicalGeGammaCyl = new G4LogicalVolume(GeGammaCyl,zipGeMat,"GeGammaCyl_L",0,0,0);
+        logicalGeGammaCyl = new G4LogicalVolume(GeGammaCyl,gammaCoinParams.coinmaterial,"GeGammaCyl_L",0,0,0);
 	G4VPhysicalVolume* GeGammaCylWorld = new G4PVPlacement(gammadetrot, 
 								point - (relative.unit()*gammaCoinParams.sizethk/2.0), //put source at edge of shielding
 								"shieldBox_P",
@@ -1840,6 +1873,7 @@ void k100_DetectorConstruction::ConstructSimpleGammaCoin(G4VPhysicalVolume *worl
 
 	// Visualization attributes
 	//G4VisAttributes* VisAttGeGammaCyl = new G4VisAttributes(G4Colour(128.0/255.0,0/255.,0/255.));
+	G4cout << "Gamma Coincidence Detector is: " << gammaCoinParams.coinmaterial->GetName() << G4endl;
         G4VisAttributes* VisAttGeGammaCyl = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
 	VisAttGeGammaCyl->SetForceWireframe(false);  //I want a Wireframe of the me
 	logicalGeGammaCyl->SetVisAttributes(VisAttGeGammaCyl);  
