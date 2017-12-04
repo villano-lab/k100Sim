@@ -22,6 +22,9 @@
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 
+//ROOT stuff
+#include "TH1D.h"
+
 #include <vector>
 
 // ------------------------------------------------
