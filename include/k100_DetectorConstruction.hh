@@ -38,6 +38,12 @@ class k100_ZipParameterisation;
     G4Material* coinmaterial;
   };
 
+  //complicated parameters for complex options (PuBe setup)
+  struct PuBeNaICoin {
+    G4double xcntr; //of lead shield
+    G4double ycntr;
+    G4double zcntr;
+  };
 // ------------------------------------------------
 
 class k100_DetectorConstruction : public G4VUserDetectorConstruction
@@ -57,6 +63,8 @@ public:
   void SetConstructVetoBool(G4bool newVal)       {ConstructVetoBool = newVal;}
   void SetConstructShieldsBool(G4bool newVal)    {ConstructShieldsBool = newVal;}
   void SetConstructIceBoxBool(G4bool newVal)     {ConstructIceBoxBool = newVal;}
+  void SetConstructFloorBool(G4bool newVal)     {ConstructFloorBool = newVal;}
+  void SetConstructFrameBool(G4bool newVal)     {ConstructFrameBool = newVal;}
   void SetConstructThermalNeutronBoxBool(G4bool newVal)  {ConstructThermalNeutronBoxBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentBool(G4bool newVal)      {ConstructShieldTestEnvironmentBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentPos(G4double xcntr,G4double ycntr,G4double zcntr);
@@ -66,6 +74,7 @@ public:
   void SetConstructSimpleGammaCoinPos(G4double xcntr,G4double ycntr,G4double zcntr);
   void SetConstructSimpleGammaCoinSize(G4double sizer, G4double sizethk);
   void SetConstructSimpleGammaCoinMat(G4String mat);
+  void SetConstructPuBeNaIBool(G4bool newVal)  {ConstructPuBeNaIBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetNbOfTowers(G4int newVal)               {NbOfTowers = newVal;}
   void SetNbOfZips(G4int newVal)                 {NbOfZips = newVal;}
 
@@ -75,6 +84,8 @@ public:
   G4bool GetConstructVetoBool()    {return ConstructVetoBool;}
   G4bool GetConstructShieldsBool() {return ConstructShieldsBool;}
   G4bool GetConstructIceBoxBool()  {return ConstructIceBoxBool;}
+  G4bool GetConstructFloorBool()  {return ConstructFloorBool;}
+  G4bool GetConstructFrameBool()  {return ConstructFrameBool;}
   G4int GetNbOfTowers()           {return NbOfTowers;}
   G4int GetNbOfZips()             {return NbOfZips;}
 
@@ -85,6 +96,8 @@ public:
   G4String GetConstructShieldTestEnvironmentMat();
   G4bool GetConstructSimpleGammaCoinBool()      {return ConstructSimpleGammaCoinBool;}
   struct GammaCoin GetConstructSimpleGammaCoinParams() {return gammaCoinParams;}
+  G4bool GetConstructPuBeNaIBool()      {return ConstructPuBeNaIBool;}
+  struct PuBeNaICoin GetConstructPuBeNaIParams() {return pubeNaIParams;}
   G4String GetConstructSimpleGammaCoinMat();
   G4int GetConstructGenericTrackerInt() {return ConstructGenericTrackerInt;}
   G4int GetConstructGenericSensitiveInt() {return ConstructGenericSensitiveInt;}
@@ -110,14 +123,21 @@ private:
 
   G4bool ConstructExperimentBool, ConstructTowerBool, ConstructZipBool;
   G4bool ConstructVetoBool, ConstructShieldsBool, ConstructIceBoxBool;
+  G4bool ConstructFloorBool;
+  G4bool ConstructFrameBool;
+  G4bool ConstructAddNaIToShield;
 
   G4Material *zipGeMat, *zipSiMat, *towerMat, *scintMat;
   G4Material* polyMat, *mumetalMat;
   G4Material* d2oMat, *h2oMat, *naiMat;
+  G4Material* sio2Mat;
   G4Material* shieldCuMat, *shieldPbMat;
   G4Material* iceboxCuMat;
   G4Material* defaultMat;
   G4Material* aluminum, *steel, *brass, *helium, *super;
+  G4Material* blastsand;
+  G4Material* G4NISTconcrete,*G4NISTair,*G4NISTNaI,*G4NISTPVC,*G4NISTPE;
+  G4Material* G4NISTAl;
 
   //SD map
   std::map<G4String,G4int> k100CollName;
@@ -129,10 +149,12 @@ private:
 
   G4Region* DetectorRegion;
 
+
   G4bool ConstructGenericGeometryBool;
   G4bool ConstructThermalNeutronBoxBool;
   G4bool ConstructShieldTestEnvironmentBool;
   G4bool ConstructSimpleGammaCoinBool;
+  G4bool ConstructPuBeNaIBool;
   G4int ConstructGenericTrackerInt;
   G4int ConstructGenericSensitiveInt;
   G4int DesignNo;
@@ -143,6 +165,7 @@ private:
   //structs for grouped parameters
   ShieldTest shieldTestParams;
   GammaCoin  gammaCoinParams;
+  PuBeNaICoin  pubeNaIParams;
 
   void DefineMaterials();
   void ConstructDetector();
@@ -153,9 +176,12 @@ private:
   void ConstructVeto(G4LogicalVolume*  logicalWorld);
   void ConstructShields(G4LogicalVolume*  logicalWorld);
   void ConstructIceBox(G4LogicalVolume*  logicalWorld);
+  void ConstructFloor(G4VPhysicalVolume*  world);
+  void ConstructFrame(G4VPhysicalVolume*  world);
   void ConstructThermalNeutronBox(G4VPhysicalVolume*  world);
   void ConstructShieldTestEnvironment(G4VPhysicalVolume*  world);
   void ConstructSimpleGammaCoin(G4VPhysicalVolume*  world);
+  void ConstructPuBeNaI(G4VPhysicalVolume*  world);
   void FillTheTower(G4VPhysicalVolume* physicalTower, G4int towerNb);
 
 #include "k100_DetectorParameterDef.hh"
