@@ -17,6 +17,17 @@ class k100_DetectorConstructionMessenger;
 class k100_ZipSD;
 class k100_ZipParameterisation;
 
+  //complicated parameters for complex options (Frame)
+  struct Frame {
+    G4bool addLeadSupports; //not yet implemented
+    G4bool addNaISouth; //add 2 NaI detectors to South shielding wall, make sensitive
+  };
+
+  //complicated parameters for complex options (Floor)
+  struct Floor {
+    G4bool addReBar; //not yet implemented
+  };
+
   //complicated parameters for complex options
   struct ShieldTest {
     G4double xcntr;
@@ -40,9 +51,7 @@ class k100_ZipParameterisation;
 
   //complicated parameters for complex options (PuBe setup)
   struct PuBeNaICoin {
-    G4double xcntr; //of lead shield
-    G4double ycntr;
-    G4double zcntr;
+    G4bool addBarrel;
   };
 // ------------------------------------------------
 
@@ -65,6 +74,7 @@ public:
   void SetConstructIceBoxBool(G4bool newVal)     {ConstructIceBoxBool = newVal;}
   void SetConstructFloorBool(G4bool newVal)     {ConstructFloorBool = newVal;}
   void SetConstructFrameBool(G4bool newVal)     {ConstructFrameBool = newVal;}
+  void SetConstructPuBeSourceAndShieldBool(G4bool newVal)     {ConstructPuBeSourceAndShieldBool = newVal;}
   void SetConstructThermalNeutronBoxBool(G4bool newVal)  {ConstructThermalNeutronBoxBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentBool(G4bool newVal)      {ConstructShieldTestEnvironmentBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentPos(G4double xcntr,G4double ycntr,G4double zcntr);
@@ -86,6 +96,7 @@ public:
   G4bool GetConstructIceBoxBool()  {return ConstructIceBoxBool;}
   G4bool GetConstructFloorBool()  {return ConstructFloorBool;}
   G4bool GetConstructFrameBool()  {return ConstructFrameBool;}
+  G4bool GetConstructPuBeSourceAndShieldBool()  {return ConstructPuBeSourceAndShieldBool;}
   G4int GetNbOfTowers()           {return NbOfTowers;}
   G4int GetNbOfZips()             {return NbOfZips;}
 
@@ -125,7 +136,7 @@ private:
   G4bool ConstructVetoBool, ConstructShieldsBool, ConstructIceBoxBool;
   G4bool ConstructFloorBool;
   G4bool ConstructFrameBool;
-  G4bool ConstructAddNaIToShield;
+  G4bool ConstructPuBeSourceAndShieldBool;
 
   G4Material *zipGeMat, *zipSiMat, *towerMat, *scintMat;
   G4Material* polyMat, *mumetalMat;
@@ -136,11 +147,15 @@ private:
   G4Material* defaultMat;
   G4Material* aluminum, *steel, *brass, *helium, *super;
   G4Material* blastsand;
-  G4Material* G4NISTconcrete,*G4NISTair,*G4NISTNaI,*G4NISTPVC,*G4NISTPE;
+  G4Material* carbonsteel;
+  G4Material* lightaluminum;
+  G4Material* wood;
+  G4Material* G4NISTconcrete,*G4NISTair,*G4NISTNaI,*G4NISTPVC,*G4NISTPE,*G4NISTlucite,*G4NISTparaffin;
   G4Material* G4NISTAl;
 
   //SD map
   std::map<G4String,G4int> k100CollName;
+  std::map<G4String,k100_ZipSD*> k100CollPoint;
 
   k100_DetectorConstructionMessenger* detectorMessenger;  //pointer to the Messenger
   //  k100_ZipSD*   azipSD;
@@ -166,6 +181,8 @@ private:
   ShieldTest shieldTestParams;
   GammaCoin  gammaCoinParams;
   PuBeNaICoin  pubeNaIParams;
+  Frame		frameParams;
+  Floor		floorParams;
 
   void DefineMaterials();
   void ConstructDetector();
@@ -178,6 +195,7 @@ private:
   void ConstructIceBox(G4LogicalVolume*  logicalWorld);
   void ConstructFloor(G4VPhysicalVolume*  world);
   void ConstructFrame(G4VPhysicalVolume*  world);
+  void ConstructPuBeSourceAndShield(G4VPhysicalVolume*  world);
   void ConstructThermalNeutronBox(G4VPhysicalVolume*  world);
   void ConstructShieldTestEnvironment(G4VPhysicalVolume*  world);
   void ConstructSimpleGammaCoin(G4VPhysicalVolume*  world);

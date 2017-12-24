@@ -43,6 +43,7 @@ k100_RunAction::k100_RunAction()
   OutputDataToFile = true;
   DrawEventCmd = true;
   SaltPillOutCmd = false;
+  ResetRun=false;
 
   runMessenger = new k100_RunActionMessenger(this);  
 }
@@ -74,7 +75,11 @@ void k100_RunAction::BeginOfRunAction(const G4Run* aRun)
     // Create the DataOut instance -- with the current data file names
     char file[200];
     sprintf(file,"%ld",randSeed);
-    DataFileNamePrefix=DataFileNamePrefix+G4String(file);
+    if(runN == 0 || ResetRun){
+       DataFileNamePrefix=DataFileNamePrefix+G4String(file);
+       ResetRun=false;
+     }
+    //DataFileNamePrefix=DataFileNamePrefix+G4String(file);
     dataOut = new k100_DataStorage(DataFileNamePrefix,runN,1); 
 
   }

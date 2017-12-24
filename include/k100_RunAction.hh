@@ -57,6 +57,7 @@ private :
   G4bool   DrawEventCmd;
   G4bool   SaltPillOutCmd;
   G4bool   OutputDataToFile;
+  G4bool   ResetRun;
   G4int    runN;
   long     randSeed;
 
