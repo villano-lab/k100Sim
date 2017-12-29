@@ -80,7 +80,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructIceBoxBool = true;
   ConstructFloorBool = true;
   ConstructFrameBool = true;
-  ConstructPuBeSourceAndShieldBool = true;
+  ConstructPuBeSourceAndShieldBool = false;
   SetConstructThermalNeutronBoxBool(false); //note, requires construct ZIP bool
   SetConstructShieldTestEnvironmentBool(false); //note, requires construct ZIP bool
   SetConstructSimpleGammaCoinBool(false); //note, requires construct ZIP bool
@@ -88,7 +88,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
-  DrawSolidTowerBool = false; 
+  DrawSolidTowerBool = true; 
   DrawSolidVetoBool = false;
   DrawSolidShieldsBool = false; DrawSolidIceBoxBool = false;
 
@@ -702,6 +702,10 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
   G4Transform3D towerflip(r180Rotation, positionTower);
   //r180Rotation->rotateX(M_PI*rad);
   //r180Rotation->rotateZ(M_PI*rad);
+  G4cout << "Tower_nZcut: " << Tower_nZcut << G4endl;
+  G4cout << "Tower_zPcut: " << Tower_zPcut[0] << "\t" << Tower_zPcut[1] << G4endl;
+  G4cout << "Tower_rIcut: " << Tower_rIcut[0] << "\t" << Tower_rIcut[1] << G4endl;
+  G4cout << "Tower_rOcut: " << Tower_rOcut[0] << "\t" << Tower_rOcut[1] << G4endl;
   G4Polyhedra* solidTower1 = new G4Polyhedra("Tower1_S",0.*deg,360.*deg,6,Tower_nZcut,Tower_zPcut,Tower_rIcut,Tower_rOcut);
 
   if(NbOfTowers>=1){
@@ -841,11 +845,29 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
 void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G4int towerNb)
 {
 
+  //check the null case
+  if(NbZipsPerTower<1) return;
 
-  G4ThreeVector positionZipArray = G4ThreeVector(0,0,Tower_zPcut[0]-(zPldh[1]-zPldh[0])-zPsdh[1]-Zip_z/2);
-  G4cout << "Zip Array Position In Tower: " << Tower_zPcut[0]-(zPldh[1]-zPldh[0])-zPsdh[1]-Zip_z/2 << G4endl;
+  //some measurements of the floor and fridge
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  //set up some variables
+  //G4ThreeVector position_ldh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - (zPsdh[1]-zPsdh[0]) - zPldh[1] ); 
+  G4double voidThk = NbZipsPerTower*Zip_z + (NbZipsPerTower-1)*Zip_Space + (zPsdh[1]-zPsdh[0]) - Zip_z; //total height plus tiny extra space 
+  G4double z0 = Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]); //z position after top housing of position 1 
+
+  //G4ThreeVector positionZipArray = G4ThreeVector(0,0,Tower_zPcut[0]-(zPldh[1]-zPldh[0])-zPsdh[1]-Zip_z/2);
+  //G4ThreeVector positionZipArray = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1]); 
+  G4ThreeVector positionZipArray = G4ThreeVector(0,0, z0-voidThk/2.0); 
+  //G4cout << "Zip Array Position In Tower: " << Tower_zPcut[0]-(zPldh[1]-zPldh[0])-zPsdh[1]-Zip_z/2 << G4endl;
+  //G4cout << "Zip Array Position In Tower: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1] << G4endl; 
+  G4cout << "Zip Array Position In Tower: " << z0-voidThk/2.0 << G4endl;
+  G4cout << "Tower 1 Height Above Floor: " << tower_z-floorZ-z0+Zip_z/2.0+(zPsdh[1]-zPsdh[0]-Zip_z)/2.0  << G4endl;
  //Corrected from: G4ThreeVector(0,0,Tower_zPcut[0]+(zPldh[1]-zPldh[0]) + zPsdh[1]);
-  G4Tubs* solidZipArray = new G4Tubs("ZipArray_S", 0.0, Zip_Rout, 6*Zip_Househeight/2,  0, 2*pi);
+  //G4Tubs* solidZipArray = new G4Tubs("ZipArray_S", 0.0, Zip_Rout, 6*Zip_Househeight/2,  0, 2*pi);
+  G4Tubs* solidZipArray = new G4Tubs("ZipArray_S", 0.0, Zip_Rout, voidThk/2,  0, 2*pi);
 
   //------------------------------ 
   // Individual Zips
@@ -868,8 +890,9 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
 
   // Using the parameterisation defined in the PixelParameteriation class.
   zipParam = 
-    new k100_ZipParameterisation(NbZipsPerTower,   // NoZips/Tower
-				 Zip_Househeight, // Z spacing of centers
+    new k100_ZipParameterisation(voidThk, //total thickness
+		                 NbZipsPerTower,   // NoZips/Tower
+				 Zip_Space, // Z spacing between 
 				 Zip_Rout,       // Zip Radius
 				 Zip_z,         // Depth of pixel (in Z)
 				 DetMaterials, // Zip Materials
@@ -883,7 +906,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
   if(towerNb==1) {
     G4LogicalVolume* logicalZip1Array = new G4LogicalVolume(solidZipArray, defaultMat, "ZipArray1_L", 0,0,0);
     G4VPhysicalVolume* physicalZip1Array = new G4PVPlacement(0, positionZipArray, "ZipArray1_P", logicalZip1Array,
-							     physicalTower, false,  0);
+    							     physicalTower, false,  0);
     // Visualization attributes
     G4VisAttributes* VisAttZipArr = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
     VisAttZipArr->SetForceSolid(true);
@@ -1108,6 +1131,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Working from the top down: this is the `copper upper tower', mass 2.0 kg
   //-------------------------------------------------------------------------
   G4ThreeVector position_top = G4ThreeVector(0,0,+Tower_zPcut[1] - zPcut[1]);
+  G4cout << "z shift for Tower Guts: " << Tower_zPcut[1] - zPcut[1] << G4endl;
+  G4cout << "Height of copper upper tower: " << zPcut[1] - zPcut[0] << G4endl;
   G4Polyhedra* cu_tops=new G4Polyhedra("cu_top",0.*deg,360.*deg,6,nZcut,zPcut,rIcut,rOcut);
   G4LogicalVolume* cu_topl1 = new G4LogicalVolume(cu_tops,towerMat,"cutl1");
   G4PVPlacement* cu_topp1 = new G4PVPlacement(0,position_top,"cutp1",cu_topl1,physicalTower,false,0);
@@ -1117,6 +1142,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, the lower cap of the `copper upper tower', mass 0.233 kg/tower
   //----------------------------------------------------------------------
   G4ThreeVector position_clc = G4ThreeVector(0,0,+Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - zPclc[1]);
+  G4cout << "z shift for Tower lower cap: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) << G4endl;
+  G4cout << "Height of copper lower cap: " << zPclc[1] - zPclc[0] << G4endl;
   G4Polyhedra* cu_clcs=new G4Polyhedra("cu_clc",0.*deg,360.*deg,6,nZclc,zPclc,rIclc,rOclc);
   G4LogicalVolume* cu_clcl1 = new G4LogicalVolume(cu_clcs,towerMat,"clcl1");
   G4PVPlacement* cu_clcp1 = new G4PVPlacement(0,position_clc,"clcp1",cu_clcl1,physicalTower,false,0);
@@ -1126,6 +1153,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, connector tube, mass 0.140 kg/tower (next ring excluded...)
   //------------------------------------------------------------------
   G4ThreeVector position_ctu = G4ThreeVector(0,0,+Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - zHctu);
+  G4cout << "z shift for spool: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - zHctu << G4endl;
+  G4cout << "Height of spool: " << 2*zHctu << G4endl;
   G4Tubs* cu_ctus=new G4Tubs("cu_ctu",rIctu,rOctu,zHctu,0.*deg,360.*deg);
   G4LogicalVolume* cu_ctul1=new G4LogicalVolume(cu_ctus,towerMat,"ctul1");
   G4PVPlacement* cu_ctup1=new G4PVPlacement(0,position_ctu,"ctup1",cu_ctul1,physicalTower,false,0);
@@ -1136,6 +1165,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, ring at base of connector tube, mass 0.051 kg/tower
   //--------------------------------------------------------------
   G4ThreeVector position_rb = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu); // QUESTION : Is this ring centered on the bottom of the tower ??
+  G4cout << "z shift for base ring: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu << G4endl;
+  G4cout << "Height of base ring: " << 2*zHrb << G4endl;
   G4Tubs* cu_rbs=new G4Tubs("cu_rb",rIrb,rOrb,zHrb,0.*deg,360.*deg);
   G4LogicalVolume* cu_rbl1=new G4LogicalVolume(cu_rbs,towerMat,"crbl1");
   G4PVPlacement* cu_rbp1=new G4PVPlacement(0,position_rb,"crbp1",cu_rbl1,physicalTower,false,0);
@@ -1146,6 +1177,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   // (about 0.044 kg/tower actually included in ring at base above)
   //------------------------------------------------------------------
   G4ThreeVector position_udh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - zPudh[1]); 
+  G4cout << "z shift for upper det housing cap: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - zPudh[1] << G4endl;
+  G4cout << "Height of upper det housing cap: " << zPudh[1] - zPudh[0] << G4endl;
   G4Polyhedra* cu_udhs=new G4Polyhedra("cu_udh",0.*deg,360.*deg,6,nZudh,zPudh,rIudh,rOudh);
   G4LogicalVolume* cu_udhl1 = new G4LogicalVolume(cu_udhs,towerMat,"udhl1");
   G4PVPlacement* cu_udhp1 = new G4PVPlacement(0, position_udh,"udhp1",cu_udhl1,physicalTower,false,0);
@@ -1156,6 +1189,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, the side detector housing, mass 0.384 kg/tower
   //--------------------------------------------------------------
   G4ThreeVector position_sdh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1]); 
+  G4cout << "z shift for side det housing: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1] << G4endl;
+  G4cout << "Height of side det housing: " << zPsdh[1] - zPsdh[0] << G4endl;
   G4Polyhedra* cu_sdhs=new G4Polyhedra("cu_sdh",0.*deg,360.*deg,6,nZsdh,zPsdh,rIsdh,rOsdh);
   G4LogicalVolume* cu_sdhl1 = new G4LogicalVolume(cu_sdhs,towerMat,"sdhl1");
   G4PVPlacement* cu_sdhp1 = new G4PVPlacement(0,position_sdh,"sdhp1",cu_sdhl1,physicalTower,false,0);
@@ -1167,6 +1202,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, the lower cap of the detector housing, mass 0.078 kg/tower
   //------------------------------------------------------------------
   G4ThreeVector position_ldh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - (zPsdh[1]-zPsdh[0]) - zPldh[1] ); 
+  G4cout << "z shift for lower det housing cap: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - (zPsdh[1]-zPsdh[0]) - zPldh[1] << G4endl;
+  G4cout << "Height of lower det housing cap: " << zPldh[1] - zPldh[0] << G4endl;
   G4Polyhedra* cu_ldhs=new G4Polyhedra("cu_ldh",0.*deg,360.*deg,6,nZldh,zPldh,rIldh,rOldh);
   G4LogicalVolume* cu_ldhl1 = new G4LogicalVolume(cu_ldhs,towerMat,"ldhl1");
   G4PVPlacement* cu_ldhp1 = new G4PVPlacement(0,position_ldh,"ldhp1",cu_ldhl1,physicalTower,false,0);
@@ -1712,14 +1749,14 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   G4ThreeVector mK30Pos(fridge_x,fridge_y,fridge_z);
   G4Tubs* mK30Solid = new G4Tubs("mK30Solid", .5*4.438*2.54*cm,.5*4.5*2.54*cm, .5*9.75*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicmK30 = new G4LogicalVolume(mK30Solid,towerMat,"logicmK30",0,0,0);
-  new G4PVPlacement(0,mK30Pos,"physicmK30",logicmK30,physicalWorld,false,0);
+  //new G4PVPlacement(0,mK30Pos,"physicmK30",logicmK30,physicalWorld,false,0);
   logicmK30->SetVisAttributes(copperVis);
 
   // upper endcap
   G4ThreeVector mK30topPos(fridge_x,fridge_y,fridge_z+5.*2.54*cm);
   G4Tubs* mK30top = new G4Tubs("mK30top", 0, .5*4.5*2.54*cm, .5*.25*2.54*cm,0,2*pi);
   G4LogicalVolume* logicmK30top = new G4LogicalVolume(mK30top,towerMat,"logicmK30top",0,0,0);
-  new G4PVPlacement(0,mK30topPos,"physicmK30top",logicmK30top,physicalWorld,false,0);
+  //new G4PVPlacement(0,mK30topPos,"physicmK30top",logicmK30top,physicalWorld,false,0);
   logicmK30top->SetVisAttributes(copperVis);
 
   // lower endcap
@@ -1728,7 +1765,7 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   G4Polyhedra* towerHole = new G4Polyhedra("towerHole",0.*deg,360.*deg,6,Tower_nZcut,Tower_zPcut,Tower_rIcut,Tower_rOcut);
   G4SubtractionSolid* mK30low = new G4SubtractionSolid("mK30low",mK30lowbase,towerHole);
   G4LogicalVolume* logicmK30low=new G4LogicalVolume(mK30low,towerMat,"logicmK30low",0,0,0);
-  new G4PVPlacement(0,mK30lowPos,"physicmK30low",logicmK30low,physicalWorld,false,0);
+  //new G4PVPlacement(0,mK30lowPos,"physicmK30low",logicmK30low,physicalWorld,false,0);
   logicmK30low->SetVisAttributes(copperVis);
   
 
@@ -1763,7 +1800,7 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   logicuBrLow->SetVisAttributes(brassVis); 
 
   // copper cylinder
-  G4ThreeVector uCuPos(fridge_x,fridge_y,fridge_x+9.06*2.54*cm);
+  G4ThreeVector uCuPos(fridge_x,fridge_y,fridge_z+9.06*2.54*cm);
   G4Tubs* uCu = new G4Tubs("uCu",.5*3.375*2.54*cm,.5*3.5*2.54*cm,.5*5.944*2.54*cm,0,2*pi);
   G4LogicalVolume* logicuCu = new G4LogicalVolume(uCu,towerMat,"logicuCu",0,0,0);
   new G4PVPlacement(0,uCuPos,"physicuCu",logicuCu,physicalWorld,false,0);

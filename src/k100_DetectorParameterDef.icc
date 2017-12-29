@@ -96,6 +96,7 @@ ztow[4]=Tower_Center_Z;
   
 
 Zip_Househeight=2.74142*cm;
+Zip_Space=0.5*cm; //5mm nominal spacing
 DetBoxShim = 0.1*micrometer;
 
 // -----------------------
