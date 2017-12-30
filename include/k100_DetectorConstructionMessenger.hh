@@ -45,6 +45,12 @@ private:
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinPositionCmd;
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinSizeCmd;
   G4UIcmdWithAString*     SimpleGammaCoinMatCmd;
+  G4UIcmdWithABool*       ShieldConfigureCmd_SouthNaI;
+  G4UIcmdWithABool*       ShieldConfigureCmd_BasePoly;
+  G4UIcmdWithABool*       ShieldConfigureCmd_BaseLead;
+  G4UIcmdWithABool*       PuBeConfigureCmd_Barrel;
+  G4UIcmdWithABool*       PuBeConfigureCmd_R66;
+  G4UIcmdWithABool*       PuBeConfigureCmd_R62;
 
   G4UIcmdWithAString*     DrawSolidBox;
   G4UIcmdWithAString*     DrawFrameBox;

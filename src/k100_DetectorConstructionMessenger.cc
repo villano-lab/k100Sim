@@ -51,12 +51,54 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorActivateCmd->AvailableForStates(G4State_Idle);
 
   DetectorDeActivateCmd = new G4UIcmdWithAString("/CDMS/detector/deactivate",this);
-  DetectorDeActivateCmd->SetGuidance("Dectivate CDMS Detector Element.");
+  DetectorDeActivateCmd->SetGuidance("Deactivate CDMS Detector Element.");
   DetectorDeActivateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   DetectorDeActivateCmd->SetGuidance("in order for change to take effect.");
   DetectorDeActivateCmd->SetGuidance("Choices are : Zip/Tower/Veto/Shields/IceBox .");
   DetectorDeActivateCmd->SetParameterName("choice",false);
   DetectorDeActivateCmd->AvailableForStates(G4State_Idle);
+
+  ShieldConfigureCmd_SouthNaI = new G4UIcmdWithABool("/CDMS/Shield/SouthNaI",this);
+  ShieldConfigureCmd_SouthNaI->SetGuidance("Toggle NaI construction on Shield.");
+  ShieldConfigureCmd_SouthNaI->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  ShieldConfigureCmd_SouthNaI->SetGuidance("in order for change to take effect.");
+  ShieldConfigureCmd_SouthNaI->SetParameterName("choice",false);
+  ShieldConfigureCmd_SouthNaI->AvailableForStates(G4State_Idle);
+
+  ShieldConfigureCmd_BasePoly = new G4UIcmdWithABool("/CDMS/Shield/BasePoly",this);
+  ShieldConfigureCmd_BasePoly->SetGuidance("Toggle base poly panel construction on Shield.");
+  ShieldConfigureCmd_BasePoly->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  ShieldConfigureCmd_BasePoly->SetGuidance("in order for change to take effect.");
+  ShieldConfigureCmd_BasePoly->SetParameterName("choice",false);
+  ShieldConfigureCmd_BasePoly->AvailableForStates(G4State_Idle);
+
+  ShieldConfigureCmd_BaseLead = new G4UIcmdWithABool("/CDMS/Shield/BaseLead",this);
+  ShieldConfigureCmd_BaseLead->SetGuidance("Toggle base lead layer construction on Shield.");
+  ShieldConfigureCmd_BaseLead->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  ShieldConfigureCmd_BaseLead->SetGuidance("in order for change to take effect.");
+  ShieldConfigureCmd_BaseLead->SetParameterName("choice",false);
+  ShieldConfigureCmd_BaseLead->AvailableForStates(G4State_Idle);
+
+  PuBeConfigureCmd_Barrel = new G4UIcmdWithABool("/CDMS/PuBe/Barrel",this);
+  PuBeConfigureCmd_Barrel->SetGuidance("Toggle Barrel addition to source.");
+  PuBeConfigureCmd_Barrel->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  PuBeConfigureCmd_Barrel->SetGuidance("in order for change to take effect.");
+  PuBeConfigureCmd_Barrel->SetParameterName("choice",false);
+  PuBeConfigureCmd_Barrel->AvailableForStates(G4State_Idle);
+
+  PuBeConfigureCmd_R66 = new G4UIcmdWithABool("/CDMS/PuBe/R66",this);
+  PuBeConfigureCmd_R66->SetGuidance("Toggle R66 source construction conditions.");
+  PuBeConfigureCmd_R66->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  PuBeConfigureCmd_R66->SetGuidance("in order for change to take effect.");
+  PuBeConfigureCmd_R66->SetParameterName("choice",false);
+  PuBeConfigureCmd_R66->AvailableForStates(G4State_Idle);
+
+  PuBeConfigureCmd_R62 = new G4UIcmdWithABool("/CDMS/PuBe/R62",this);
+  PuBeConfigureCmd_R62->SetGuidance("Toggle R62 source construction conditions.");
+  PuBeConfigureCmd_R62->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  PuBeConfigureCmd_R62->SetGuidance("in order for change to take effect.");
+  PuBeConfigureCmd_R62->SetParameterName("choice",false);
+  PuBeConfigureCmd_R62->AvailableForStates(G4State_Idle);
 
   //set parameters for generic shielding for quick sims
   GPSShieldPositionCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/genericShield/setPosition",this);
@@ -72,7 +114,7 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   GPSShieldMatCmd = new G4UIcmdWithAString("/CDMS/genericShield/setMat",this);
   GPSShieldMatCmd->SetGuidance("Set a material, options: 'Lead', 'Poly'");
   // Select between Solid / WireFrame drawing mode
-
+ 
   // Set parameters for gamma-coincidence detector
   GeGammaCoinPositionCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/gammaCoin/setPosition",this);
   GeGammaCoinPositionCmd->SetGuidance("Set position for HPGe coincidence detector.");
@@ -130,6 +172,9 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   G4String caseVeto = "Veto";
   G4String caseShields = "Shields";
   G4String caseIceBox = "IceBox";
+  G4String caseFrame = "Frame";
+  G4String caseFloor = "Floor";
+  G4String casePuBeSourceAndShield = "PuBeSourceAndShield";
   G4String caseThermalNeutronBucket = "ShieldBucket";
   G4String caseGPSShielding = "GPSShielding";
   G4String caseHPGeCoincidence = "HPGeCoincidence";
@@ -143,6 +188,9 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseTower)    {k100_Detector->SetConstructTowerBool(true);}
     else if(newValue == caseVeto)     {k100_Detector->SetConstructVetoBool(true);}
     else if(newValue == caseShields)  {k100_Detector->SetConstructShieldsBool(true);}
+    else if(newValue == caseFloor)  {k100_Detector->SetConstructFloorBool(true);}
+    else if(newValue == caseFrame)  {k100_Detector->SetConstructFrameBool(true);}
+    else if(newValue == casePuBeSourceAndShield)  {k100_Detector->SetConstructPuBeSourceAndShieldBool(true);}
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(true);}
     else if(newValue == caseThermalNeutronBucket)   {k100_Detector->SetConstructThermalNeutronBoxBool(true);}
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(true);}
@@ -154,11 +202,50 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseTower)    {k100_Detector->SetConstructTowerBool(false);}
     else if(newValue == caseVeto)     {k100_Detector->SetConstructVetoBool(false);}
     else if(newValue == caseShields)  {k100_Detector->SetConstructShieldsBool(false);}
+    else if(newValue == caseFloor)  {k100_Detector->SetConstructFloorBool(false);}
+    else if(newValue == caseFrame)  {k100_Detector->SetConstructFrameBool(false);}
+    else if(newValue == casePuBeSourceAndShield)  {k100_Detector->SetConstructPuBeSourceAndShieldBool(false);}
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(false);}
     else if(newValue == caseThermalNeutronBucket)   {k100_Detector->SetConstructThermalNeutronBoxBool(false);}
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(false);}
     else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(false);}
 
+  }
+
+  if( command == ShieldConfigureCmd_SouthNaI ) { 
+    G4bool truth = ShieldConfigureCmd_SouthNaI->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructShields_addNaISouth(truth);
+  }
+
+  if( command == ShieldConfigureCmd_BasePoly ) { 
+    G4bool truth = ShieldConfigureCmd_BasePoly->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructShields_addBasePoly(truth);
+  }
+
+  if( command == ShieldConfigureCmd_BaseLead ) { 
+    G4bool truth = ShieldConfigureCmd_BaseLead->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructShields_addBaseLead(truth);
+  }
+
+  if( command == PuBeConfigureCmd_Barrel ) { 
+    G4bool truth = PuBeConfigureCmd_Barrel->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_addBarrel(truth);
+  }
+
+  if( command == PuBeConfigureCmd_R66 ) { 
+    G4bool truth = PuBeConfigureCmd_R66->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_doR66(truth);
+    if(truth){ //set all others to false
+      k100_Detector->SetConstructPuBeSourceAndShield_doR62(false);
+    }
+  }
+
+  if( command == PuBeConfigureCmd_R62 ) { 
+    G4bool truth = PuBeConfigureCmd_R62->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_doR62(truth);
+    if(truth){ //set all others to false
+      k100_Detector->SetConstructPuBeSourceAndShield_doR66(false);
+    }
   }
 
   if( command == GPSShieldPositionCmd ) { 
