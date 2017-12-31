@@ -1704,11 +1704,12 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   //place squares
   G4LogicalVolume* logicLeadRectY = new G4LogicalVolume(rectLeadBaseY,shieldPbMat,"logicLeadRectY",0,0,0);
   G4LogicalVolume* logicLeadRectY_forNaI = new G4LogicalVolume(rectLeadBaseY_forNaI,shieldPbMat,"logicLeadRectY_forNaI",0,0,0);
-  leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12+22.5-(19.0/2.0))*2.54*cm,frame_z);
   if(!shieldParams.addNaISouth){//change lead on side with NaI detectors
+    leadPosition=G4ThreeVector(frame_x-(11.25)*2.54*cm,frame_y+12*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY0",logicLeadRectY,physicalWorld,false,0);
   }
   else{
+    leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12+22.5-(19.0/2.0))*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY_forNaI0",logicLeadRectY_forNaI,physicalWorld,false,0);
     leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12-22.5+(19.0/2.0))*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY_forNaI1",logicLeadRectY_forNaI,physicalWorld,false,0);
