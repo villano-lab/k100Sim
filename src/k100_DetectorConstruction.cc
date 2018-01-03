@@ -693,8 +693,10 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
   // Contruct the Tower Logical Volume
   //-----------------------------------
   //some measurements of the floor and fridge
-  G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
-  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
   G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
 
   // Position Vector
@@ -855,9 +857,13 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
   if(NbZipsPerTower<1) return;
 
   //some measurements of the floor and fridge
-  G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
-  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
   G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  G4double zHeightAboveFloor = tower_z-floorZ;
 
   //set up some variables
   //G4ThreeVector position_ldh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - (zPsdh[1]-zPsdh[0]) - zPldh[1] ); 
@@ -870,7 +876,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
   //G4cout << "Zip Array Position In Tower: " << Tower_zPcut[0]-(zPldh[1]-zPldh[0])-zPsdh[1]-Zip_z/2 << G4endl;
   //G4cout << "Zip Array Position In Tower: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1] << G4endl; 
   G4cout << "Zip Array Position In Tower: " << z0-voidThk/2.0 << G4endl;
-  G4cout << "Tower 1 Height Above Floor: " << tower_z-floorZ-z0+Zip_z/2.0+(zPsdh[1]-zPsdh[0]-Zip_z)/2.0  << G4endl;
+  G4cout << "Zip Height Above Floor: " << tower_z-floorZ-z0+Zip_z/2.0+(zPsdh[1]-zPsdh[0]-Zip_z)/2.0  << G4endl;
  //Corrected from: G4ThreeVector(0,0,Tower_zPcut[0]+(zPldh[1]-zPldh[0]) + zPsdh[1]);
   //G4Tubs* solidZipArray = new G4Tubs("ZipArray_S", 0.0, Zip_Rout, 6*Zip_Househeight/2,  0, 2*pi);
   G4Tubs* solidZipArray = new G4Tubs("ZipArray_S", 0.0, Zip_Rout, voidThk/2,  0, 2*pi);
@@ -913,6 +919,10 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4LogicalVolume* logicalZip1Array = new G4LogicalVolume(solidZipArray, defaultMat, "ZipArray1_L", 0,0,0);
     G4VPhysicalVolume* physicalZip1Array = new G4PVPlacement(0, positionZipArray, "ZipArray1_P", logicalZip1Array,
     							     physicalTower, false,  0);
+
+    zHeightAboveFloor-=positionZipArray.z();            //minus sign because tower rotated
+    zHeightAboveFloor-=zipParam->GetCoordinates(0).z(); //minus sign because tower rotated
+    G4cout << "Zip Height Above Floor (2nd calc): " << zHeightAboveFloor  << G4endl;
     // Visualization attributes
     G4VisAttributes* VisAttZipArr = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
     VisAttZipArr->SetForceSolid(true);
@@ -2063,9 +2073,11 @@ void k100_DetectorConstruction::ConstructFloor(G4VPhysicalVolume*  world)
   //logicoeShell->SetVisAttributes(steelVis);
 
   //Floor block
-  G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
   //G4double distanceToFloorZ = fridge_z+12.9045*2.54*cm - fridgeHalfHeightToBottomPlate - 21.0*2.54*cm;
-  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
   G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
   G4double floorThk = floorZ - (-0.5*world_z);  //need minus sign because it is COORDINATE of bottom of world
   //FIXME world_z should be checked as being big enough to fit a reasonable floor!
@@ -2133,8 +2145,10 @@ void k100_DetectorConstruction::ConstructFrame(G4VPhysicalVolume*  world)
 
 
   // ------------------------- Floor Feet and Posts ----------------------
-  G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
-  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
   G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
   std::vector<double> postPointsX,postPointsY; //X is north/south south toward positive Y is east/west west toward positive
   //anti-clockwise facing south
@@ -2328,8 +2342,10 @@ void k100_DetectorConstruction::ConstructPuBeSourceAndShield(G4VPhysicalVolume* 
 
 
   // ------------------------- Floor Feet and Posts ----------------------
-  G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
-  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
   G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
   std::vector<double> postPointsX,postPointsY; //X is north/south south toward positive Y is east/west west toward positive
   //anti-clockwise facing south
