@@ -383,7 +383,9 @@ void k100_DetectorConstruction::DefineMaterials()
   sio2_blastSand->AddElement(elementSi,natoms=1);
 
   // Poly
-  G4Material* poly=new G4Material(name="Poly", density = 0.935*g/cm3, ncomponents=2);
+  //G4Material* poly=new G4Material(name="Poly", density = 0.935*g/cm3, ncomponents=2);
+  //use average of density measures for R66 sim N-MISC-17-003 pg 31
+  G4Material* poly=new G4Material(name="Poly", density = 0.973*g/cm3, ncomponents=2); 
   poly->AddElement(elementH,natoms=2);
   poly->AddElement(elementC,natoms=1);
 
