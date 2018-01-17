@@ -31,6 +31,7 @@
 #include "G4UIterminal.hh"
 #include "G4UItcsh.hh"
 
+#include "G4PhysListFactory.hh"
 
 #include "QGSP_BERT_HP.hh"
 #include "k100_DetectorConstruction.hh"
@@ -200,9 +201,14 @@ int main(int argc, char** argv) {
   //Run Manager
   G4RunManager * runManager = new G4RunManager;
 
+  //make a physics list factory
+  G4PhysListFactory *g4Factory = new G4PhysListFactory();
+
   // User Initializaton classes (mandatory)
   runManager->SetUserInitialization(new k100_DetectorConstruction());
-  runManager->SetUserInitialization(new Shielding_ComptonsUpdate);
+  //runManager->SetUserInitialization(new Shielding_ComptonsUpdate);
+  //try standard shielding: "Shielding_EMZ"
+  runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding_EMZ"));
 
   // UserAction Classes============
   // event generator
