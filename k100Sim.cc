@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
   runManager->SetUserInitialization(new k100_DetectorConstruction());
   //runManager->SetUserInitialization(new Shielding_ComptonsUpdate);
   //try standard shielding: "Shielding_EMZ"
-  runManager->SetUserInitialization(g4Factory->GetReferencePhysList("ShieldingLEND_EMZ"));
+  runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding_EMZ"));
 
   // UserAction Classes============
   // event generator
