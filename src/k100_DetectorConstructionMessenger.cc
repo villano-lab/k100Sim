@@ -100,6 +100,12 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   PuBeConfigureCmd_R62->SetParameterName("choice",false);
   PuBeConfigureCmd_R62->AvailableForStates(G4State_Idle);
 
+  PuBeConfigureCmd_mod = new G4UIcmdWithAnInteger("/CDMS/PuBe/Mod",this);
+  PuBeConfigureCmd_mod->SetGuidance("Set integer corresponding to shield modification.");
+  PuBeConfigureCmd_mod->SetParameterName("Mod",false);
+  PuBeConfigureCmd_mod->SetRange("Mod==0 || Mod==1 || Mod==2");
+  PuBeConfigureCmd_mod->AvailableForStates(G4State_Idle);
+
   //set parameters for generic shielding for quick sims
   GPSShieldPositionCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/genericShield/setPosition",this);
   GPSShieldPositionCmd->SetGuidance("Set position for generic rectangular shielding.");
@@ -246,6 +252,11 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     if(truth){ //set all others to false
       k100_Detector->SetConstructPuBeSourceAndShield_doR66(false);
     }
+  }
+
+  if( command == PuBeConfigureCmd_mod ) { 
+    G4int Mod = PuBeConfigureCmd_mod->GetNewIntValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_mod(Mod);
   }
 
   if( command == GPSShieldPositionCmd ) { 

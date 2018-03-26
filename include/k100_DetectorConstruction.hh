@@ -61,6 +61,7 @@ class k100_ZipParameterisation;
     G4bool addBarrel;
     G4bool doR66;
     G4bool doR62;
+    G4int mod; //parameter for doing different modifications
   };
 // ------------------------------------------------
 
@@ -90,6 +91,7 @@ public:
   void SetConstructPuBeSourceAndShield_addBarrel(G4bool newVal)    {pubeNaIParams.addBarrel = newVal;}
   void SetConstructPuBeSourceAndShield_doR66(G4bool newVal)    {pubeNaIParams.doR66 = newVal;}
   void SetConstructPuBeSourceAndShield_doR62(G4bool newVal)    {pubeNaIParams.doR62 = newVal;}
+  void SetConstructPuBeSourceAndShield_mod(G4int newVal)    {pubeNaIParams.mod = newVal;}
   void SetConstructThermalNeutronBoxBool(G4bool newVal)  {ConstructThermalNeutronBoxBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentBool(G4bool newVal)      {ConstructShieldTestEnvironmentBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentPos(G4double xcntr,G4double ycntr,G4double zcntr);
@@ -114,6 +116,7 @@ public:
   G4bool GetConstructPuBeSourceAndShield_addBarrel()    {return pubeNaIParams.addBarrel;}
   G4bool GetConstructPuBeSourceAndShield_doR66()    {return pubeNaIParams.doR66;}
   G4bool GetConstructPuBeSourceAndShield_doR62()    {return pubeNaIParams.doR62;}
+  G4bool GetConstructPuBeSourceAndShield_mod()    {return pubeNaIParams.mod;}
   G4bool GetConstructIceBoxBool()  {return ConstructIceBoxBool;}
   G4bool GetConstructFloorBool()  {return ConstructFloorBool;}
   G4bool GetConstructFrameBool()  {return ConstructFrameBool;}

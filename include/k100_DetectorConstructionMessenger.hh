@@ -51,6 +51,7 @@ private:
   G4UIcmdWithABool*       PuBeConfigureCmd_Barrel;
   G4UIcmdWithABool*       PuBeConfigureCmd_R66;
   G4UIcmdWithABool*       PuBeConfigureCmd_R62;
+  G4UIcmdWithAnInteger*       PuBeConfigureCmd_mod;
 
   G4UIcmdWithAString*     DrawSolidBox;
   G4UIcmdWithAString*     DrawFrameBox;

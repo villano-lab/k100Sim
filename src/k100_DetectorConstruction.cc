@@ -121,6 +121,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   pubeNaIParams.addBarrel = true; //default to use barrel
   pubeNaIParams.doR66 = true; //default to R66 shield 
   pubeNaIParams.doR62 = false; //FIXME not yet implemented
+  pubeNaIParams.mod = 0; //FIXME not yet implemented
 
   // ---------Detector Names--------------
   DetCollName = new char*[30];  TowCollName = new char*[5];     DetMaterials = new G4int [30];
@@ -1493,9 +1494,12 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // place squares
   G4LogicalVolume* logicSquare = new G4LogicalVolume(square,polyMat,"logicSquare",0,0,0);
   panelPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y-5*2.54*cm,frame_z);
-  new G4PVPlacement(0,panelPosition,"physicSquare",logicSquare,physicalWorld,false,0);
+  G4cout << "Is Pu/Be Mod? " << pubeNaIParams.mod << G4endl;
+  if((pubeNaIParams.mod!=2) || (ConstructPuBeSourceAndShieldBool==false)) //mod 2 is simply without this poly
+    new G4PVPlacement(0,panelPosition,"physicSquare",logicSquare,physicalWorld,false,0);
   panelPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y+29*2.54*cm,frame_z);
-  new G4PVPlacement(0,panelPosition,"physicSquare1",logicSquare,physicalWorld,false,1);
+  if(((pubeNaIParams.mod!=1)&&(pubeNaIParams.mod!=2)) || (ConstructPuBeSourceAndShieldBool==false)) //mod 1 and 2 is simply without this poly
+    new G4PVPlacement(0,panelPosition,"physicSquare1",logicSquare,physicalWorld,false,1);
   logicSquare->SetVisAttributes(polyVis);
 
   // rect side panels
