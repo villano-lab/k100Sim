@@ -60,8 +60,12 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 
   // -------- The World ---------
   //world_x = 250.*cm; world_y = 250.*cm; world_z = 250.*cm;
-  world_x = 250.*cm; world_y = 350.*cm; world_z = 700.*cm;
-  
+  //contrive the overall dimensions to fit the walls and stuff
+  //world_x = 250.*cm; world_y = 350.*cm; world_z = 700.*cm;
+  world_y = 160.*cm + 5.5*2.54*cm; world_x = 188.*cm + 5.5*2.54*cm; world_z = 1100.*cm;
+  world_y*=2; //above are x and y half widths, but this should be full width
+  world_x*=2; 
+
 #include "k100_DetectorParameterDef.icc"
   
   // Create commands for interactive definition of the detector
@@ -79,6 +83,8 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructShieldsBool = false;
   ConstructIceBoxBool = false;
   ConstructFloorBool = false;
+  ConstructWallsBool = false;
+  ConstructCeilingBool = false;
   ConstructFrameBool = false;
   ConstructPuBeSourceAndShieldBool = false;
   SetConstructThermalNeutronBoxBool(false); //note, requires construct ZIP bool
@@ -445,6 +451,7 @@ void k100_DetectorConstruction::DefineMaterials()
   G4NISTAl  = man->FindOrBuildMaterial("G4_Al");
   G4NISTlucite  = man->FindOrBuildMaterial("G4_PLEXIGLASS");
   G4NISTparaffin  = man->FindOrBuildMaterial("G4_PARAFFIN");
+  G4NISTGypsum  = man->FindOrBuildMaterial("G4_GYPSUM");
   // ------------------------------------------------
   // end define database materials
 
@@ -581,7 +588,8 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
   // ------------ Construct the Physical world ---------------
 
   // Construct the World
-  G4Box* solidWorld = new G4Box("world_S", world_x, world_y, world_z);
+  G4Box* solidWorld = new G4Box("world_S", 0.5*world_x, 0.5*world_y, 0.5*world_z);
+  G4cout << "WORLD MOTHER VOLUME: " << solidWorld->GetCubicVolume()/1e9 << G4endl;
   G4LogicalVolume*  logicalWorld = new G4LogicalVolume(solidWorld,  // The solid
 						       G4NISTair, // Material
 						       "world_L",  // Name
@@ -1320,6 +1328,8 @@ void k100_DetectorConstruction::ConstructEverything(G4LogicalVolume*  logicalWor
   if(ConstructShieldsBool) {ConstructShields(logicalWorld);}
   if(ConstructIceBoxBool)  {ConstructIceBox(logicalWorld);}
   if(ConstructFloorBool)  {ConstructFloor(physicalWorld);}
+  if(ConstructWallsBool)  {ConstructWalls(physicalWorld);}
+  if(ConstructCeilingBool)  {ConstructCeiling(physicalWorld);}
   if(ConstructFrameBool)  {ConstructFrame(physicalWorld);}
   if(ConstructPuBeSourceAndShieldBool)  {ConstructPuBeSourceAndShield(physicalWorld);}
   if(ConstructThermalNeutronBoxBool)  {ConstructThermalNeutronBox(physicalWorld);}
@@ -2121,6 +2131,123 @@ void k100_DetectorConstruction::ConstructFloor(G4VPhysicalVolume*  world)
   logicalHoleCap->SetVisAttributes(holeCapVis);
 
 } // ends Floor Construction
+void k100_DetectorConstruction::ConstructWalls(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 South and West walls around the fridge in PAN 43 
+  // just to test...some zero crosshairs:
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* wallVis = new G4VisAttributes(G4Colour(215/255.,127/255.,0/255.));
+  wallVis->SetForceSolid(true);
+  G4VisAttributes* airVis = new G4VisAttributes(G4Colour(0/255.,191/255.,255/255.));
+  airVis->SetForceSolid(true);
+
+
+  // ------------------------- Wall Placement ----------------------
+  //Floor block
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  //ceiling height
+  G4double fridgeFrameHeight = (2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+4+0.75)*2.54*cm+1.735*m; //FIXME taken from hard-coded other places in code
+  G4double wallHeight = fridgeFrameHeight + 2.5*m;
+  G4double ceilingHeight = wallHeight + 0.5*m; //distance into hollow part of ceiling
+  G4double topSlabThk = 23.0*cm; //thickness of topmost concrete slab above concrete voids
+  G4double totalCeilingThk = 73.0*cm; //thickness of topmost concrete slab above concrete voids
+
+
+  //wall thickness
+  G4double dwallthk = (3.0/4.0)*2.54*cm; //3/4" assumption
+  G4double wallthk = 5.5*2.54*cm; //walls measured as 5.5" thick approx 
+  
+ 
+  //West wall
+  //G4Box* westWallBox = new G4Box("westWall",0.5*world_x,0.5*wallthk,-floorZ);
+  G4Box* westWallBox = new G4Box("westWall",0.5*world_x,0.5*wallthk,0.5*wallHeight);
+  G4LogicalVolume* logicalWestWall = new G4LogicalVolume(westWallBox,G4NISTair,"logicalWestWall",0,0,0);
+  G4ThreeVector westWallPos(0,0.5*world_y-0.5*wallthk,0.5*wallHeight-(-floorZ)); //floorZ is negative
+  G4PVPlacement *westWall = new G4PVPlacement(0,westWallPos,"physicalWestWall",logicalWestWall,world,false,0);
+  logicalWestWall->SetVisAttributes(airVis);
+
+  //G4Box* westDryWallBox = new G4Box("westDryWall",0.5*world_x,0.5*dwallthk,-floorZ);
+  G4Box* westDryWallBox = new G4Box("westDryWall",0.5*world_x,0.5*dwallthk,0.5*wallHeight);
+  G4LogicalVolume* logicalWestDryWall = new G4LogicalVolume(westDryWallBox,G4NISTGypsum,"logicalWestDryWall",0,0,0);
+  G4ThreeVector westDryWallPos(0,0.5*wallthk-0.5*dwallthk,0); //position inside of wall
+  G4PVPlacement *westDryWall0 = new G4PVPlacement(0,westDryWallPos,"physicalWestDryWall0",logicalWestDryWall,westWall,false,0);
+  westDryWallPos = G4ThreeVector(0,-0.5*wallthk+0.5*dwallthk,0); //position inside of wall
+  G4PVPlacement *westDryWall1 = new G4PVPlacement(0,westDryWallPos,"physicalWestDryWall1",logicalWestDryWall,westWall,false,0);
+  logicalWestDryWall->SetVisAttributes(wallVis);
+
+  //South wall
+  //G4Box* southWallBox = new G4Box("southWall",0.5*wallthk,0.5*(world_y-wallthk),-floorZ); //subtract thickness for other wall
+  G4Box* southWallBox = new G4Box("southWall",0.5*wallthk,0.5*(world_y-wallthk),0.5*wallHeight); //subtract thickness for other wall
+  G4LogicalVolume* logicalSouthWall = new G4LogicalVolume(southWallBox,G4NISTair,"logicalSouthWall",0,0,0);
+  G4ThreeVector southWallPos(-0.5*world_x+0.5*wallthk,-0.5*wallthk,0.5*wallHeight-(-floorZ)); //floorZ is negative
+  G4PVPlacement *southWall = new G4PVPlacement(0,southWallPos,"physicalSouthWall",logicalSouthWall,world,false,0);
+  logicalSouthWall->SetVisAttributes(airVis);
+
+  //G4Box* southDryWallBox = new G4Box("southDryWall",0.5*dwallthk,0.5*(world_y-wallthk),-floorZ);
+  G4Box* southDryWallBox = new G4Box("southDryWall",0.5*dwallthk,0.5*(world_y-wallthk),0.5*wallHeight);
+  G4LogicalVolume* logicalSouthDryWall = new G4LogicalVolume(southDryWallBox,G4NISTGypsum,"logicalSouthDryWall",0,0,0);
+  G4ThreeVector southDryWallPos(0.5*wallthk-0.5*dwallthk,0,0); //position inside of wall
+  G4PVPlacement *southDryWall0 = new G4PVPlacement(0,southDryWallPos,"physicalSouthDryWall0",logicalSouthDryWall,southWall,false,0);
+  southDryWallPos = G4ThreeVector(-0.5*wallthk+0.5*dwallthk,0,0); //position inside of wall
+  G4PVPlacement *southDryWall1 = new G4PVPlacement(0,southDryWallPos,"physicalSouthDryWall1",logicalSouthDryWall,southWall,false,0);
+  logicalSouthDryWall->SetVisAttributes(wallVis);
+
+} // ends Walls Construction
+void k100_DetectorConstruction::ConstructCeiling(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 South and West walls around the fridge in PAN 43 
+  // just to test...some zero crosshairs:
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* ceilVis = new G4VisAttributes(G4Colour(127/255.,128/255.,118/255.));
+  ceilVis->SetForceSolid(true);
+  G4VisAttributes* airVis = new G4VisAttributes(G4Colour(0/255.,191/255.,255/255.));
+  airVis->SetForceSolid(true);
+
+  // ------------------------- Ceiling Placement ----------------------
+  //Floor block
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  //ceiling height
+  G4double fridgeFrameHeight = (2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+4+0.75)*2.54*cm+1.735*m; //FIXME taken from hard-coded other places in code
+  G4double wallHeight = fridgeFrameHeight + 2.5*m;
+  G4double ceilingHeight = wallHeight + 0.5*m; //distance into hollow part of ceiling
+  G4double topSlabThk = 23.0*cm; //thickness of topmost concrete slab above concrete voids
+  G4double totalCeilingThk = 73.0*cm; //thickness of topmost concrete slab above concrete voids
+
+  //slab
+  G4Box* slabBox = new G4Box("slab",0.5*world_x,0.5*world_y,0.5*totalCeilingThk);
+  G4LogicalVolume* logicalSlab = new G4LogicalVolume(slabBox,G4NISTconcrete,"logicalSlab",0,0,0);
+  G4ThreeVector slabPos(0,0,wallHeight-(-floorZ)+0.5*totalCeilingThk);//floorZ is negative
+  G4PVPlacement *slab = new G4PVPlacement(0,slabPos,"physicalSlab",logicalSlab,world,false,0);
+  logicalSlab->SetVisAttributes(ceilVis);
+
+  //west voids
+  G4Box* westVoidBox = new G4Box("westVoid",0.5*0.5*(world_x-30*cm-5.5*2.54*cm),0.5*2.5*m,0.5*(totalCeilingThk-topSlabThk));
+  G4LogicalVolume* logicalWestVoid = new G4LogicalVolume(westVoidBox,G4NISTconcrete,"logicalWestVoid",0,0,0);
+  G4ThreeVector voidPos(-0.5*world_x+0.5*(0.5*(world_x-30*cm-5.5*2.54*cm))+5.5*2.54*cm,0.5*world_y-0.5*2.5*m-5.5*2.54*cm,-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
+  new G4PVPlacement(0,voidPos,"physicalWestVoid0",logicalWestVoid,slab,false,0);
+  voidPos = G4ThreeVector(0.5*world_x-0.5*(0.5*(world_x-30*cm-5.5*2.54*cm)),0.5*world_y-0.5*2.5*m-5.5*2.54*cm,-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
+  new G4PVPlacement(0,voidPos,"physicalWestVoid1",logicalWestVoid,slab,false,0);
+  logicalWestVoid->SetVisAttributes(airVis);
+
+  //east voids
+  G4Box* eastVoidBox = new G4Box("eastVoid",0.5*0.5*(world_x-30*cm-5.5*2.54*cm),0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),0.5*(totalCeilingThk-topSlabThk));
+  G4LogicalVolume* logicalEastVoid = new G4LogicalVolume(eastVoidBox,G4NISTconcrete,"logicalEastVoid",0,0,0);
+  voidPos = G4ThreeVector(-0.5*world_x+0.5*(0.5*(world_x-30*cm-5.5*2.54*cm))+5.5*2.54*cm,-0.5*world_y+0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
+  new G4PVPlacement(0,voidPos,"physicalEastVoid",logicalEastVoid,slab,false,0);
+  voidPos = G4ThreeVector(0.5*world_x-0.5*(0.5*(world_x-30*cm-5.5*2.54*cm)),-0.5*world_y+0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
+  new G4PVPlacement(0,voidPos,"physicalEastVoid",logicalEastVoid,slab,false,0);
+  logicalEastVoid->SetVisAttributes(airVis);
+
+
+} // ends Ceiling Construction
 
 void k100_DetectorConstruction::ConstructFrame(G4VPhysicalVolume*  world)
 {
