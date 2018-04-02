@@ -182,6 +182,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   G4String caseFloor = "Floor";
   G4String caseWalls = "Walls";
   G4String caseCeiling = "Ceiling";
+  G4String caseWestReflector = "WestReflector";
   G4String casePuBeSourceAndShield = "PuBeSourceAndShield";
   G4String caseThermalNeutronBucket = "ShieldBucket";
   G4String caseGPSShielding = "GPSShielding";
@@ -199,6 +200,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseFloor)  {k100_Detector->SetConstructFloorBool(true);}
     else if(newValue == caseWalls)  {k100_Detector->SetConstructWallsBool(true);}
     else if(newValue == caseCeiling)  {k100_Detector->SetConstructCeilingBool(true);}
+    else if(newValue == caseWestReflector)  {k100_Detector->SetConstructWestReflectorBool(true);}
     else if(newValue == caseFrame)  {k100_Detector->SetConstructFrameBool(true);}
     else if(newValue == casePuBeSourceAndShield)  {k100_Detector->SetConstructPuBeSourceAndShieldBool(true);}
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(true);}
@@ -215,6 +217,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseFloor)  {k100_Detector->SetConstructFloorBool(false);}
     else if(newValue == caseWalls)  {k100_Detector->SetConstructWallsBool(false);}
     else if(newValue == caseCeiling)  {k100_Detector->SetConstructCeilingBool(false);}
+    else if(newValue == caseWestReflector)  {k100_Detector->SetConstructWestReflectorBool(false);}
     else if(newValue == caseFrame)  {k100_Detector->SetConstructFrameBool(false);}
     else if(newValue == casePuBeSourceAndShield)  {k100_Detector->SetConstructPuBeSourceAndShieldBool(false);}
     else if(newValue == caseIceBox)   {k100_Detector->SetConstructIceBoxBool(false);}

@@ -85,6 +85,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructFloorBool = false;
   ConstructWallsBool = false;
   ConstructCeilingBool = false;
+  ConstructWestReflectorBool = false;
   ConstructFrameBool = false;
   ConstructPuBeSourceAndShieldBool = false;
   SetConstructThermalNeutronBoxBool(false); //note, requires construct ZIP bool
@@ -1330,6 +1331,7 @@ void k100_DetectorConstruction::ConstructEverything(G4LogicalVolume*  logicalWor
   if(ConstructFloorBool)  {ConstructFloor(physicalWorld);}
   if(ConstructWallsBool)  {ConstructWalls(physicalWorld);}
   if(ConstructCeilingBool)  {ConstructCeiling(physicalWorld);}
+  if(ConstructWestReflectorBool)  {ConstructWestReflector(physicalWorld);}
   if(ConstructFrameBool)  {ConstructFrame(physicalWorld);}
   if(ConstructPuBeSourceAndShieldBool)  {ConstructPuBeSourceAndShield(physicalWorld);}
   if(ConstructThermalNeutronBoxBool)  {ConstructThermalNeutronBox(physicalWorld);}
@@ -2230,7 +2232,7 @@ void k100_DetectorConstruction::ConstructCeiling(G4VPhysicalVolume*  world)
 
   //west voids
   G4Box* westVoidBox = new G4Box("westVoid",0.5*0.5*(world_x-30*cm-5.5*2.54*cm),0.5*2.5*m,0.5*(totalCeilingThk-topSlabThk));
-  G4LogicalVolume* logicalWestVoid = new G4LogicalVolume(westVoidBox,G4NISTconcrete,"logicalWestVoid",0,0,0);
+  G4LogicalVolume* logicalWestVoid = new G4LogicalVolume(westVoidBox,G4NISTair,"logicalWestVoid",0,0,0);
   G4ThreeVector voidPos(-0.5*world_x+0.5*(0.5*(world_x-30*cm-5.5*2.54*cm))+5.5*2.54*cm,0.5*world_y-0.5*2.5*m-5.5*2.54*cm,-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
   new G4PVPlacement(0,voidPos,"physicalWestVoid0",logicalWestVoid,slab,false,0);
   voidPos = G4ThreeVector(0.5*world_x-0.5*(0.5*(world_x-30*cm-5.5*2.54*cm)),0.5*world_y-0.5*2.5*m-5.5*2.54*cm,-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
@@ -2239,7 +2241,7 @@ void k100_DetectorConstruction::ConstructCeiling(G4VPhysicalVolume*  world)
 
   //east voids
   G4Box* eastVoidBox = new G4Box("eastVoid",0.5*0.5*(world_x-30*cm-5.5*2.54*cm),0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),0.5*(totalCeilingThk-topSlabThk));
-  G4LogicalVolume* logicalEastVoid = new G4LogicalVolume(eastVoidBox,G4NISTconcrete,"logicalEastVoid",0,0,0);
+  G4LogicalVolume* logicalEastVoid = new G4LogicalVolume(eastVoidBox,G4NISTair,"logicalEastVoid",0,0,0);
   voidPos = G4ThreeVector(-0.5*world_x+0.5*(0.5*(world_x-30*cm-5.5*2.54*cm))+5.5*2.54*cm,-0.5*world_y+0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
   new G4PVPlacement(0,voidPos,"physicalEastVoid",logicalEastVoid,slab,false,0);
   voidPos = G4ThreeVector(0.5*world_x-0.5*(0.5*(world_x-30*cm-5.5*2.54*cm)),-0.5*world_y+0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
@@ -2248,6 +2250,60 @@ void k100_DetectorConstruction::ConstructCeiling(G4VPhysicalVolume*  world)
 
 
 } // ends Ceiling Construction
+
+void k100_DetectorConstruction::ConstructWestReflector(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 West wall reflector 
+  // just to test...some zero crosshairs:
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* polyVis = new G4VisAttributes(G4Colour(255/255.,255/255.,255/255.));
+  polyVis->SetForceSolid(true);
+
+  // ------------------------- Panel Placement ----------------------
+  //Floor block
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  //FIXME hard-coded post locations
+  std::vector<double> postPointsX,postPointsY; //X is north/south south toward positive Y is east/west west toward positive
+  //anti-clockwise facing south
+  postPointsY.push_back((-19.75-16.0)*2.54*cm); 
+  postPointsX.push_back(-22.0*2.54*cm); 
+  postPointsY.push_back((-19.75-16.0+73.6)*2.54*cm); 
+  postPointsX.push_back(-22.0*2.54*cm);
+  postPointsY.push_back((-19.75-16.0+73.6)*2.54*cm); 
+  postPointsX.push_back((-22.0+44.0)*2.54*cm);
+  postPointsY.push_back((-19.75-16.0)*2.54*cm); 
+  postPointsX.push_back((-22.0+44.0)*2.54*cm);
+
+  //ceiling height
+  G4double fridgeFrameHeight = (2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+4+0.75)*2.54*cm+1.735*m; //FIXME taken from hard-coded other places in code
+  G4double wallHeight = fridgeFrameHeight + 2.5*m;
+  G4double ceilingHeight = wallHeight + 0.5*m; //distance into hollow part of ceiling
+  G4double topSlabThk = 23.0*cm; //thickness of topmost concrete slab above concrete voids
+  G4double totalCeilingThk = 73.0*cm; //thickness of topmost concrete slab above concrete voids
+
+  //useful locations
+  //G4ThreeVector barrelPos = G4ThreeVector(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm,floorZ+0.5*21.0*2.54*cm);
+  //G4Tubs* steelBarrel = new G4Tubs("steelBarrel",0,0.5*(16.25)*2.54*cm,0.5*(21.0)*2.54*cm,0,2*pi);
+  G4double westmostEdge = postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm + 0.5*(16.25)*2.54*cm; //barrel center plus radius
+
+  //setable parameters
+  G4double slabReflectorThk = 4.0*2.54*cm; //4 inch thick
+  G4double slabReflectorH = 48.0*2.54*cm; //4ft tall 
+  G4double slabReflectorW = 36.0*2.54*cm; //3ft wide 
+
+  //slab Reflector
+  G4Box* slabReflectorBox = new G4Box("slabReflector",0.5*slabReflectorW,0.5*slabReflectorThk,0.5*slabReflectorH);
+  G4LogicalVolume* logicalSlabReflector = new G4LogicalVolume(slabReflectorBox,polyMat,"logicalSlabReflector",0,0,0);
+  G4ThreeVector slabPos(0,westmostEdge+0.5*slabReflectorThk,floorZ+0.5*slabReflectorH);//floorZ is negative
+  G4PVPlacement *slabReflector = new G4PVPlacement(0,slabPos,"physicalSlabReflector",logicalSlabReflector,world,false,0);
+  logicalSlabReflector->SetVisAttributes(polyVis);
+
+
+} // ends Reflector Construction
 
 void k100_DetectorConstruction::ConstructFrame(G4VPhysicalVolume*  world)
 {

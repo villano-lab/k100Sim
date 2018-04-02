@@ -88,6 +88,7 @@ public:
   void SetConstructFloorBool(G4bool newVal)     {ConstructFloorBool = newVal;}
   void SetConstructWallsBool(G4bool newVal)     {ConstructWallsBool = newVal;}
   void SetConstructCeilingBool(G4bool newVal)     {ConstructCeilingBool = newVal;}
+  void SetConstructWestReflectorBool(G4bool newVal)     {ConstructWestReflectorBool = newVal;}
   void SetConstructFrameBool(G4bool newVal)     {ConstructFrameBool = newVal;}
   void SetConstructPuBeSourceAndShieldBool(G4bool newVal)     {ConstructPuBeSourceAndShieldBool = newVal;}
   void SetConstructPuBeSourceAndShield_addBarrel(G4bool newVal)    {pubeNaIParams.addBarrel = newVal;}
@@ -123,6 +124,7 @@ public:
   G4bool GetConstructFloorBool()  {return ConstructFloorBool;}
   G4bool GetConstructWallsBool()  {return ConstructWallsBool;}
   G4bool GetConstructCeilingBool()  {return ConstructCeilingBool;}
+  G4bool GetConstructWestReflectorBool()  {return ConstructWestReflectorBool;}
   G4bool GetConstructFrameBool()  {return ConstructFrameBool;}
   G4bool GetConstructPuBeSourceAndShieldBool()  {return ConstructPuBeSourceAndShieldBool;}
   G4int GetNbOfTowers()           {return NbOfTowers;}
@@ -165,6 +167,7 @@ private:
   G4bool ConstructFloorBool;
   G4bool ConstructWallsBool;
   G4bool ConstructCeilingBool;
+  G4bool ConstructWestReflectorBool;
   G4bool ConstructFrameBool;
   G4bool ConstructPuBeSourceAndShieldBool;
 
@@ -228,6 +231,7 @@ private:
   void ConstructFloor(G4VPhysicalVolume*  world);
   void ConstructWalls(G4VPhysicalVolume*  world);
   void ConstructCeiling(G4VPhysicalVolume*  world);
+  void ConstructWestReflector(G4VPhysicalVolume*  world);
   void ConstructFrame(G4VPhysicalVolume*  world);
   void ConstructPuBeSourceAndShield(G4VPhysicalVolume*  world);
   void ConstructThermalNeutronBox(G4VPhysicalVolume*  world);
