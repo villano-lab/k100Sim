@@ -1480,7 +1480,8 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // square side panels
   // initial setup
   G4Box* squareBase = new G4Box("squareBase",11*2.54*cm,4*2.54*cm,27.5*2.54*cm);
-  G4Tubs* hole = new G4Tubs("hole", 0, .55*2.54*cm, 2.1*2.54*cm, 0, 2*pi);
+  //G4Tubs* hole = new G4Tubs("hole", 0, .55*2.54*cm, 2.1*2.54*cm, 0, 2*pi);
+  G4Tubs* hole = new G4Tubs("hole", 0, .55*2.54*cm, 4.1*2.54*cm, 0, 2*pi);
   G4ThreeVector off(1*m,1*m,1*m);
   G4RotationMatrix holeRot;
   holeRot.rotateX(pi/2*rad);
