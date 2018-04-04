@@ -33,6 +33,7 @@ class k100_ZipParameterisation;
     G4bool addNaISouth; //add 2 NaI detectors to South shielding wall, make sensitive
     G4bool addBasePoly; //add poly panels on the bottom 
     G4bool addBaseLead; //add lead sheets on the bottom 
+    G4int mod; //parameter for doing different modifications
   };
 
   //complicated parameters for complex options
@@ -61,7 +62,9 @@ class k100_ZipParameterisation;
     G4bool addBarrel;
     G4bool doR66;
     G4bool doR62;
-    G4int mod; //parameter for doing different modifications
+    G4int mod; //parameter for doing different modifications:
+               // 0 - no mod
+	       // 1 - add poly layer 1.6m down from origin, in pit and lead shield on floor
   };
 // ------------------------------------------------
 
@@ -84,6 +87,7 @@ public:
   void SetConstructShields_addNaISouth(G4bool newVal)    {shieldParams.addNaISouth = newVal;}
   void SetConstructShields_addBasePoly(G4bool newVal)    {shieldParams.addBasePoly = newVal;}
   void SetConstructShields_addBaseLead(G4bool newVal)    {shieldParams.addBaseLead = newVal;}
+  void SetConstructShields_mod(G4int newVal)    {shieldParams.mod = newVal;}
   void SetConstructIceBoxBool(G4bool newVal)     {ConstructIceBoxBool = newVal;}
   void SetConstructFloorBool(G4bool newVal)     {ConstructFloorBool = newVal;}
   void SetConstructWallsBool(G4bool newVal)     {ConstructWallsBool = newVal;}
@@ -116,10 +120,11 @@ public:
   G4bool GetConstructShields_addNaISouth()    {return shieldParams.addNaISouth;}
   G4bool GetConstructShields_addBasePoly()    {return shieldParams.addBasePoly;}
   G4bool GetConstructShields_addBaseLead()    {return shieldParams.addBaseLead;}
+  G4int  GetConstructShields_mod()    {return shieldParams.mod;}
   G4bool GetConstructPuBeSourceAndShield_addBarrel()    {return pubeNaIParams.addBarrel;}
   G4bool GetConstructPuBeSourceAndShield_doR66()    {return pubeNaIParams.doR66;}
   G4bool GetConstructPuBeSourceAndShield_doR62()    {return pubeNaIParams.doR62;}
-  G4bool GetConstructPuBeSourceAndShield_mod()    {return pubeNaIParams.mod;}
+  G4int  GetConstructPuBeSourceAndShield_mod()    {return pubeNaIParams.mod;}
   G4bool GetConstructIceBoxBool()  {return ConstructIceBoxBool;}
   G4bool GetConstructFloorBool()  {return ConstructFloorBool;}
   G4bool GetConstructWallsBool()  {return ConstructWallsBool;}

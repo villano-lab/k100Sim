@@ -124,11 +124,12 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   shieldParams.addNaISouth = false;
   shieldParams.addBasePoly = false;
   shieldParams.addBaseLead = false;
+  shieldParams.mod = 0; 
   
   pubeNaIParams.addBarrel = true; //default to use barrel
   pubeNaIParams.doR66 = true; //default to R66 shield 
   pubeNaIParams.doR62 = false; //FIXME not yet implemented
-  pubeNaIParams.mod = 0; //FIXME not yet implemented
+  pubeNaIParams.mod = 0; 
 
   // ---------Detector Names--------------
   DetCollName = new char*[30];  TowCollName = new char*[5];     DetMaterials = new G4int [30];
@@ -1507,11 +1508,11 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // place squares
   G4LogicalVolume* logicSquare = new G4LogicalVolume(square,polyMat,"logicSquare",0,0,0);
   panelPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y-5*2.54*cm,frame_z);
-  G4cout << "Is Pu/Be Mod? " << pubeNaIParams.mod << G4endl;
-  if((pubeNaIParams.mod!=2) || (ConstructPuBeSourceAndShieldBool==false)) //mod 2 is simply without this poly
+  G4cout << "Is Pu/Be Mod? " << shieldParams.mod << G4endl;
+  if((shieldParams.mod!=2) || (ConstructPuBeSourceAndShieldBool==false)) //mod 2 is simply without this poly
     new G4PVPlacement(0,panelPosition,"physicSquare",logicSquare,physicalWorld,false,0);
   panelPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y+29*2.54*cm,frame_z);
-  if(((pubeNaIParams.mod!=1)&&(pubeNaIParams.mod!=2)) || (ConstructPuBeSourceAndShieldBool==false)) //mod 1 and 2 is simply without this poly
+  if(((shieldParams.mod!=1)&&(shieldParams.mod!=2)) || (ConstructPuBeSourceAndShieldBool==false)) //mod 1 and 2 is simply without this poly
     new G4PVPlacement(0,panelPosition,"physicSquare1",logicSquare,physicalWorld,false,1);
   logicSquare->SetVisAttributes(polyVis);
 
@@ -2081,6 +2082,10 @@ void k100_DetectorConstruction::ConstructFloor(G4VPhysicalVolume*  world)
   holeVis->SetForceSolid(true);
   G4VisAttributes* holeCapVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
   holeCapVis->SetForceSolid(true);
+  G4VisAttributes* polyVis = new G4VisAttributes(G4Colour(255/255.,255/255.,255/255.));
+  polyVis->SetForceSolid(true);
+  G4VisAttributes* leadVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+  leadVis->SetForceSolid(true);
 
 
   // ------------------------- Solid Floor ----------------------
@@ -2123,7 +2128,7 @@ void k100_DetectorConstruction::ConstructFloor(G4VPhysicalVolume*  world)
   //FIXME world_z should be checked as being big enough!
   G4Box* holeBox = new G4Box("hole",0.5*holeWidth,0.5*holeWidth,0.5*(holeDepth-lipThk)); //minus the lip
   G4LogicalVolume* logicalHole = new G4LogicalVolume(holeBox,G4NISTair,"logicalHoleBox",0,0,0);
-  new G4PVPlacement(0,holePos,"physicalHoleBox",logicalHole,floor,false,0);
+  G4PVPlacement *pitHole = new G4PVPlacement(0,holePos,"physicalHoleBox",logicalHole,floor,false,0);
   logicalHole->SetVisAttributes(holeVis);
 
   //hole cap
@@ -2132,6 +2137,38 @@ void k100_DetectorConstruction::ConstructFloor(G4VPhysicalVolume*  world)
   G4LogicalVolume* logicalHoleCap = new G4LogicalVolume(holeCap,G4NISTPVC,"logicalHoleCap",0,0,0);
   new G4PVPlacement(0,holeCapPos,"physicalHoleCap",logicalHoleCap,floor,false,0);
   logicalHoleCap->SetVisAttributes(holeCapVis);
+
+  //PuBe source modifications mod=1
+  if((pubeNaIParams.mod==1) && (ConstructPuBeSourceAndShieldBool==true)){
+
+    //poly
+    G4double distanceFromOrigin = 1.6*m; 
+    G4double x = distanceFromOrigin - lipThk + floorZ; //floorz is negative, this is intermediate var
+    G4double polyReflectorThk = 4.0*2.54*cm;
+    G4Box* polyReflectorBox = new G4Box("polyReflector",0.5*holeWidth,0.5*holeWidth,0.5*polyReflectorThk); 
+    G4LogicalVolume* logicalPolyReflector = new G4LogicalVolume(polyReflectorBox,polyMat,"logicalPolyReflector",0,0,0);
+    G4ThreeVector reflectorPos(0,0,0.5*(holeDepth-lipThk)-x);
+    new G4PVPlacement(0,reflectorPos,"physicalPolyReflector",logicalPolyReflector,pitHole,false,0);
+    logicalPolyReflector->SetVisAttributes(polyVis);
+
+    //lead
+    G4double leadThk = 4.0*2.54*cm;
+    G4double leadWidth = 12.0*2.54*cm;
+    G4Box* leadBox0 = new G4Box("lead0",0.5*holeWidth,0.5*leadWidth,0.5*leadThk); 
+    G4LogicalVolume* logicalLead0 = new G4LogicalVolume(leadBox0,shieldPbMat,"logicalLead",0,0,0);
+    G4ThreeVector leadPos(0,0,floorZ+0.5*leadThk);
+    new G4PVPlacement(0,leadPos,"physicalLead0",logicalLead0,world,false,0);
+    logicalLead0->SetVisAttributes(leadVis);
+    
+    leadThk = 8.0*2.54*cm;
+    G4Box* leadBox1 = new G4Box("lead0",0.5*holeWidth,0.5*leadWidth,0.5*leadThk); 
+    G4LogicalVolume* logicalLead1 = new G4LogicalVolume(leadBox1,shieldPbMat,"logicalLead",0,0,0);
+    leadPos = G4ThreeVector(0,0,0.5*(holeDepth-lipThk)-0.5*leadThk);
+    new G4PVPlacement(0,leadPos,"physicalLead1",logicalLead1,pitHole,false,0);
+    logicalLead1->SetVisAttributes(leadVis);
+   
+
+  }//end Source mod 1
 
 } // ends Floor Construction
 void k100_DetectorConstruction::ConstructWalls(G4VPhysicalVolume*  world)
