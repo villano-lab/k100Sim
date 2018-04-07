@@ -1516,7 +1516,8 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   G4RotationMatrix holeRot;
   holeRot.rotateX(pi/2*rad);
   G4Transform3D offset(holeRot,off);
-  G4SubtractionSolid* oldSquare = new G4SubtractionSolid("oldSquare", squareBase, hole, offset);
+  //G4SubtractionSolid* oldSquare = new G4SubtractionSolid("oldSquare", squareBase, hole, offset);
+  G4SubtractionSolid* oldSquare = (G4SubtractionSolid*) squareBase; //not good to put a subtraction outside original solid, especially not just for convenience, try casting
   G4SubtractionSolid* square;
 
   // Loop to put in holes
