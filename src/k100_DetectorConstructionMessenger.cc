@@ -85,6 +85,13 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   ShieldConfigureCmd_mod->SetRange("Mod==0 || Mod==1 || Mod==2");
   ShieldConfigureCmd_mod->AvailableForStates(G4State_Idle);
 
+  FridgeConfigureCmd_pure3HeBath = new G4UIcmdWithABool("/CDMS/Fridge/pure3HeBath",this);
+  FridgeConfigureCmd_pure3HeBath->SetGuidance("Toggle to 3He in bath.");
+  FridgeConfigureCmd_pure3HeBath->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  FridgeConfigureCmd_pure3HeBath->SetGuidance("in order for change to take effect.");
+  FridgeConfigureCmd_pure3HeBath->SetParameterName("choice",false);
+  FridgeConfigureCmd_pure3HeBath->AvailableForStates(G4State_Idle);
+
   PuBeConfigureCmd_Barrel = new G4UIcmdWithABool("/CDMS/PuBe/Barrel",this);
   PuBeConfigureCmd_Barrel->SetGuidance("Toggle Barrel addition to source.");
   PuBeConfigureCmd_Barrel->SetGuidance("This command MUST be applied before \"beamOn\" ");
@@ -251,6 +258,11 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   if( command == ShieldConfigureCmd_mod ) { 
     G4int Mod = ShieldConfigureCmd_mod->GetNewIntValue(newValue);
     k100_Detector->SetConstructShields_mod(Mod);
+  }
+
+  if( command == FridgeConfigureCmd_pure3HeBath ) { 
+    G4bool truth = FridgeConfigureCmd_pure3HeBath->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructIceBox_pure3HeBath(truth);
   }
 
   if( command == PuBeConfigureCmd_Barrel ) { 

@@ -121,6 +121,9 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 
   frameParams.includeSand = false;
 
+  fridgeParams.includeMixture = false;
+  fridgeParams.pure3HeBath = false;
+
   shieldParams.addNaISouth = false;
   shieldParams.addBasePoly = false;
   shieldParams.addBaseLead = false;
@@ -243,6 +246,24 @@ void k100_DetectorConstruction::DefineMaterials()
 
   // Define Helium
   G4Element* elementHe = new G4Element(name="Helium", symbol="He", z=2., a=4.003*g/mole);
+  G4IsotopeVector *ivec;
+  G4double *relabvec;
+  ivec = elementHe->GetIsotopeVector();
+  relabvec = elementHe->GetRelativeAbundanceVector();
+  for(int i=0;i<elementHe->GetNumberOfIsotopes();i++){
+    G4cout << "He isotope " << i+1 << " is A = " << (*ivec)[i]->GetN() <<
+	    ", relative abundance: " << relabvec[i] << G4endl;
+  }
+  G4cout << "Is the He natural abundance distribution? " << elementHe->GetNaturalAbundanceFlag() << G4endl;
+
+  // Define specialized Helium
+  G4Isotope *isoHe4 = new G4Isotope("4He",2,4); //when it asks for N does it really mean (integer) A?
+  G4Isotope *isoHe3 = new G4Isotope("3He",2,3); 
+  G4Element *stillLiquidHe = new G4Element("Liquid3He","L3He",1);
+  stillLiquidHe->AddIsotope(isoHe3,1.0);
+  G4Element *MCLiquidHe = new G4Element("MCLiquidHe","LHeMix",2);
+  MCLiquidHe->AddIsotope(isoHe3,0.12);
+  MCLiquidHe->AddIsotope(isoHe4,0.88);
 
   // Define Carbon
   G4Element* elementC=new G4Element(name="Carbon", symbol="C", z=6., a=12.011*g/mole);
@@ -412,6 +433,12 @@ void k100_DetectorConstruction::DefineMaterials()
   G4Material* liquidHelium=new G4Material(name="liquidHelium", density=.1412*g/cm3, ncomponents=1);
   liquidHelium->AddElement(elementHe,natoms=2);
 
+  // More complex Helium Liquid
+  G4Material* stillLiquid = new G4Material(name="stillLiquid",density=0.081*g/cm3,ncomponents=1);
+  stillLiquid->AddElement(stillLiquidHe,natoms=2);
+  G4Material* MCLiquid = new G4Material(name="MCLiquid",density=0.1412*g/cm3,ncomponents=1); //assumed to be same as LHe
+  MCLiquid->AddElement(MCLiquidHe,natoms=2);
+
   // Stainless Steel (Alloy 304)
   G4Material* Steel = new G4Material(name="Steel", density=8.03*g/cm3, ncomponents=8);
   Steel->AddMaterial(Carbon, .0008);
@@ -543,6 +570,8 @@ void k100_DetectorConstruction::DefineMaterials()
   carbonsteel=StandardSteel;
   brass=Brass;
   helium=liquidHelium;
+  stillHe=stillLiquid;
+  MCHe=MCLiquid;
   super=Super;
   // ------------------------------------------------
 
@@ -1919,52 +1948,59 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   logicecap->SetVisAttributes(steelVis);
 
   // ---------------------------- Liquid Helium --------------------------
+  //
+
+  G4Material *thishelium;
+  if(fridgeParams.pure3HeBath)
+    thishelium = stillHe;
+  else
+    thishelium = helium;
   // top piece
   G4ThreeVector topHePos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm+1.0*2.54*cm);
   G4Tubs* topHe = new G4Tubs("topHe", 0, .5*10.*2.54*cm, .5*18.563*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logictopHe = new G4LogicalVolume(topHe,helium,"logictopHe",0,0,0);
+  G4LogicalVolume* logictopHe = new G4LogicalVolume(topHe,thishelium,"logictopHe",0,0,0);
   new G4PVPlacement(0,topHePos,"physictopHe",logictopHe,physicalWorld,false,0);
   logictopHe->SetVisAttributes(heliumVis);
 
   // top center piece
   G4ThreeVector tcHePos(fridge_x,fridge_y,fridge_z+24.985*2.54*cm+1.0*2.54*cm);
   G4Tubs* tcHe = new G4Tubs("tcHe", 0, .5*14.*2.54*cm, .5*3.282*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logictcHe = new G4LogicalVolume(tcHe,helium,"logictcHe",0,0,0);
+  G4LogicalVolume* logictcHe = new G4LogicalVolume(tcHe,thishelium,"logictcHe",0,0,0);
   new G4PVPlacement(0,tcHePos,"physictcHe",logictcHe,physicalWorld,false,0);
   logictcHe->SetVisAttributes(heliumVis);
 
   // center piece
   G4ThreeVector ceHePos(fridge_x,fridge_y,fridge_z+14.841*2.54*cm+1.0*2.54*cm);
   G4Tubs* ceHe = new G4Tubs("ceHe", .5*4.*2.54*cm, .5*14.*2.54*cm, .5*17.006*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logiceHe = new G4LogicalVolume(ceHe,helium,"logiceHe",0,0,0);
+  G4LogicalVolume* logiceHe = new G4LogicalVolume(ceHe,thishelium,"logiceHe",0,0,0);
   new G4PVPlacement(0,ceHePos,"physiceHe",logiceHe,physicalWorld,false,0);
   logiceHe->SetVisAttributes(heliumVis);
   
   // lower center piece
   G4ThreeVector lcHePos(fridge_x,fridge_y,fridge_z+5.8255*2.54*cm+1.0*2.54*cm);
   G4Tubs* lcHe = new G4Tubs("lcHe", .5*9.*2.54*cm, .5*14.*2.54*cm, .5*1.025*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logiclcHe = new G4LogicalVolume(lcHe,helium,"logiclcHe",0,0,0);
+  G4LogicalVolume* logiclcHe = new G4LogicalVolume(lcHe,thishelium,"logiclcHe",0,0,0);
   new G4PVPlacement(0,lcHePos,"physiclcHe",logiclcHe,physicalWorld,0,0,0);
   logiclcHe->SetVisAttributes(heliumVis);
   
   // upper lower piece
   G4ThreeVector ulHePos(fridge_x,fridge_y,fridge_z-1.816*2.54*cm+1.0*2.54*cm);
   G4Tubs* ulHe = new G4Tubs("ulHe", .5*9.*2.54*cm, .5*10.*2.54*cm, .5*14.258*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logiculHe = new G4LogicalVolume(ulHe,helium,"logiculHe",0,0,0);
+  G4LogicalVolume* logiculHe = new G4LogicalVolume(ulHe,thishelium,"logiculHe",0,0,0);
   new G4PVPlacement(0,ulHePos,"physiculHe",logiculHe,physicalWorld,0,0,0);
   logiculHe->SetVisAttributes(heliumVis);
 
   // center lower piece
   G4ThreeVector clHePos(fridge_x,fridge_y,fridge_z-10.91*2.54*cm+1.0*2.54*cm);
   G4Tubs* clHe = new G4Tubs("clHe", .5*8.*2.54*cm, .5*10.*2.54*cm, .5*3.93*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logiclHe = new G4LogicalVolume(clHe,helium,"logiclHe",0,0,0);
+  G4LogicalVolume* logiclHe = new G4LogicalVolume(clHe,thishelium,"logiclHe",0,0,0);
   new G4PVPlacement(0,clHePos,"physiclHe",logiclHe,physicalWorld,0,0,0);
   logiclHe->SetVisAttributes(heliumVis);
 
   // bottom piece
   G4ThreeVector botHePos(fridge_x,fridge_y,fridge_z-13.*2.54*cm+1.0*2.54*cm);
   G4Tubs* botHe = new G4Tubs("botHe", 0, .5*10.*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logicbotHe = new G4LogicalVolume(botHe,helium,"logicbotHe",0,0,0);
+  G4LogicalVolume* logicbotHe = new G4LogicalVolume(botHe,thishelium,"logicbotHe",0,0,0);
   new G4PVPlacement(0,botHePos,"physicbotHe",logicbotHe,physicalWorld,0,0,0);
   logicbotHe->SetVisAttributes(heliumVis);
 

@@ -17,6 +17,12 @@ class k100_DetectorConstructionMessenger;
 class k100_ZipSD;
 class k100_ZipParameterisation;
 
+  //complicated parameters for complex options (Fridge)
+  struct Fridge {
+    G4bool includeMixture; //not yet implemented
+    G4bool pure3HeBath; 
+  };
+
   //complicated parameters for complex options (Frame)
   struct Frame {
     G4bool includeSand; //not yet implemented
@@ -89,6 +95,7 @@ public:
   void SetConstructShields_addBaseLead(G4bool newVal)    {shieldParams.addBaseLead = newVal;}
   void SetConstructShields_mod(G4int newVal)    {shieldParams.mod = newVal;}
   void SetConstructIceBoxBool(G4bool newVal)     {ConstructIceBoxBool = newVal;}
+  void SetConstructIceBox_pure3HeBath(G4bool newVal)    {fridgeParams.pure3HeBath = newVal;}
   void SetConstructFloorBool(G4bool newVal)     {ConstructFloorBool = newVal;}
   void SetConstructWallsBool(G4bool newVal)     {ConstructWallsBool = newVal;}
   void SetConstructCeilingBool(G4bool newVal)     {ConstructCeilingBool = newVal;}
@@ -144,6 +151,7 @@ public:
   struct GammaCoin GetConstructSimpleGammaCoinParams() {return gammaCoinParams;}
   G4bool GetConstructPuBeNaIBool()      {return ConstructPuBeNaIBool;}
   struct PuBeNaICoin GetConstructPuBeNaIParams() {return pubeNaIParams;}
+  struct Fridge GetConstructFridgeParams() {return fridgeParams;}
   G4String GetConstructSimpleGammaCoinMat();
   G4int GetConstructGenericTrackerInt() {return ConstructGenericTrackerInt;}
   G4int GetConstructGenericSensitiveInt() {return ConstructGenericSensitiveInt;}
@@ -184,6 +192,7 @@ private:
   G4Material* iceboxCuMat;
   G4Material* defaultMat;
   G4Material* aluminum, *steel, *brass, *helium, *super;
+  G4Material* stillHe,*MCHe;
   G4Material* blastsand;
   G4Material* carbonsteel;
   G4Material* lightaluminum;
@@ -220,6 +229,7 @@ private:
   ShieldTest shieldTestParams;
   GammaCoin  gammaCoinParams;
   PuBeNaICoin  pubeNaIParams;
+  Fridge	fridgeParams;
   Frame		frameParams;
   Floor		floorParams;
   Shield	shieldParams;
