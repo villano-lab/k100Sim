@@ -748,7 +748,7 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
     G4VisAttributes* VisAttTower1 = new G4VisAttributes(G4Colour(215/255.,215/255.,215/255.));
     VisAttTower1->SetForceSolid(false);
     logicalTower1->SetVisAttributes(VisAttTower1);  
-    logicalTower1->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    //logicalTower1->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
     
     ConstructTowerGuts(physicalTower1);
     if(ConstructZipBool) {FillTheTower(physicalTower1,1);}
@@ -931,7 +931,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
   if(towerNb==1) {
     G4LogicalVolume* logicalZip1Array = new G4LogicalVolume(solidZipArray, defaultMat, "ZipArray1_L", 0,0,0);
     G4VPhysicalVolume* physicalZip1Array = new G4PVPlacement(0, positionZipArray, "ZipArray1_P", logicalZip1Array,
-    							     physicalTower, false,  0);
+   							     physicalTower, false,  0);
 
     zHeightAboveFloor-=positionZipArray.z();            //minus sign because tower rotated
     zHeightAboveFloor-=zipParam->GetCoordinates(0).z(); //minus sign because tower rotated
@@ -1290,7 +1290,7 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
 
   G4double coaxpos;
   coaxpos = (Tower_zPcut[0]+zPldh[1] + (6-0.5-5)*Zip_Househeight + sdcx_lenH[0]);
-  G4PVPlacement* physcoax1 = new G4PVPlacement(0,G4ThreeVector(0.*cm,-(sdcx_thicknessH+rOsdh[0]),coaxpos),"coax1",logiccoax1,physicalTower,false,0);
+  //G4PVPlacement* physcoax1 = new G4PVPlacement(0,G4ThreeVector(0.*cm,-(sdcx_thicknessH+rOsdh[0]),coaxpos),"coax1",logiccoax1,physicalTower,false,0);
 
   //G4PVPlacement* physcoax1 = new G4PVPlacement(0,G4ThreeVector(0.*cm,-4.18*cm,coaxpos),"coax1",logiccoax1,physicalTower,false,0);
 
@@ -1301,7 +1301,7 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //G4PVPlacement* physcoax3 = new G4PVPlacement(coaxrotation2,G4ThreeVector(0+3.62*cm,0+2.09*cm,coaxpos),"coax3",logiccoax3,physicalTower,false,0);
 
   coaxpos = (Tower_zPcut[0]+zPldh[1] + (6-0.5-5)*Zip_Househeight + sdcx_lenH[3]);
-  G4PVPlacement* physcoax4 = new G4PVPlacement(0,G4ThreeVector(0,sdcx_thicknessH+rOsdh[0],coaxpos),"coax4",logiccoax4,physicalTower,false,0);  
+  //G4PVPlacement* physcoax4 = new G4PVPlacement(0,G4ThreeVector(0,sdcx_thicknessH+rOsdh[0],coaxpos),"coax4",logiccoax4,physicalTower,false,0);  
 
   //G4PVPlacement* physcoax4 = new G4PVPlacement(0,G4ThreeVector(0,0+4.18*cm,coaxpos),"coax4",logiccoax4,physicalTower,false,0);
 
@@ -1309,7 +1309,7 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //G4PVPlacement* physcoax5 = new G4PVPlacement(coaxrotation1,G4ThreeVector(0-3.62*cm,0+2.09*cm,coaxpos),"coax5",logiccoax5,physicalTower,false,0);
 
   coaxpos = (Tower_zPcut[0]+zPldh[1] + (6-0.5-5)*Zip_Househeight + sdcx_lenH[5]);
-  G4PVPlacement* physcoax6 = new G4PVPlacement(coaxrotation2,G4ThreeVector(-(sdcx_thicknessH+rOsdh[0])*sin(60*deg),-(sdcx_thicknessH+rOsdh[0])*cos(60*deg),coaxpos),"coax6",logiccoax6,physicalTower,false,0);
+  //G4PVPlacement* physcoax6 = new G4PVPlacement(coaxrotation2,G4ThreeVector(-(sdcx_thicknessH+rOsdh[0])*sin(60*deg),-(sdcx_thicknessH+rOsdh[0])*cos(60*deg),coaxpos),"coax6",logiccoax6,physicalTower,false,0);
 
   //G4PVPlacement* physcoax6 = new G4PVPlacement(coaxrotation2,G4ThreeVector(0-3.62*cm,0-2.09*cm,coaxpos),"coax6",logiccoax6,physicalTower,false,0);
 
@@ -1796,25 +1796,31 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   
   // ------------------------- 30 mK shield ---------------------------
   G4ThreeVector mK30Pos(fridge_x,fridge_y,fridge_z);
-  G4Tubs* mK30Solid = new G4Tubs("mK30Solid", .5*4.438*2.54*cm,.5*4.5*2.54*cm, .5*9.75*2.54*cm, 0, 2*pi);
+  G4double r30 = 0.5*5.7*2.54*cm;
+  G4double thk30 = 0.5*0.12*2.54*cm;
+  //G4Tubs* mK30Solid = new G4Tubs("mK30Solid", 5*4.438*2.54*cm,.5*4.5*2.54*cm, .5*9.75*2.54*cm, 0, 2*pi);
+  G4Tubs* mK30Solid = new G4Tubs("mK30Solid", r30-thk30,r30, .5*9.75*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicmK30 = new G4LogicalVolume(mK30Solid,towerMat,"logicmK30",0,0,0);
-  //new G4PVPlacement(0,mK30Pos,"physicmK30",logicmK30,physicalWorld,false,0);
+  new G4PVPlacement(0,mK30Pos,"physicmK30",logicmK30,physicalWorld,false,0);
   logicmK30->SetVisAttributes(copperVis);
 
   // upper endcap
   G4ThreeVector mK30topPos(fridge_x,fridge_y,fridge_z+5.*2.54*cm);
-  G4Tubs* mK30top = new G4Tubs("mK30top", 0, .5*4.5*2.54*cm, .5*.25*2.54*cm,0,2*pi);
+  //G4Tubs* mK30top = new G4Tubs("mK30top", 0, .5*4.5*2.54*cm, .5*.25*2.54*cm,0,2*pi);
+  G4Tubs* mK30top = new G4Tubs("mK30top", 0, r30, .5*.25*2.54*cm,0,2*pi);
   G4LogicalVolume* logicmK30top = new G4LogicalVolume(mK30top,towerMat,"logicmK30top",0,0,0);
-  //new G4PVPlacement(0,mK30topPos,"physicmK30top",logicmK30top,physicalWorld,false,0);
+  new G4PVPlacement(0,mK30topPos,"physicmK30top",logicmK30top,physicalWorld,false,0);
   logicmK30top->SetVisAttributes(copperVis);
 
   // lower endcap
   G4ThreeVector mK30lowPos(fridge_x,fridge_y,fridge_z-5.*2.54*cm);
-  G4Tubs* mK30lowbase = new G4Tubs("mK30lowbase",0,.5*4.5*2.54*cm,.5*.25*2.54*cm,0,2*pi);
-  G4Polyhedra* towerHole = new G4Polyhedra("towerHole",0.*deg,360.*deg,6,Tower_nZcut,Tower_zPcut,Tower_rIcut,Tower_rOcut);
+  //G4Tubs* mK30lowbase = new G4Tubs("mK30lowbase",0,.5*4.5*2.54*cm,.5*.25*2.54*cm,0,2*pi);
+  G4Tubs* mK30lowbase = new G4Tubs("mK30lowbase",0,r30,.5*.25*2.54*cm,0,2*pi);
+  //G4Polyhedra* towerHole = new G4Polyhedra("towerHole",0.*deg,360.*deg,6,Tower_nZcut,Tower_zPcut,Tower_rIcut,Tower_rOcut);
+  G4Tubs* towerHole = new G4Tubs("towerHole",0,Tower_rOcut[0]+0.5*cm,400*cm,0,2*pi); //FIXME temporary slopply but large hole
   G4SubtractionSolid* mK30low = new G4SubtractionSolid("mK30low",mK30lowbase,towerHole);
   G4LogicalVolume* logicmK30low=new G4LogicalVolume(mK30low,towerMat,"logicmK30low",0,0,0);
-  //new G4PVPlacement(0,mK30lowPos,"physicmK30low",logicmK30low,physicalWorld,false,0);
+  new G4PVPlacement(0,mK30lowPos,"physicmK30low",logicmK30low,physicalWorld,false,0);
   logicmK30low->SetVisAttributes(copperVis);
   
 
@@ -1863,35 +1869,35 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   logicuBrTop->SetVisAttributes(brassVis);
 
   // -------------------- inner vacuum can ---------------------------
-  G4ThreeVector ivcPos(fridge_x,fridge_y,fridge_z-1.3035*2.54*cm);
+  G4ThreeVector ivcPos(fridge_x,fridge_y,fridge_z-1.3035*2.54*cm+1.0*2.54*cm);
   G4Tubs* ivc = new G4Tubs("ivc", .5*8.87*2.54*cm, .5*9.*2.54*cm, .5*13.483*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicivc = new G4LogicalVolume(ivc,steel,"logicivc",0,0,0);
   new G4PVPlacement(0,ivcPos,"physicivc",logicivc,physicalWorld,false,0);
   logicivc->SetVisAttributes(steelVis); 
   
   // upper endcap
-  G4ThreeVector ivcTopPos(fridge_x,fridge_y,fridge_z+5.888*2.54*cm);
+  G4ThreeVector ivcTopPos(fridge_x,fridge_y,fridge_z+5.888*2.54*cm+1.0*2.54*cm);
   G4Tubs* ivcTop = new G4Tubs("ivcTop", .5*4.*2.54*cm, .5*9.*2.54*cm, .5*.9*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicivcTop = new G4LogicalVolume(ivcTop,steel,"logicivcTop",0,0,0);
   new G4PVPlacement(0,ivcTopPos,"physicivcTop",logicivcTop,physicalWorld,false,0);
   logicivcTop->SetVisAttributes(steelVis); 
 
   // upper pipe
-  G4ThreeVector uppPos(fridge_x,fridge_y,fridge_z+14.191*2.54*cm);
+  G4ThreeVector uppPos(fridge_x,fridge_y,fridge_z+14.191*2.54*cm+1.0*2.54*cm);
   G4Tubs* upp = new G4Tubs("upp", .5*3.834*2.54*cm, .5*4.*2.54*cm, .5*17.506*2.54*cm,0,2*pi);
   G4LogicalVolume* logicupp = new G4LogicalVolume(upp,steel,"logicupp",0,0,0);
   new G4PVPlacement(0,uppPos,"physicupp",logicupp,physicalWorld,false,0);
   logicupp->SetVisAttributes(steelVis);
 
   // upper pipe cap
-  G4ThreeVector upcPos(fridge_x,fridge_y,fridge_z+23.144*2.54*cm);
+  G4ThreeVector upcPos(fridge_x,fridge_y,fridge_z+23.144*2.54*cm+1.0*2.54*cm);
   G4Tubs* upc = new G4Tubs("upc", 0,.5*4.*2.54*cm,.5*.4*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicupc = new G4LogicalVolume(upc,steel,"logicupc",0,0,0);
   new G4PVPlacement(0,upcPos,"physicupc",logicupc,physicalWorld,false,0);
   logicupc->SetVisAttributes(steelVis);
 
   // lower endcap
-  G4ThreeVector ivcLowPos(fridge_x,fridge_y,fridge_z-8.495*2.54*cm);
+  G4ThreeVector ivcLowPos(fridge_x,fridge_y,fridge_z-8.495*2.54*cm+1.0*2.54*cm);
   G4Tubs* ivcLowBase = new G4Tubs("ivcLowBase", 0, .5*9.*2.54*cm, .5*.9*2.54*cm,0,2*pi);
   G4SubtractionSolid* ivcLow = new G4SubtractionSolid("ivcLow",ivcLowBase,towerHole);
   G4LogicalVolume* logicivcLow = new G4LogicalVolume(ivcLow,steel,"logicivcLow",0,0,0);
@@ -1899,14 +1905,14 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   logicivcLow->SetVisAttributes(steelVis); 
 
   // electronics box
-  G4ThreeVector eboxPos(fridge_x,fridge_y,fridge_z-10.785*2.54*cm);
+  G4ThreeVector eboxPos(fridge_x,fridge_y,fridge_z-10.785*2.54*cm+1.0*2.54*cm);
   G4Tubs* ebox = new G4Tubs("ebox", .5*7.87*2.54*cm, .5*8.*2.54*cm, .5*3.68*2.54*cm,0,2*pi);
   G4LogicalVolume* logicebox = new G4LogicalVolume(ebox,steel,"logicebox",0,0,0);
   new G4PVPlacement(0,eboxPos,"physicebox",logicebox,physicalWorld,false,0);
   logicebox->SetVisAttributes(steelVis);
 
   // lower cap for electronics box
-  G4ThreeVector ecapPos(fridge_x,fridge_y,fridge_z-12.75*2.54*cm);
+  G4ThreeVector ecapPos(fridge_x,fridge_y,fridge_z-12.75*2.54*cm+1.0*2.54*cm);
   G4Tubs* ecap = new G4Tubs("ecap", 0, .5*8.*2.54*cm, .5*.25*2.54*cm,0,2*pi);
   G4LogicalVolume* logicecap=new G4LogicalVolume(ecap,steel,"logicecap",0,0,0);
   new G4PVPlacement(0,ecapPos,"physicebox",logicecap,physicalWorld,false,0);
@@ -1914,49 +1920,49 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
 
   // ---------------------------- Liquid Helium --------------------------
   // top piece
-  G4ThreeVector topHePos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm);
+  G4ThreeVector topHePos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm+1.0*2.54*cm);
   G4Tubs* topHe = new G4Tubs("topHe", 0, .5*10.*2.54*cm, .5*18.563*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logictopHe = new G4LogicalVolume(topHe,helium,"logictopHe",0,0,0);
   new G4PVPlacement(0,topHePos,"physictopHe",logictopHe,physicalWorld,false,0);
   logictopHe->SetVisAttributes(heliumVis);
 
   // top center piece
-  G4ThreeVector tcHePos(fridge_x,fridge_y,fridge_z+24.985*2.54*cm);
+  G4ThreeVector tcHePos(fridge_x,fridge_y,fridge_z+24.985*2.54*cm+1.0*2.54*cm);
   G4Tubs* tcHe = new G4Tubs("tcHe", 0, .5*14.*2.54*cm, .5*3.282*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logictcHe = new G4LogicalVolume(tcHe,helium,"logictcHe",0,0,0);
   new G4PVPlacement(0,tcHePos,"physictcHe",logictcHe,physicalWorld,false,0);
   logictcHe->SetVisAttributes(heliumVis);
 
   // center piece
-  G4ThreeVector ceHePos(fridge_x,fridge_y,fridge_z+14.841*2.54*cm);
+  G4ThreeVector ceHePos(fridge_x,fridge_y,fridge_z+14.841*2.54*cm+1.0*2.54*cm);
   G4Tubs* ceHe = new G4Tubs("ceHe", .5*4.*2.54*cm, .5*14.*2.54*cm, .5*17.006*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logiceHe = new G4LogicalVolume(ceHe,helium,"logiceHe",0,0,0);
   new G4PVPlacement(0,ceHePos,"physiceHe",logiceHe,physicalWorld,false,0);
   logiceHe->SetVisAttributes(heliumVis);
   
   // lower center piece
-  G4ThreeVector lcHePos(fridge_x,fridge_y,fridge_z+5.8255*2.54*cm);
+  G4ThreeVector lcHePos(fridge_x,fridge_y,fridge_z+5.8255*2.54*cm+1.0*2.54*cm);
   G4Tubs* lcHe = new G4Tubs("lcHe", .5*9.*2.54*cm, .5*14.*2.54*cm, .5*1.025*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logiclcHe = new G4LogicalVolume(lcHe,helium,"logiclcHe",0,0,0);
   new G4PVPlacement(0,lcHePos,"physiclcHe",logiclcHe,physicalWorld,0,0,0);
   logiclcHe->SetVisAttributes(heliumVis);
   
   // upper lower piece
-  G4ThreeVector ulHePos(fridge_x,fridge_y,fridge_z-1.816*2.54*cm);
+  G4ThreeVector ulHePos(fridge_x,fridge_y,fridge_z-1.816*2.54*cm+1.0*2.54*cm);
   G4Tubs* ulHe = new G4Tubs("ulHe", .5*9.*2.54*cm, .5*10.*2.54*cm, .5*14.258*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logiculHe = new G4LogicalVolume(ulHe,helium,"logiculHe",0,0,0);
   new G4PVPlacement(0,ulHePos,"physiculHe",logiculHe,physicalWorld,0,0,0);
   logiculHe->SetVisAttributes(heliumVis);
 
   // center lower piece
-  G4ThreeVector clHePos(fridge_x,fridge_y,fridge_z-10.91*2.54*cm);
+  G4ThreeVector clHePos(fridge_x,fridge_y,fridge_z-10.91*2.54*cm+1.0*2.54*cm);
   G4Tubs* clHe = new G4Tubs("clHe", .5*8.*2.54*cm, .5*10.*2.54*cm, .5*3.93*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logiclHe = new G4LogicalVolume(clHe,helium,"logiclHe",0,0,0);
   new G4PVPlacement(0,clHePos,"physiclHe",logiclHe,physicalWorld,0,0,0);
   logiclHe->SetVisAttributes(heliumVis);
 
   // bottom piece
-  G4ThreeVector botHePos(fridge_x,fridge_y,fridge_z-13.*2.54*cm);
+  G4ThreeVector botHePos(fridge_x,fridge_y,fridge_z-13.*2.54*cm+1.0*2.54*cm);
   G4Tubs* botHe = new G4Tubs("botHe", 0, .5*10.*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicbotHe = new G4LogicalVolume(botHe,helium,"logicbotHe",0,0,0);
   new G4PVPlacement(0,botHePos,"physicbotHe",logicbotHe,physicalWorld,0,0,0);
@@ -1964,63 +1970,63 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
 
   // ------------------------- Shell ----------------------
   // Outer Edge
-  G4ThreeVector oeShellPos(fridge_x,fridge_y,fridge_z+12.9045*2.54*cm);
+  G4ThreeVector oeShellPos(fridge_x,fridge_y,fridge_z+12.9045*2.54*cm+2.0*2.54*cm);
   G4Tubs* oeShell = new G4Tubs("oeShell", .5*21.5*2.54*cm, .5*22.*2.54*cm, .5*64.067*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicoeShell = new G4LogicalVolume(oeShell,steel,"logicoeShell",0,0,0);
   new G4PVPlacement(0,oeShellPos,"physicoeShell",logicoeShell,physicalWorld,false,0);
   logicoeShell->SetVisAttributes(steelVis);
 
   // Top Edge
-  G4ThreeVector teShellPos(fridge_x,fridge_y,fridge_z+45.063*2.54*cm);
+  G4ThreeVector teShellPos(fridge_x,fridge_y,fridge_z+45.063*2.54*cm+2.0*2.54*cm);
   G4Tubs* teShell = new G4Tubs("teShell", .5*10.*2.54*cm, .5*22.*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicteShell = new G4LogicalVolume(teShell,steel,"logicteShell",0,0,0);
   new G4PVPlacement(0,teShellPos,"physicteShell",logicteShell,physicalWorld,false,0);
   logicteShell->SetVisAttributes(steelVis);
 
   // Bottom Edge
-  G4ThreeVector btShellPos(fridge_x,fridge_y,fridge_z-19.254*2.54*cm);
+  G4ThreeVector btShellPos(fridge_x,fridge_y,fridge_z-19.254*2.54*cm+2.0*2.54*cm);
   G4Tubs* btShell = new G4Tubs("btShell", 0, .5*22.*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicbtShell = new G4LogicalVolume(btShell,steel,"logicbtShell",0,0,0);
   new G4PVPlacement(0,btShellPos,"physicbtShell",logicbtShell,physicalWorld,false,0);
   logicbtShell->SetVisAttributes(steelVis);
 
   // Upper Inner (core)
-  G4ThreeVector ucShellPos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm);
-  G4Tubs* ucShell = new G4Tubs("ucShell", .5*10.*2.54*cm, .5*10.5*2.54*cm, .5*18.063*2.54*cm, 0, 2*pi);
+  G4ThreeVector ucShellPos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm+1.5*2.54*cm);
+  G4Tubs* ucShell = new G4Tubs("ucShell", .5*10.1*2.54*cm, .5*10.2*2.54*cm, .5*18.063*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicucShell = new G4LogicalVolume(ucShell,steel,"logicucShell",0,0,0);
   new G4PVPlacement(0,ucShellPos,"physicucShell",logicucShell,physicalWorld,false,0);
   logicucShell->SetVisAttributes(steelVis);
 
   // Upper Interface
-  G4ThreeVector uiShellPos(fridge_x,fridge_y,fridge_z+26.751*2.54*cm);
-  G4Tubs* uiShell = new G4Tubs("uiShell", .5*10.*2.54*cm, .5*14.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
+  G4ThreeVector uiShellPos(fridge_x,fridge_y,fridge_z+26.751*2.54*cm+1.5*2.54*cm);
+  G4Tubs* uiShell = new G4Tubs("uiShell", .5*10.1*2.54*cm, .5*14.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicuiShell = new G4LogicalVolume(uiShell,steel,"logicuiShell",0,0,0);
-  new G4PVPlacement(0,uiShellPos,"physicuiShell",logicuiShell,physicalWorld,false,0);
+  //new G4PVPlacement(0,uiShellPos,"physicuiShell",logicuiShell,physicalWorld,false,0);
   logicuiShell->SetVisAttributes(steelVis);
 
   // Middle Inner (core)
-  G4ThreeVector mcShellPos(fridge_x,fridge_y,fridge_z+15.9695*2.54*cm);
-  G4Tubs* mcShell = new G4Tubs("mcShell", .5*14.*2.54*cm, .5*14.5*2.54*cm, .5*21.313*2.54*cm, 0, 2*pi);
+  G4ThreeVector mcShellPos(fridge_x,fridge_y,fridge_z+15.9695*2.54*cm+1.0*2.54*cm);
+  G4Tubs* mcShell = new G4Tubs("mcShell", .5*14.1*2.54*cm, .5*14.5*2.54*cm, .5*21.313*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicmcShell = new G4LogicalVolume(mcShell,steel,"logicmcShell",0,0,0);
   new G4PVPlacement(0,mcShellPos,"physicmcShell",logicmcShell,physicalWorld,false,0);
   logicmcShell->SetVisAttributes(steelVis);
 
   // Lower Interface
-  G4ThreeVector liShellPos(fridge_x,fridge_y,fridge_z+5.188*2.54*cm);
-  G4Tubs* liShell = new G4Tubs("liShell", .5*10.*2.54*cm, .5*14.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
+  G4ThreeVector liShellPos(fridge_x,fridge_y,fridge_z+5.188*2.54*cm+1.0*2.54*cm);
+  G4Tubs* liShell = new G4Tubs("liShell", .5*10.1*2.54*cm, .5*14.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicliShell = new G4LogicalVolume(liShell,steel,"logicliShell",0,0,0);
   new G4PVPlacement(0,liShellPos,"physicliShell",logicliShell,physicalWorld,false,0);
   logicliShell->SetVisAttributes(steelVis);
 
   // Lower Inner (core)
-  G4ThreeVector lcShellPos(fridge_x,fridge_y,fridge_z-4.031*2.54*cm);
-  G4Tubs* lcShell = new G4Tubs("lcShell", .5*10.*2.54*cm, .5*10.5*2.54*cm, .5*18.188*2.54*cm, 0, 2*pi);
+  G4ThreeVector lcShellPos(fridge_x,fridge_y,fridge_z-4.031*2.54*cm+1.0*2.54*cm);
+  G4Tubs* lcShell = new G4Tubs("lcShell", .5*10.1*2.54*cm, .5*10.5*2.54*cm, .5*18.188*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logiclcShell = new G4LogicalVolume(lcShell,steel,"logiclcShell",0,0,0);
   new G4PVPlacement(0,lcShellPos,"physiclcShell",logiclcShell,physicalWorld,false,0);
   logiclcShell->SetVisAttributes(steelVis);
 
   // Lower Cap
-  G4ThreeVector lpShellPos(fridge_x,fridge_y,fridge_z-13.25*2.54*cm);
+  G4ThreeVector lpShellPos(fridge_x,fridge_y,fridge_z-13.25*2.54*cm+1.0*2.54*cm);
   G4Tubs* lpShell = new G4Tubs("lpShell", 0, .5*10.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logiclpShell = new G4LogicalVolume(lpShell,steel,"logiclpShell",0,0,0);
   new G4PVPlacement(0,lpShellPos,"physiclpShell",logiclpShell,physicalWorld,false,0);
@@ -2028,29 +2034,29 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
 
   // ------------------------ Insulation --------------------
   // Upper piece
-  G4ThreeVector upInPos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm);
+  G4ThreeVector upInPos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm+1.0*2.54*cm);
   G4Tubs* upIn = new G4Tubs("upIn", .5*10.5*2.54*cm, .5*21.5*2.54*cm, .5*18.063*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicupIn = new G4LogicalVolume(upIn,super,"logicupIn",0,0,0);
   new G4PVPlacement(0,upInPos,"physicupIn",logicupIn,physicalWorld,false,0);
   logicupIn->SetVisAttributes(superVis);
 
   // Middle piece
-  G4ThreeVector miInPos(fridge_x,fridge_y,fridge_z+15.9695*2.54*cm);
+  G4ThreeVector miInPos(fridge_x,fridge_y,fridge_z+15.9695*2.54*cm+1.0*2.54*cm);
   G4Tubs* miIn = new G4Tubs("miIn", .5*14.5*2.54*cm, .5*21.5*2.54*cm, .5*21.813*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicmiIn = new G4LogicalVolume(miIn,super,"logicmiIn",0,0,0);
   new G4PVPlacement(0,miInPos,"physicmiIn",logicmiIn,physicalWorld,false,0);
   logicmiIn->SetVisAttributes(superVis);
 
   // Lower piece
-  G4ThreeVector loInPos(fridge_x,fridge_y,fridge_z-4.156*2.54*cm);
+  G4ThreeVector loInPos(fridge_x,fridge_y,fridge_z-4.156*2.54*cm+1.0*2.54*cm);
   G4Tubs* loIn = new G4Tubs("loIn", .5*10.5*2.54*cm, .5*21.5*2.54*cm, .5*18.438*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicloIn = new G4LogicalVolume(loIn,super,"logicloIn",0,0,0);
   new G4PVPlacement(0,loInPos,"physicloIn",logicloIn,physicalWorld,false,0);
   logicloIn->SetVisAttributes(superVis);
 
   // Bottom piece
-  G4ThreeVector btInPos(fridge_x,fridge_y,fridge_z-16.252*2.54*cm);
-  G4Tubs* btIn = new G4Tubs("btIn", 0, .5*21.5*2.54*cm, .5*5.754*2.54*cm, 0, 2*pi);
+  G4ThreeVector btInPos(fridge_x,fridge_y,fridge_z-16.252*2.54*cm+1.5*2.54*cm);
+  G4Tubs* btIn = new G4Tubs("btIn", 0, .5*21.5*2.54*cm, .5*4.754*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicbtIn = new G4LogicalVolume(btIn,super,"logicbtIn",0,0,0);
   new G4PVPlacement(0,btInPos,"physicbtIn",logicbtIn,physicalWorld,false,0);
   logicbtIn->SetVisAttributes(superVis);
@@ -2506,7 +2512,7 @@ void k100_DetectorConstruction::ConstructFrame(G4VPhysicalVolume*  world)
 
   //frame plates
   G4VSolid* framePlateMiddle = new G4Box("framePlateMiddle",0.5*(44+4)*2.54*cm,0.5*(33.75)*2.54*cm,0.5*1.5*2.54*cm);
-  G4Tubs* large_hole = new G4Tubs("large_hole",0.0,0.5*20.5*2.54*cm,2*2.54*cm,0.0,2*pi);
+  G4Tubs* large_hole = new G4Tubs("large_hole",0.0,0.5*22.1*2.54*cm,2*2.54*cm,0.0,2*pi);
   framePlateMiddle = new G4SubtractionSolid("framePlateMiddle_Cut",framePlateMiddle,large_hole,NULL,G4ThreeVector(0,0,0));
   // using "light" aluminum to simulate the existence of a lattice of 1/4-20 holes with a pitch of 2" about 99% of area is filled and same fraction
   // of volume becaus they are through-holes
