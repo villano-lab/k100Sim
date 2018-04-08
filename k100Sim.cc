@@ -208,7 +208,9 @@ int main(int argc, char** argv) {
   runManager->SetUserInitialization(new k100_DetectorConstruction());
   //runManager->SetUserInitialization(new Shielding_ComptonsUpdate);
   //try standard shielding: "Shielding_EMZ"
-  runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding_EMZ"));
+  //runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding_EMZ"));
+  //revert back to standard to try to fix infinite loop bug: N-MISC-17-003 pg 10
+  runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding"));
 
   // UserAction Classes============
   // event generator
