@@ -44,6 +44,7 @@ private:
   // Run Element Activation
 
   G4UIcmdWithABool*       setDrawEventCmd;
+  G4UIcmdWithABool*       setNCapOutputCmd;
   G4UIcmdWithAString*       setRunFileName;
 };
 

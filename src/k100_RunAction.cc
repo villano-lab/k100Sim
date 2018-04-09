@@ -28,7 +28,9 @@ char filename[200];
 
 k100_RunAction::k100_RunAction()
 {
-  
+ 
+  //set a default for saveOnlyNCapture
+  saveOnlyNCapture = false;
   
   // automatic (time-based) random seeds and filenames for each run
   struct timeval mytime;

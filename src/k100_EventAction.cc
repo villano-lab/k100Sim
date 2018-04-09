@@ -39,6 +39,8 @@ k100_EventAction::k100_EventAction(k100_RunAction* RunAction,G4bool nCapSaveOnly
 	k100_Detector = 
     (k100_DetectorConstruction*)(G4RunManager::GetRunManager()->GetUserDetectorConstruction());
 
+	//make the run action information consistent
+	pRunAction->SetSaveOnlyNCapture(saveOnlyNCapture);
 }
 k100_EventAction::~k100_EventAction()
 {
@@ -46,6 +48,8 @@ k100_EventAction::~k100_EventAction()
 }
 void k100_EventAction::BeginOfEventAction(const G4Event* evt)
 {
+	//be sure the RunAction copy of saveOnlyNCapture is used
+	saveOnlyNCapture = pRunAction->GetSaveOnlyNCapture();
 	
 	drawEvent = pRunAction->GetDrawEventCmd();
 	saveEvent = true; // for now this is simple logic
