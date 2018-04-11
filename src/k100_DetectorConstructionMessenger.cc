@@ -9,6 +9,7 @@
 #include "G4UIcmdWithAnInteger.hh"
 #include "G4UIcmdWithABool.hh"
 #include "G4UIcmdWith3VectorAndUnit.hh"
+#include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithoutParameter.hh"
 
 #include "k100_DetectorConstructionMessenger.hh"
@@ -119,6 +120,23 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   PuBeConfigureCmd_mod->SetRange("Mod==0 || Mod==1 || Mod==2");
   PuBeConfigureCmd_mod->AvailableForStates(G4State_Idle);
 
+  PuBeConfigureCmd_Orb = new G4UIcmdWithABool("/CDMS/PuBe/Orb",this);
+  PuBeConfigureCmd_Orb->SetGuidance("Do simple lead orb shielding.");
+  PuBeConfigureCmd_Orb->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  PuBeConfigureCmd_Orb->SetGuidance("in order for change to take effect.");
+  PuBeConfigureCmd_Orb->SetParameterName("choice",false);
+  PuBeConfigureCmd_Orb->AvailableForStates(G4State_Idle);
+
+  PuBeConfigureCmd_OrbPos = new G4UIcmdWith3VectorAndUnit("/CDMS/PuBe/setOrbPos",this);
+  PuBeConfigureCmd_OrbPos->SetGuidance("Set the shielding Orb position.");
+  PuBeConfigureCmd_OrbPos->SetParameterName("X","Y","Z",true,true);
+  //PuBeConfigureCmd_OrbPos->SetRange("X != 0 && Y != 0 && Z != 0"); //none of these can be zero
+  
+  PuBeConfigureCmd_OrbRad = new G4UIcmdWithADoubleAndUnit("/CDMS/PuBe/setOrbRadius",this);
+  PuBeConfigureCmd_OrbRad->SetGuidance("Set the shielding Orb radius.");
+  PuBeConfigureCmd_OrbRad->SetParameterName("R",true,true);
+  PuBeConfigureCmd_OrbRad->SetRange("R != 0"); //none of these can be zero
+ 
   //set parameters for generic shielding for quick sims
   GPSShieldPositionCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/genericShield/setPosition",this);
   GPSShieldPositionCmd->SetGuidance("Set position for generic rectangular shielding.");
@@ -275,6 +293,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     k100_Detector->SetConstructPuBeSourceAndShield_doR66(truth);
     if(truth){ //set all others to false
       k100_Detector->SetConstructPuBeSourceAndShield_doR62(false);
+      k100_Detector->SetConstructPuBeSourceAndShield_doOrb(false);
     }
   }
 
@@ -283,12 +302,32 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     k100_Detector->SetConstructPuBeSourceAndShield_doR62(truth);
     if(truth){ //set all others to false
       k100_Detector->SetConstructPuBeSourceAndShield_doR66(false);
+      k100_Detector->SetConstructPuBeSourceAndShield_doOrb(false);
+    }
+  }
+
+  if( command == PuBeConfigureCmd_Orb ) { 
+    G4bool truth = PuBeConfigureCmd_Orb->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_doOrb(truth);
+    if(truth){ //set all others to false
+      k100_Detector->SetConstructPuBeSourceAndShield_doR66(false);
+      k100_Detector->SetConstructPuBeSourceAndShield_doR62(false);
     }
   }
 
   if( command == PuBeConfigureCmd_mod ) { 
     G4int Mod = PuBeConfigureCmd_mod->GetNewIntValue(newValue);
     k100_Detector->SetConstructPuBeSourceAndShield_mod(Mod);
+  }
+
+  if( command == PuBeConfigureCmd_OrbPos ) { 
+    G4ThreeVector pos = PuBeConfigureCmd_OrbPos->GetNew3VectorValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_OrbPos(pos);
+  }
+
+  if( command == PuBeConfigureCmd_OrbRad ) { 
+    G4double rad = PuBeConfigureCmd_OrbRad->GetNewDoubleValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_OrbRad(rad);
   }
 
   if( command == GPSShieldPositionCmd ) { 

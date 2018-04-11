@@ -15,6 +15,7 @@
 #include "G4Sphere.hh"
 #include "G4Cons.hh"
 #include "G4Tubs.hh"
+#include "G4Orb.hh"
 #include "G4Polyhedra.hh"
 #include "G4SubtractionSolid.hh"
 #include "G4IntersectionSolid.hh"
@@ -133,6 +134,9 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   pubeNaIParams.doR66 = true; //default to R66 shield 
   pubeNaIParams.doR62 = false; //FIXME not yet implemented
   pubeNaIParams.mod = 0; 
+  pubeNaIParams.doOrb = false; 
+  pubeNaIParams.OrbPos = G4ThreeVector(0,0,0);
+  pubeNaIParams.OrbRad = 10*cm;
 
   // ---------Detector Names--------------
   DetCollName = new char*[30];  TowCollName = new char*[5];     DetMaterials = new G4int [30];
@@ -1542,7 +1546,7 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   if((shieldParams.mod!=2) || (ConstructPuBeSourceAndShieldBool==false)) //mod 2 is simply without this poly
     new G4PVPlacement(0,panelPosition,"physicSquare",logicSquare,physicalWorld,false,0);
   panelPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y+29*2.54*cm,frame_z);
-  if(((shieldParams.mod!=1)&&(shieldParams.mod!=2)) || (ConstructPuBeSourceAndShieldBool==false)) //mod 1 and 2 is simply without this poly
+  if(((shieldParams.mod!=1)&&(shieldParams.mod!=2)&&(!pubeNaIParams.doOrb)) || (ConstructPuBeSourceAndShieldBool==false)) //mod 1 and 2 is simply without this poly
     new G4PVPlacement(0,panelPosition,"physicSquare1",logicSquare,physicalWorld,false,1);
   logicSquare->SetVisAttributes(polyVis);
 
@@ -1750,7 +1754,8 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   leadPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y-(11.25)*2.54*cm,frame_z);
   new G4PVPlacement(0,leadPosition,"physicLeadSquare",logicLeadSquare,physicalWorld,false,0);
   leadPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y+(35.25)*2.54*cm,frame_z);
-  new G4PVPlacement(0,leadPosition,"physicLeadSquare1",logicLeadSquare,physicalWorld,false,1);
+  if(!pubeNaIParams.doOrb) //don't place this lead if doing orb
+    new G4PVPlacement(0,leadPosition,"physicLeadSquare1",logicLeadSquare,physicalWorld,false,1);
   logicLeadSquare->SetVisAttributes(leadVis);
 
 
@@ -1781,7 +1786,8 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
   G4LogicalVolume* logicLeadRectX = new G4LogicalVolume(rectLeadBaseX,shieldPbMat,"logicLeadRectX",0,0,0);
   leadPosition=G4ThreeVector(frame_x+(10.0)*2.54*cm,frame_y+(12+25)*2.54*cm,frame_z);
-  new G4PVPlacement(0,leadPosition,"physicLeadRectX0",logicLeadRectX,physicalWorld,false,0);
+  if(!pubeNaIParams.doOrb) //don't place this lead if doing orb
+    new G4PVPlacement(0,leadPosition,"physicLeadRectX0",logicLeadRectX,physicalWorld,false,0);
   leadPosition=G4ThreeVector(frame_x+(10.0)*2.54*cm,frame_y+(12-25)*2.54*cm,frame_z);
   new G4PVPlacement(0,leadPosition,"physicLeadRectX1",logicLeadRectX,physicalWorld,false,1);
   logicLeadRectX->SetVisAttributes(leadVis);
@@ -2628,126 +2634,138 @@ void k100_DetectorConstruction::ConstructPuBeSourceAndShield(G4VPhysicalVolume* 
   postPointsY.push_back((-19.75-16.0)*2.54*cm); 
   postPointsX.push_back((-22.0+44.0)*2.54*cm);
 
-  //Wood
-  G4Box* woodBase = new G4Box("woodBase",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm,0.5*10.5*2.54*cm,0.5*1.5*2.54*cm);
-  G4LogicalVolume* logicalWoodBase = new G4LogicalVolume(woodBase,wood,"logicalWoodBase",0,0,0);
-  G4ThreeVector basePos(0,postPointsY[1]-(0.5*(16.0-10.5)+3.25)*2.54*cm,floorZ+0.5*1.5*2.54*cm);
-  new G4PVPlacement(0,basePos,"physicalWoodBase",logicalWoodBase,world,false,0);
-  logicalWoodBase->SetVisAttributes(woodVis);
+  if(pubeNaIParams.doR66){
+    //Wood
+    G4Box* woodBase = new G4Box("woodBase",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm,0.5*10.5*2.54*cm,0.5*1.5*2.54*cm);
+    G4LogicalVolume* logicalWoodBase = new G4LogicalVolume(woodBase,wood,"logicalWoodBase",0,0,0);
+    G4ThreeVector basePos(0,postPointsY[1]-(0.5*(16.0-10.5)+3.25)*2.54*cm,floorZ+0.5*1.5*2.54*cm);
+    new G4PVPlacement(0,basePos,"physicalWoodBase",logicalWoodBase,world,false,0);
+    logicalWoodBase->SetVisAttributes(woodVis);
 
-  //lead
-  G4Box* leadBase = new G4Box("leadBase",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm - 0.5*2.0*2.54*cm,0.5*8.0*2.54*cm,0.5*0.5*2.54*cm + 0.5*cm);
-  G4LogicalVolume* logicalLeadBase = new G4LogicalVolume(leadBase,shieldPbMat,"logicalLeadBase",0,0,0);
-  basePos =  G4ThreeVector(0,postPointsY[1]-(0.5*(16.0-10.5)+3.25)*2.54*cm,floorZ+1.5*2.54*cm+0.5*(0.5*2.54*cm + 1*cm));
-  new G4PVPlacement(0,basePos,"physicalleadBase",logicalLeadBase,world,false,0);
-  logicalLeadBase->SetVisAttributes(leadVis);
+    //lead
+    G4Box* leadBase = new G4Box("leadBase",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm - 0.5*2.0*2.54*cm,0.5*8.0*2.54*cm,0.5*0.5*2.54*cm + 0.5*cm);
+    G4LogicalVolume* logicalLeadBase = new G4LogicalVolume(leadBase,shieldPbMat,"logicalLeadBase",0,0,0);
+    basePos =  G4ThreeVector(0,postPointsY[1]-(0.5*(16.0-10.5)+3.25)*2.54*cm,floorZ+1.5*2.54*cm+0.5*(0.5*2.54*cm + 1*cm));
+    new G4PVPlacement(0,basePos,"physicalleadBase",logicalLeadBase,world,false,0);
+    logicalLeadBase->SetVisAttributes(leadVis);
 
-  //aluminum box
-  G4VSolid* alBox = new G4Box("alBox",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm,0.5*25.5*cm,0.5*25.5*cm);
-  G4Box* alCap = new G4Box("alCap",0.5*1.0*cm,0.5*27.5*cm,0.5*27.5*cm);
-  alBox = new G4UnionSolid("alBox0",alBox,alCap,0,G4ThreeVector(0.5*(postPointsX[2]-postPointsX[1]) -0.5*16*2.54*cm +0.5*1.0*cm,0,0));
-  alBox = new G4UnionSolid("alBox1",alBox,alCap,0,G4ThreeVector(-0.5*(postPointsX[2]-postPointsX[1])+0.5*16*2.54*cm -0.5*1.0*cm,0,0));
-  G4LogicalVolume* logicalAlBox = new G4LogicalVolume(alBox,G4NISTAl,"logicalAlBox",0,0,0);
-  //G4ThreeVector boxPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+0.5*25.5*cm);
-  G4ThreeVector boxPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+2.0*2.54*cm+0.5*27.5*cm);
-  G4PVPlacement *alBoxWorld = new G4PVPlacement(0,boxPos,"physicalAlBox",logicalAlBox,world,false,0);
-  logicalAlBox->SetVisAttributes(alVis);
+    //aluminum box
+    G4VSolid* alBox = new G4Box("alBox",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm,0.5*25.5*cm,0.5*25.5*cm);
+    G4Box* alCap = new G4Box("alCap",0.5*1.0*cm,0.5*27.5*cm,0.5*27.5*cm);
+    alBox = new G4UnionSolid("alBox0",alBox,alCap,0,G4ThreeVector(0.5*(postPointsX[2]-postPointsX[1]) -0.5*16*2.54*cm +0.5*1.0*cm,0,0));
+    alBox = new G4UnionSolid("alBox1",alBox,alCap,0,G4ThreeVector(-0.5*(postPointsX[2]-postPointsX[1])+0.5*16*2.54*cm -0.5*1.0*cm,0,0));
+    G4LogicalVolume* logicalAlBox = new G4LogicalVolume(alBox,G4NISTAl,"logicalAlBox",0,0,0);
+    //G4ThreeVector boxPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+0.5*25.5*cm);
+    G4ThreeVector boxPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+2.0*2.54*cm+0.5*27.5*cm);
+    G4PVPlacement *alBoxWorld = new G4PVPlacement(0,boxPos,"physicalAlBox",logicalAlBox,world,false,0);
+    logicalAlBox->SetVisAttributes(alVis);
 
-  G4Box* airInAlBox = new G4Box("airInAlBox",0.5*28.0*2.54*cm,0.5*(25.5-0.6)*cm,0.5*(25.5-0.6)*cm);
-  G4LogicalVolume* logicalAirInAlBox = new G4LogicalVolume(airInAlBox,G4NISTair,"logicalAirInAlBox",0,0,0);
-  G4PVPlacement *airBoxWorld = new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalAirInAlBox",logicalAirInAlBox,alBoxWorld,false,0);
-  logicalAirInAlBox->SetVisAttributes(airVis);
+    G4Box* airInAlBox = new G4Box("airInAlBox",0.5*28.0*2.54*cm,0.5*(25.5-0.6)*cm,0.5*(25.5-0.6)*cm);
+    G4LogicalVolume* logicalAirInAlBox = new G4LogicalVolume(airInAlBox,G4NISTair,"logicalAirInAlBox",0,0,0);
+    G4PVPlacement *airBoxWorld = new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalAirInAlBox",logicalAirInAlBox,alBoxWorld,false,0);
+    logicalAirInAlBox->SetVisAttributes(airVis);
 
-  G4Box* alIntPlate = new G4Box("alInt",0.5*(25.5-0.6)*cm + 1.0*2.54*cm,0.5*1.0*2.54*cm,0.5*(25.5-0.6)*cm);
-  G4LogicalVolume* logicalAlIntPlate = new G4LogicalVolume(alIntPlate,G4NISTAl,"logicalAlIntPlate",0,0,0);
-  new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalAlIntPlate",logicalAlIntPlate,airBoxWorld,false,0);
-  logicalAlIntPlate->SetVisAttributes(alVis);
+    G4Box* alIntPlate = new G4Box("alInt",0.5*(25.5-0.6)*cm + 1.0*2.54*cm,0.5*1.0*2.54*cm,0.5*(25.5-0.6)*cm);
+    G4LogicalVolume* logicalAlIntPlate = new G4LogicalVolume(alIntPlate,G4NISTAl,"logicalAlIntPlate",0,0,0);
+    new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalAlIntPlate",logicalAlIntPlate,airBoxWorld,false,0);
+    logicalAlIntPlate->SetVisAttributes(alVis);
 
-  //plate lead sits on
-  G4Box* alLeadPlate = new G4Box("alLeadPlate",0.5*(24-1.5)*2.54*cm,0.5*(12)*2.54*cm,0.5*(3.0/8.0)*2.54*cm);
-  G4LogicalVolume* logicalAlLeadPlate = new G4LogicalVolume(alLeadPlate,G4NISTAl,"logicalAlLeadPlate",0,0,0);
-  G4ThreeVector alLeadPlatePos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+0.5*(3.0/8.0)*2.54*cm);
-  new G4PVPlacement(0,alLeadPlatePos,"physicalAlLeadPlate",logicalAlLeadPlate,world,false,0);
-  logicalAlLeadPlate->SetVisAttributes(alVis);
+    //plate lead sits on
+    G4Box* alLeadPlate = new G4Box("alLeadPlate",0.5*(24-1.5)*2.54*cm,0.5*(12)*2.54*cm,0.5*(3.0/8.0)*2.54*cm);
+    G4LogicalVolume* logicalAlLeadPlate = new G4LogicalVolume(alLeadPlate,G4NISTAl,"logicalAlLeadPlate",0,0,0);
+    G4ThreeVector alLeadPlatePos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+0.5*(3.0/8.0)*2.54*cm);
+    new G4PVPlacement(0,alLeadPlatePos,"physicalAlLeadPlate",logicalAlLeadPlate,world,false,0);
+    logicalAlLeadPlate->SetVisAttributes(alVis);
 
-  //lead stack
-  G4Box* leadStack = new G4Box("leadStack",0.5*(24)*2.54*cm,0.5*(12)*2.54*cm,0.5*(16)*2.54*cm);
-  G4LogicalVolume* logicalLeadStack = new G4LogicalVolume(leadStack,shieldPbMat,"logicalLeadStack",0,0,0);
-  G4ThreeVector leadStackPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+0.5*16*2.54*cm);
-  new G4PVPlacement(0,leadStackPos,"physicalLeadStack",logicalLeadStack,world,false,0);
-  logicalLeadStack->SetVisAttributes(leadVis);
+    //lead stack
+    G4Box* leadStack = new G4Box("leadStack",0.5*(24)*2.54*cm,0.5*(12)*2.54*cm,0.5*(16)*2.54*cm);
+    G4LogicalVolume* logicalLeadStack = new G4LogicalVolume(leadStack,shieldPbMat,"logicalLeadStack",0,0,0);
+    G4ThreeVector leadStackPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+0.5*16*2.54*cm);
+    new G4PVPlacement(0,leadStackPos,"physicalLeadStack",logicalLeadStack,world,false,0);
+    logicalLeadStack->SetVisAttributes(leadVis);
 
-  G4Box* leadStack1 = new G4Box("leadStack1",0.5*(8)*2.54*cm,0.5*(8)*2.54*cm,0.5*(6)*2.54*cm);
-  G4LogicalVolume* logicalLeadStack1 = new G4LogicalVolume(leadStack1,shieldPbMat,"logicalLeadStack1",0,0,0);
-  leadStackPos = G4ThreeVector(-(12-4.0)*2.54*cm,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm-2.0*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+16*2.54*cm+0.5*6.0*2.54*cm);
-  new G4PVPlacement(0,leadStackPos,"physicalLeadStack1",logicalLeadStack1,world,false,0);
-  logicalLeadStack1->SetVisAttributes(airVis);
+    G4Box* leadStack1 = new G4Box("leadStack1",0.5*(8)*2.54*cm,0.5*(8)*2.54*cm,0.5*(6)*2.54*cm);
+    G4LogicalVolume* logicalLeadStack1 = new G4LogicalVolume(leadStack1,shieldPbMat,"logicalLeadStack1",0,0,0);
+    leadStackPos = G4ThreeVector(-(12-4.0)*2.54*cm,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm-2.0*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+16*2.54*cm+0.5*6.0*2.54*cm);
+    new G4PVPlacement(0,leadStackPos,"physicalLeadStack1",logicalLeadStack1,world,false,0);
+    logicalLeadStack1->SetVisAttributes(airVis);
 
-  G4Box* leadStack2 = new G4Box("leadStack2",0.5*(8)*2.54*cm,0.5*(4)*2.54*cm,0.5*(2)*2.54*cm);
-  G4LogicalVolume* logicalLeadStack2 = new G4LogicalVolume(leadStack2,shieldPbMat,"logicalLeadStack2",0,0,0);
-  leadStackPos = G4ThreeVector(-(12-4.0)*2.54*cm,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm-2.0*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+16*2.54*cm+6.0*2.54*cm+0.5*2.0*2.54*cm);
-  new G4PVPlacement(0,leadStackPos,"physicalLeadStack2",logicalLeadStack2,world,false,0);
-  logicalLeadStack2->SetVisAttributes(airVis);
+    G4Box* leadStack2 = new G4Box("leadStack2",0.5*(8)*2.54*cm,0.5*(4)*2.54*cm,0.5*(2)*2.54*cm);
+    G4LogicalVolume* logicalLeadStack2 = new G4LogicalVolume(leadStack2,shieldPbMat,"logicalLeadStack2",0,0,0);
+    leadStackPos = G4ThreeVector(-(12-4.0)*2.54*cm,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm-2.0*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+16*2.54*cm+6.0*2.54*cm+0.5*2.0*2.54*cm);
+    new G4PVPlacement(0,leadStackPos,"physicalLeadStack2",logicalLeadStack2,world,false,0);
+    logicalLeadStack2->SetVisAttributes(airVis);
 
-  //barrel
-  if(pubeNaIParams.addBarrel){
-    G4Tubs* steelBarrel = new G4Tubs("steelBarrel",0,0.5*(16.25)*2.54*cm,0.5*(21.0)*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalSteelBarrel = new G4LogicalVolume(steelBarrel,carbonsteel,"logicalSteelBarrel",0,0,0);
-    G4ThreeVector barrelPos = G4ThreeVector(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm,floorZ+0.5*21.0*2.54*cm);
-    G4PVPlacement *barrelWorld = new G4PVPlacement(0,barrelPos,"physicalBarrel",logicalSteelBarrel,world,false,0);
-    logicalSteelBarrel->SetVisAttributes(steelVis);
+    //barrel
+    if(pubeNaIParams.addBarrel){
+      G4Tubs* steelBarrel = new G4Tubs("steelBarrel",0,0.5*(16.25)*2.54*cm,0.5*(21.0)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalSteelBarrel = new G4LogicalVolume(steelBarrel,carbonsteel,"logicalSteelBarrel",0,0,0);
+      G4ThreeVector barrelPos = G4ThreeVector(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm,floorZ+0.5*21.0*2.54*cm);
+      G4PVPlacement *barrelWorld = new G4PVPlacement(0,barrelPos,"physicalBarrel",logicalSteelBarrel,world,false,0);
+      logicalSteelBarrel->SetVisAttributes(steelVis);
 
-    G4Tubs* paraffinInsert = new G4Tubs("paraffinInsert",0,0.5*(16.25-0.125)*2.54*cm,0.5*(21.0-(1.0/16.0))*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalParaffinInsert = new G4LogicalVolume(paraffinInsert,G4NISTparaffin,"logicalParaffinInsert",0,0,0);
-    G4ThreeVector paraffinPos = G4ThreeVector(0,0,(1.0/32.0)*2.54*cm);
-    G4PVPlacement *paraffinWorld = new G4PVPlacement(0,paraffinPos,"physicalParaffin",logicalParaffinInsert,barrelWorld,false,0);
-    logicalParaffinInsert->SetVisAttributes(paraffinVis);
+      G4Tubs* paraffinInsert = new G4Tubs("paraffinInsert",0,0.5*(16.25-0.125)*2.54*cm,0.5*(21.0-(1.0/16.0))*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalParaffinInsert = new G4LogicalVolume(paraffinInsert,G4NISTparaffin,"logicalParaffinInsert",0,0,0);
+      G4ThreeVector paraffinPos = G4ThreeVector(0,0,(1.0/32.0)*2.54*cm);
+      G4PVPlacement *paraffinWorld = new G4PVPlacement(0,paraffinPos,"physicalParaffin",logicalParaffinInsert,barrelWorld,false,0);
+      logicalParaffinInsert->SetVisAttributes(paraffinVis);
 
-    G4cout << "floorZ: " << floorZ << G4endl;
-    G4Tubs* pipeInner = new G4Tubs("pipeInner",0,0.5*(2.5)*2.54*cm,0.5*(9.0)*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalPipeInner = new G4LogicalVolume(pipeInner,carbonsteel,"logicalPipeInner",0,0,0);
-    G4ThreeVector pipePos = G4ThreeVector(0,0,0.5*(21.0-(1/16.0)-9.0)*2.54*cm-2*2.54*cm);
-    G4PVPlacement *pipeWorld = new G4PVPlacement(0,pipePos,"physicalPipe",logicalPipeInner,paraffinWorld,false,0);
-    logicalPipeInner->SetVisAttributes(steelVis);
+      G4cout << "floorZ: " << floorZ << G4endl;
+      G4Tubs* pipeInner = new G4Tubs("pipeInner",0,0.5*(2.5)*2.54*cm,0.5*(9.0)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalPipeInner = new G4LogicalVolume(pipeInner,carbonsteel,"logicalPipeInner",0,0,0);
+      G4ThreeVector pipePos = G4ThreeVector(0,0,0.5*(21.0-(1/16.0)-9.0)*2.54*cm-2*2.54*cm);
+      G4PVPlacement *pipeWorld = new G4PVPlacement(0,pipePos,"physicalPipe",logicalPipeInner,paraffinWorld,false,0);
+      logicalPipeInner->SetVisAttributes(steelVis);
 
-    G4Tubs* pipeAir = new G4Tubs("pipeAir",0,0.5*(2.5-0.25)*2.54*cm,0.5*(9.0-0.25)*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalPipeAir = new G4LogicalVolume(pipeAir,G4NISTair,"logicalPipeAir",0,0,0);
-    G4ThreeVector airPos = G4ThreeVector(0,0,0.5*(1/8.0)*2.54*cm);
-    G4PVPlacement *airWorld = new G4PVPlacement(0,airPos,"physicalPipeAir",logicalPipeAir,pipeWorld,false,0);
-    logicalPipeAir->SetVisAttributes(airVis);
+      G4Tubs* pipeAir = new G4Tubs("pipeAir",0,0.5*(2.5-0.25)*2.54*cm,0.5*(9.0-0.25)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalPipeAir = new G4LogicalVolume(pipeAir,G4NISTair,"logicalPipeAir",0,0,0);
+      G4ThreeVector airPos = G4ThreeVector(0,0,0.5*(1/8.0)*2.54*cm);
+      G4PVPlacement *airWorld = new G4PVPlacement(0,airPos,"physicalPipeAir",logicalPipeAir,pipeWorld,false,0);
+      logicalPipeAir->SetVisAttributes(airVis);
 
-    G4Tubs* barrelAir0 = new G4Tubs("barrelAir0",0,0.5*(16.25-0.125)*2.54*cm,0.5*(2.0)*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalBarrelAir0 = new G4LogicalVolume(barrelAir0,G4NISTair,"logicalBarrelAir0",0,0,0);
-    airPos = G4ThreeVector(0,0,0.5*(21.0 - (1/16.0))*2.54*cm - 0.5*(2.0)*2.54*cm);
-    G4PVPlacement *abovePipeAirWorld = new G4PVPlacement(0,airPos,"physicalBarrelAir0",logicalBarrelAir0,paraffinWorld,false,0);
-    logicalBarrelAir0->SetVisAttributes(airVis);
+      G4Tubs* barrelAir0 = new G4Tubs("barrelAir0",0,0.5*(16.25-0.125)*2.54*cm,0.5*(2.0)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalBarrelAir0 = new G4LogicalVolume(barrelAir0,G4NISTair,"logicalBarrelAir0",0,0,0);
+      airPos = G4ThreeVector(0,0,0.5*(21.0 - (1/16.0))*2.54*cm - 0.5*(2.0)*2.54*cm);
+      G4PVPlacement *abovePipeAirWorld = new G4PVPlacement(0,airPos,"physicalBarrelAir0",logicalBarrelAir0,paraffinWorld,false,0);
+      logicalBarrelAir0->SetVisAttributes(airVis);
 
-    G4Tubs* barrelAir1 = new G4Tubs("barrelAir1",0.5*2.5*2.54*cm,0.5*(16.25-0.125)*2.54*cm,0.5*(1.5)*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalBarrelAir1 = new G4LogicalVolume(barrelAir1,G4NISTair,"logicalBarrelAir1",0,0,0);
-    airPos = G4ThreeVector(0,0,0.5*(21.0 - (1/16.0))*2.54*cm - (2.0)*2.54*cm - 0.5*(1.5)*2.54*cm );
-    new G4PVPlacement(0,airPos,"physicalBarrelAir1",logicalBarrelAir1,paraffinWorld,false,0);
-    logicalBarrelAir1->SetVisAttributes(airVis);
+      G4Tubs* barrelAir1 = new G4Tubs("barrelAir1",0.5*2.5*2.54*cm,0.5*(16.25-0.125)*2.54*cm,0.5*(1.5)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalBarrelAir1 = new G4LogicalVolume(barrelAir1,G4NISTair,"logicalBarrelAir1",0,0,0);
+      airPos = G4ThreeVector(0,0,0.5*(21.0 - (1/16.0))*2.54*cm - (2.0)*2.54*cm - 0.5*(1.5)*2.54*cm );
+      new G4PVPlacement(0,airPos,"physicalBarrelAir1",logicalBarrelAir1,paraffinWorld,false,0);
+      logicalBarrelAir1->SetVisAttributes(airVis);
 
-    G4Tubs* luciteRodInPipe = new G4Tubs("luciteRodInPipe",0.,0.5*(2.0)*2.54*cm,0.5*(3.5)*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalLuciteRodInPipe = new G4LogicalVolume(luciteRodInPipe,G4NISTlucite,"logicalLuciteRodInPipe",0,0,0);
-    G4ThreeVector lucitePos = G4ThreeVector(0,0,0.5*(9.0-0.25)*2.54*cm - 0.5*3.5*2.54*cm);
-    new G4PVPlacement(0,lucitePos,"physicalLuciteRodInPipe",logicalLuciteRodInPipe,airWorld,false,0);
-    logicalLuciteRodInPipe->SetVisAttributes(luciteVis);
+      G4Tubs* luciteRodInPipe = new G4Tubs("luciteRodInPipe",0.,0.5*(2.0)*2.54*cm,0.5*(3.5)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalLuciteRodInPipe = new G4LogicalVolume(luciteRodInPipe,G4NISTlucite,"logicalLuciteRodInPipe",0,0,0);
+      G4ThreeVector lucitePos = G4ThreeVector(0,0,0.5*(9.0-0.25)*2.54*cm - 0.5*3.5*2.54*cm);
+      new G4PVPlacement(0,lucitePos,"physicalLuciteRodInPipe",logicalLuciteRodInPipe,airWorld,false,0);
+      logicalLuciteRodInPipe->SetVisAttributes(luciteVis);
 
-    G4Tubs* luciteRodAbovePipe = new G4Tubs("luciteRodAbovePipe",0.,0.5*(2.0)*2.54*cm,0.5*(2.0)*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalLuciteRodAbovePipe = new G4LogicalVolume(luciteRodAbovePipe,G4NISTlucite,"logicalLuciteRodAbovePipe",0,0,0);
-    lucitePos = G4ThreeVector(0,0,0);
-    new G4PVPlacement(0,lucitePos,"physicalLuciteRodAbovePipe",logicalLuciteRodAbovePipe,abovePipeAirWorld,false,0);
-    logicalLuciteRodAbovePipe->SetVisAttributes(luciteVis);
+      G4Tubs* luciteRodAbovePipe = new G4Tubs("luciteRodAbovePipe",0.,0.5*(2.0)*2.54*cm,0.5*(2.0)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalLuciteRodAbovePipe = new G4LogicalVolume(luciteRodAbovePipe,G4NISTlucite,"logicalLuciteRodAbovePipe",0,0,0);
+      lucitePos = G4ThreeVector(0,0,0);
+      new G4PVPlacement(0,lucitePos,"physicalLuciteRodAbovePipe",logicalLuciteRodAbovePipe,abovePipeAirWorld,false,0);
+      logicalLuciteRodAbovePipe->SetVisAttributes(luciteVis);
 
-    G4Tubs* luciteRodAboveBarrel = new G4Tubs("luciteRodAboveBarrel",0.,0.5*(2.0)*2.54*cm,0.5*(9.75)*2.54*cm,0,2*pi);
-    G4LogicalVolume* logicalLuciteRodAboveBarrel = new G4LogicalVolume(luciteRodAboveBarrel,G4NISTlucite,"logicalLuciteRodAboveBarrel",0,0,0);
-    lucitePos = G4ThreeVector(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm,floorZ+(21)*2.54*cm+0.5*(9.75)*2.54*cm);
-    new G4PVPlacement(0,lucitePos,"physicalLuciteRodAboveBarrel",logicalLuciteRodAboveBarrel,world,false,0);
-    logicalLuciteRodAboveBarrel->SetVisAttributes(luciteVis);
-  
-  } //end pubeNaIParams.addBarrel if statement
-  G4cout << "Position of Source: " << 0 << "," << postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm << "," << floorZ+(21-2.0-9.0+2.25)*2.54*cm << G4endl;
+      G4Tubs* luciteRodAboveBarrel = new G4Tubs("luciteRodAboveBarrel",0.,0.5*(2.0)*2.54*cm,0.5*(9.75)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalLuciteRodAboveBarrel = new G4LogicalVolume(luciteRodAboveBarrel,G4NISTlucite,"logicalLuciteRodAboveBarrel",0,0,0);
+      lucitePos = G4ThreeVector(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm,floorZ+(21)*2.54*cm+0.5*(9.75)*2.54*cm);
+      new G4PVPlacement(0,lucitePos,"physicalLuciteRodAboveBarrel",logicalLuciteRodAboveBarrel,world,false,0);
+      logicalLuciteRodAboveBarrel->SetVisAttributes(luciteVis);
+    
+    } //end pubeNaIParams.addBarrel if statement
+    G4cout << "Position of Source: " << 0 << "," << postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm << "," << floorZ+(21-2.0-9.0+2.25)*2.54*cm << G4endl;
+  }//end do R66
+
+  if(pubeNaIParams.doOrb){
+
+    //lead
+    G4Orb* leadOrb = new G4Orb("leadOrb",pubeNaIParams.OrbRad);
+    G4LogicalVolume* logicalLeadOrb = new G4LogicalVolume(leadOrb,shieldPbMat,"logicalLeadOrb",0,0,0);
+    new G4PVPlacement(0,pubeNaIParams.OrbPos,"physicalleadOrb",logicalLeadOrb,world,false,0);
+    logicalLeadOrb->SetVisAttributes(leadVis);
+
+  } //end do Orb
 
 } // ends PuBe SourceAndShield 
 

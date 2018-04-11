@@ -71,6 +71,9 @@ class k100_ZipParameterisation;
     G4int mod; //parameter for doing different modifications:
                // 0 - no mod
 	       // 1 - add poly layer 1.6m down from origin, in pit and lead shield on floor
+    G4bool doOrb;
+    G4ThreeVector OrbPos;
+    G4double OrbRad;
   };
 // ------------------------------------------------
 
@@ -105,7 +108,10 @@ public:
   void SetConstructPuBeSourceAndShield_addBarrel(G4bool newVal)    {pubeNaIParams.addBarrel = newVal;}
   void SetConstructPuBeSourceAndShield_doR66(G4bool newVal)    {pubeNaIParams.doR66 = newVal;}
   void SetConstructPuBeSourceAndShield_doR62(G4bool newVal)    {pubeNaIParams.doR62 = newVal;}
+  void SetConstructPuBeSourceAndShield_doOrb(G4bool newVal)    {pubeNaIParams.doOrb = newVal;}
   void SetConstructPuBeSourceAndShield_mod(G4int newVal)    {pubeNaIParams.mod = newVal;}
+  void SetConstructPuBeSourceAndShield_OrbPos(G4ThreeVector newVal)    {pubeNaIParams.OrbPos = newVal;}
+  void SetConstructPuBeSourceAndShield_OrbRad(G4double newVal)    {pubeNaIParams.OrbRad = newVal;}
   void SetConstructThermalNeutronBoxBool(G4bool newVal)  {ConstructThermalNeutronBoxBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentBool(G4bool newVal)      {ConstructShieldTestEnvironmentBool = newVal&&ConstructZipBool;} //requires construction of Zips
   void SetConstructShieldTestEnvironmentPos(G4double xcntr,G4double ycntr,G4double zcntr);

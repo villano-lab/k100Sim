@@ -14,6 +14,7 @@ class G4UIdirectory;
 class G4UIcmdWithAString;
 class G4UIcmdWithAnInteger;
 class G4UIcmdWithABool;
+class G4UIcmdWithADoubleAndUnit;
 class G4UIcmdWith3VectorAndUnit;
 class G4UIcmdWithoutParameter;
 
@@ -54,6 +55,9 @@ private:
   G4UIcmdWithABool*       PuBeConfigureCmd_R66;
   G4UIcmdWithABool*       PuBeConfigureCmd_R62;
   G4UIcmdWithAnInteger*       PuBeConfigureCmd_mod;
+  G4UIcmdWithABool*       PuBeConfigureCmd_Orb;
+  G4UIcmdWith3VectorAndUnit*   PuBeConfigureCmd_OrbPos;
+  G4UIcmdWithADoubleAndUnit*   PuBeConfigureCmd_OrbRad;
 
   G4UIcmdWithAString*     DrawSolidBox;
   G4UIcmdWithAString*     DrawFrameBox;
