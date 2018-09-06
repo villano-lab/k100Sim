@@ -14,6 +14,7 @@ class G4UIdirectory;
 class G4UIcmdWithAString;
 class G4UIcmdWithAnInteger;
 class G4UIcmdWithABool;
+class G4UIcmdWithADoubleAndUnit;
 class G4UIcmdWith3VectorAndUnit;
 class G4UIcmdWithoutParameter;
 
@@ -45,6 +46,18 @@ private:
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinPositionCmd;
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinSizeCmd;
   G4UIcmdWithAString*     SimpleGammaCoinMatCmd;
+  G4UIcmdWithABool*       ShieldConfigureCmd_SouthNaI;
+  G4UIcmdWithABool*       ShieldConfigureCmd_BasePoly;
+  G4UIcmdWithABool*       ShieldConfigureCmd_BaseLead;
+  G4UIcmdWithAnInteger*       ShieldConfigureCmd_mod;
+  G4UIcmdWithABool*       FridgeConfigureCmd_pure3HeBath;
+  G4UIcmdWithABool*       PuBeConfigureCmd_Barrel;
+  G4UIcmdWithABool*       PuBeConfigureCmd_R66;
+  G4UIcmdWithABool*       PuBeConfigureCmd_R62;
+  G4UIcmdWithAnInteger*       PuBeConfigureCmd_mod;
+  G4UIcmdWithABool*       PuBeConfigureCmd_Orb;
+  G4UIcmdWith3VectorAndUnit*   PuBeConfigureCmd_OrbPos;
+  G4UIcmdWithADoubleAndUnit*   PuBeConfigureCmd_OrbRad;
 
   G4UIcmdWithAString*     DrawSolidBox;
   G4UIcmdWithAString*     DrawFrameBox;

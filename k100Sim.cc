@@ -31,6 +31,7 @@
 #include "G4UIterminal.hh"
 #include "G4UItcsh.hh"
 
+#include "G4PhysListFactory.hh"
 
 #include "QGSP_BERT_HP.hh"
 #include "k100_DetectorConstruction.hh"
@@ -58,6 +59,7 @@ void print_usage (FILE* stream, int exit_code)
 	   //"\n"
            "  -c, --customgen                    use custom particle generator \n"
            "  -o, --outfile       <filename>     name the output file \n"
+           "  -p, --only-ncap                    restrict event output to those including ncap \n"
            "  -q, --quiet         <level>        quiet printing \n"
            "                                     optional argument integer > 0 \n"
            "                                     0,default: no non-event output\n"
@@ -86,11 +88,13 @@ int main(int argc, char** argv) {
   bool quiet=false;
   bool dataquiet=false;
   bool customgen=false;
+  bool onlyncap=false;
    
   const struct option longopts[] =
   {
     {"customgen",     no_argument,  0, 'c'},
     {"outfile",     required_argument,  0, 'o'},
+    {"only-ncap",     no_argument,  0, 'p'},
     {"quiet",     optional_argument,  0, 'q'},
     {"silent",    no_argument,        0, 's'},
     {"verbose",   optional_argument,  0, 'v'},
@@ -106,7 +110,7 @@ int main(int argc, char** argv) {
 
   while(iarg != -1)
   {
-    iarg = getopt_long(argc, argv, "+co:q::sv::V", longopts, &index);
+    iarg = getopt_long(argc, argv, "+co:pq::sv::V", longopts, &index);
 
     switch (iarg)
     {
@@ -117,6 +121,10 @@ int main(int argc, char** argv) {
 
       case 'o':
         outputfile = optarg;
+        break;
+
+      case 'p':
+        onlyncap=true;
         break;
 
       case 'q':
@@ -193,9 +201,16 @@ int main(int argc, char** argv) {
   //Run Manager
   G4RunManager * runManager = new G4RunManager;
 
+  //make a physics list factory
+  G4PhysListFactory *g4Factory = new G4PhysListFactory();
+
   // User Initializaton classes (mandatory)
   runManager->SetUserInitialization(new k100_DetectorConstruction());
-  runManager->SetUserInitialization(new Shielding_ComptonsUpdate);
+  //runManager->SetUserInitialization(new Shielding_ComptonsUpdate);
+  //try standard shielding: "Shielding_EMZ"
+  //runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding_EMZ"));
+  //revert back to standard to try to fix infinite loop bug: N-MISC-17-003 pg 10
+  runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding"));
 
   // UserAction Classes============
   // event generator
@@ -205,7 +220,7 @@ int main(int argc, char** argv) {
   //run action
   k100_RunAction* pRunAction = new k100_RunAction();
   runManager->SetUserAction(pRunAction);
-  runManager->SetUserAction(new k100_EventAction(pRunAction));
+  runManager->SetUserAction(new k100_EventAction(pRunAction,onlyncap));
 
   // Initialize G4 kernel
   runManager->Initialize();

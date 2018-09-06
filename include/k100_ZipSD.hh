@@ -29,6 +29,7 @@ private:
   k100_ZipHitsCollection* zipCollection;
   G4int towNb;
 
+  G4bool isNCap(G4Track* track,G4Step *aStep);
 };
 
 // ------------------------------------------------

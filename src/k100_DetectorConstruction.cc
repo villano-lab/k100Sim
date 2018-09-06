@@ -9,11 +9,13 @@
 #include "G4MaterialTable.hh"
 #include "G4Element.hh"
 #include "G4ElementTable.hh"
+#include "G4NistManager.hh"
 
 #include "G4Box.hh"
 #include "G4Sphere.hh"
 #include "G4Cons.hh"
 #include "G4Tubs.hh"
+#include "G4Orb.hh"
 #include "G4Polyhedra.hh"
 #include "G4SubtractionSolid.hh"
 #include "G4IntersectionSolid.hh"
@@ -49,6 +51,9 @@
 #include "G4LogicalVolumeStore.hh"
 #include "G4SolidStore.hh"
 
+#include <vector>
+#include <ostream>
+
 // ------------------------------------------------
 
 k100_DetectorConstruction::k100_DetectorConstruction()
@@ -56,8 +61,12 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 
   // -------- The World ---------
   //world_x = 250.*cm; world_y = 250.*cm; world_z = 250.*cm;
-  world_x = 250.*cm; world_y = 250.*cm; world_z = 500.*cm;
-  
+  //contrive the overall dimensions to fit the walls and stuff
+  //world_x = 250.*cm; world_y = 350.*cm; world_z = 700.*cm;
+  world_y = 160.*cm + 5.5*2.54*cm; world_x = 188.*cm + 5.5*2.54*cm; world_z = 1100.*cm;
+  world_y*=2; //above are x and y half widths, but this should be full width
+  world_x*=2; 
+
 #include "k100_DetectorParameterDef.icc"
   
   // Create commands for interactive definition of the detector
@@ -72,15 +81,22 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructTowerBool = true;
   ConstructZipBool = true;
   ConstructVetoBool = false;
-  ConstructShieldsBool = true;
-  ConstructIceBoxBool = true;
+  ConstructShieldsBool = false;
+  ConstructIceBoxBool = false;
+  ConstructFloorBool = false;
+  ConstructWallsBool = false;
+  ConstructCeilingBool = false;
+  ConstructWestReflectorBool = false;
+  ConstructFrameBool = false;
+  ConstructPuBeSourceAndShieldBool = false;
   SetConstructThermalNeutronBoxBool(false); //note, requires construct ZIP bool
   SetConstructShieldTestEnvironmentBool(false); //note, requires construct ZIP bool
   SetConstructSimpleGammaCoinBool(false); //note, requires construct ZIP bool
+  SetConstructPuBeNaIBool(false); //note, requires construct ZIP bool
 
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
-  DrawSolidTowerBool = false; 
+  DrawSolidTowerBool = true; 
   DrawSolidVetoBool = false;
   DrawSolidShieldsBool = false; DrawSolidIceBoxBool = false;
 
@@ -103,6 +119,24 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   gammaCoinParams.sizer = 2.54*3*cm;
   gammaCoinParams.sizethk = 5.0*cm;
   gammaCoinParams.coinmaterial = zipGeMat; //MUST be after DefineMaterials()
+
+  frameParams.includeSand = false;
+
+  fridgeParams.includeMixture = false;
+  fridgeParams.pure3HeBath = false;
+
+  shieldParams.addNaISouth = false;
+  shieldParams.addBasePoly = false;
+  shieldParams.addBaseLead = false;
+  shieldParams.mod = 0; 
+  
+  pubeNaIParams.addBarrel = true; //default to use barrel
+  pubeNaIParams.doR66 = true; //default to R66 shield 
+  pubeNaIParams.doR62 = false; //FIXME not yet implemented
+  pubeNaIParams.mod = 0; 
+  pubeNaIParams.doOrb = false; 
+  pubeNaIParams.OrbPos = G4ThreeVector(0,0,0);
+  pubeNaIParams.OrbRad = 10*cm;
 
   // ---------Detector Names--------------
   DetCollName = new char*[30];  TowCollName = new char*[5];     DetMaterials = new G4int [30];
@@ -216,6 +250,24 @@ void k100_DetectorConstruction::DefineMaterials()
 
   // Define Helium
   G4Element* elementHe = new G4Element(name="Helium", symbol="He", z=2., a=4.003*g/mole);
+  G4IsotopeVector *ivec;
+  G4double *relabvec;
+  ivec = elementHe->GetIsotopeVector();
+  relabvec = elementHe->GetRelativeAbundanceVector();
+  for(int i=0;i<elementHe->GetNumberOfIsotopes();i++){
+    G4cout << "He isotope " << i+1 << " is A = " << (*ivec)[i]->GetN() <<
+	    ", relative abundance: " << relabvec[i] << G4endl;
+  }
+  G4cout << "Is the He natural abundance distribution? " << elementHe->GetNaturalAbundanceFlag() << G4endl;
+
+  // Define specialized Helium
+  G4Isotope *isoHe4 = new G4Isotope("4He",2,4); //when it asks for N does it really mean (integer) A?
+  G4Isotope *isoHe3 = new G4Isotope("3He",2,3); 
+  G4Element *stillLiquidHe = new G4Element("Liquid3He","L3He",1);
+  stillLiquidHe->AddIsotope(isoHe3,1.0);
+  G4Element *MCLiquidHe = new G4Element("MCLiquidHe","LHeMix",2);
+  MCLiquidHe->AddIsotope(isoHe3,0.12);
+  MCLiquidHe->AddIsotope(isoHe4,0.88);
 
   // Define Carbon
   G4Element* elementC=new G4Element(name="Carbon", symbol="C", z=6., a=12.011*g/mole);
@@ -275,6 +327,16 @@ void k100_DetectorConstruction::DefineMaterials()
   // Aluminum
   G4Material* Aluminum = new G4Material(name="Aluminum", density = 2.7*g/cm3, ncomponents=1);
   Aluminum->AddElement(elementAl, natoms=1);
+
+  // LightAluminum -- i.e. a plate of aluminum with a 2" pitch array of 1/4-20 holes
+  G4Material* LightAluminum = new G4Material(name="Aluminum", density = 0.989*2.7*g/cm3, ncomponents=1);
+  LightAluminum->AddElement(elementAl, natoms=1);
+
+  //wood
+  G4Material* WOOD = new G4Material(name="wood", density=0.9*g/cm3, ncomponents=3);
+  WOOD->AddElement(elementH , 4);
+  WOOD->AddElement(elementO , 1);
+  WOOD->AddElement(elementC , 2);
 
   // Silicon 
   G4Material* Silicon = new G4Material(name="Silicon", density = 2.330*g/cm3, ncomponents=1);
@@ -344,8 +406,20 @@ void k100_DetectorConstruction::DefineMaterials()
   d2o->AddElement(elementD,natoms=2);
   d2o->AddElement(elementO,natoms=1);
 
+  // SiO2 amorphous
+  G4Material* sio2=new G4Material(name="SiO2", density = 2.196*g/cm3, ncomponents=2);
+  sio2->AddElement(elementO,natoms=2);
+  sio2->AddElement(elementSi,natoms=1);
+
+  // SiO2 amorphous (blasting sand with 64% packing)
+  G4Material* sio2_blastSand=new G4Material(name="SiO2BlastSand", density = 0.64*2.196*g/cm3, ncomponents=2);
+  sio2_blastSand->AddElement(elementO,natoms=2);
+  sio2_blastSand->AddElement(elementSi,natoms=1);
+
   // Poly
-  G4Material* poly=new G4Material(name="Poly", density = 0.935*g/cm3, ncomponents=2);
+  //G4Material* poly=new G4Material(name="Poly", density = 0.935*g/cm3, ncomponents=2);
+  //use average of density measures for R66 sim N-MISC-17-003 pg 31
+  G4Material* poly=new G4Material(name="Poly", density = 0.973*g/cm3, ncomponents=2); 
   poly->AddElement(elementH,natoms=2);
   poly->AddElement(elementC,natoms=1);
 
@@ -363,6 +437,12 @@ void k100_DetectorConstruction::DefineMaterials()
   G4Material* liquidHelium=new G4Material(name="liquidHelium", density=.1412*g/cm3, ncomponents=1);
   liquidHelium->AddElement(elementHe,natoms=2);
 
+  // More complex Helium Liquid
+  G4Material* stillLiquid = new G4Material(name="stillLiquid",density=0.081*g/cm3,ncomponents=1);
+  stillLiquid->AddElement(stillLiquidHe,natoms=2);
+  G4Material* MCLiquid = new G4Material(name="MCLiquid",density=0.1412*g/cm3,ncomponents=1); //assumed to be same as LHe
+  MCLiquid->AddElement(MCLiquidHe,natoms=2);
+
   // Stainless Steel (Alloy 304)
   G4Material* Steel = new G4Material(name="Steel", density=8.03*g/cm3, ncomponents=8);
   Steel->AddMaterial(Carbon, .0008);
@@ -373,6 +453,11 @@ void k100_DetectorConstruction::DefineMaterials()
   Steel->AddMaterial(Phosphorus, .00045);
   Steel->AddMaterial(Sulfur, .0003);
   Steel->AddMaterial(Iron, .68595);
+
+  // Steel (Standard 1% carbon)
+  G4Material* StandardSteel = new G4Material(name="StandardSteel", density=7.85*g/cm3, ncomponents=2);
+  StandardSteel->AddMaterial(Carbon, .0100);
+  StandardSteel->AddMaterial(Iron, .99);
 
   // Superinsulation/Vacuum Layer (Modeled as Superinsulation at half normal density.  Normal Density 1.3890*g/cm3)
   G4Material* Super = new G4Material(name="Super", density=.6945*g/cm3, ncomponents=2);
@@ -387,6 +472,21 @@ void k100_DetectorConstruction::DefineMaterials()
 				      kStateGas, temperature, pressure);
 
   // ------------------------------------------------
+  // Define Database Materials
+  // ------------------------------------------------
+  G4NistManager* man = G4NistManager::Instance(); 
+ 
+  G4NISTconcrete  = man->FindOrBuildMaterial("G4_CONCRETE");
+  G4NISTair  = man->FindOrBuildMaterial("G4_AIR");
+  G4NISTNaI  = man->FindOrBuildMaterial("G4_SODIUM_IODIDE");
+  G4NISTPVC  = man->FindOrBuildMaterial("G4_POLYVINYL_CHLORIDE");
+  G4NISTPE  = man->FindOrBuildMaterial("G4_POLYETHYLENE");
+  G4NISTAl  = man->FindOrBuildMaterial("G4_Al");
+  G4NISTlucite  = man->FindOrBuildMaterial("G4_PLEXIGLASS");
+  G4NISTparaffin  = man->FindOrBuildMaterial("G4_PARAFFIN");
+  G4NISTGypsum  = man->FindOrBuildMaterial("G4_GYPSUM");
+  // ------------------------------------------------
+  // end define database materials
 
   // ------------------------------------------------
   // PROPERTIES OF SCINTILLATOR
@@ -459,16 +559,23 @@ void k100_DetectorConstruction::DefineMaterials()
   scintMat = Scint;
   polyMat = poly;
   d2oMat = d2o;
+  sio2Mat = sio2;
   h2oMat = h2o;
   naiMat = NaI;
+  blastsand = sio2_blastSand;
   shieldCuMat = Copper;
   shieldPbMat = Lead;
   iceboxCuMat = Copper;
   mumetalMat = mumetal;
   aluminum=Aluminum;
+  lightaluminum=LightAluminum;
+  wood=WOOD;
   steel=Steel;
+  carbonsteel=StandardSteel;
   brass=Brass;
   helium=liquidHelium;
+  stillHe=stillLiquid;
+  MCHe=MCLiquid;
   super=Super;
   // ------------------------------------------------
 
@@ -495,6 +602,7 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
 
   // Clean old geometry, if any
   //
+  //FIXME: clean sensitive detectors?
   G4GeometryManager::GetInstance()->OpenGeometry();
   G4PhysicalVolumeStore::GetInstance()->Clean();
   G4LogicalVolumeStore::GetInstance()->Clean();
@@ -507,15 +615,18 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
   std::map<G4String,G4int>::iterator it;
   for(it=k100CollName.begin();it!=k100CollName.end();++it){
     SDman->Activate(it->first,false);
+    //delete k100CollPoint[it->first]; //trouble! never
   }
   k100CollName.clear();
+  k100CollPoint.clear();
 
   // ------------ Construct the Physical world ---------------
 
   // Construct the World
-  G4Box* solidWorld = new G4Box("world_S", world_x, world_y, world_z);
+  G4Box* solidWorld = new G4Box("world_S", 0.5*world_x, 0.5*world_y, 0.5*world_z);
+  G4cout << "WORLD MOTHER VOLUME: " << solidWorld->GetCubicVolume()/1e9 << G4endl;
   G4LogicalVolume*  logicalWorld = new G4LogicalVolume(solidWorld,  // The solid
-						       defaultMat, // Material
+						       G4NISTair, // Material
 						       "world_L",  // Name
 						       0,0,0);
   // Physical volume
@@ -627,15 +738,28 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
   //----------------------------------- 
   // Contruct the Tower Logical Volume
   //-----------------------------------
+  //some measurements of the floor and fridge
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
 
   // Position Vector
   //G4ThreeVector positionTower = G4ThreeVector(xtow[1-1],ytow[1-1],ztow[1-1]);
   G4ThreeVector positionTower = G4ThreeVector(tower_x,tower_y,tower_z);
+
+  G4cout << "Position of Tower 1 in World: (" << tower_x << "," << tower_y << "," << tower_z << ")" << G4endl;
+  G4cout << "Tower 1 Height Above Floor: " << tower_z-floorZ  << G4endl;
   G4RotationMatrix r180Rotation;		// flip towers over
   r180Rotation.rotateY(180.*deg);
   G4Transform3D towerflip(r180Rotation, positionTower);
   //r180Rotation->rotateX(M_PI*rad);
   //r180Rotation->rotateZ(M_PI*rad);
+  G4cout << "Tower_nZcut: " << Tower_nZcut << G4endl;
+  G4cout << "Tower_zPcut: " << Tower_zPcut[0] << "\t" << Tower_zPcut[1] << G4endl;
+  G4cout << "Tower_rIcut: " << Tower_rIcut[0] << "\t" << Tower_rIcut[1] << G4endl;
+  G4cout << "Tower_rOcut: " << Tower_rOcut[0] << "\t" << Tower_rOcut[1] << G4endl;
   G4Polyhedra* solidTower1 = new G4Polyhedra("Tower1_S",0.*deg,360.*deg,6,Tower_nZcut,Tower_zPcut,Tower_rIcut,Tower_rOcut);
 
   if(NbOfTowers>=1){
@@ -657,7 +781,7 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
     G4VisAttributes* VisAttTower1 = new G4VisAttributes(G4Colour(215/255.,215/255.,215/255.));
     VisAttTower1->SetForceSolid(false);
     logicalTower1->SetVisAttributes(VisAttTower1);  
-    logicalTower1->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    //logicalTower1->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
     
     ConstructTowerGuts(physicalTower1);
     if(ConstructZipBool) {FillTheTower(physicalTower1,1);}
@@ -774,9 +898,34 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
 
 void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G4int towerNb)
 {
-  G4ThreeVector positionZipArray = G4ThreeVector(0,0,Tower_zPcut[0]-(zPldh[1]-zPldh[0])-zPsdh[1]-Zip_z/2);
+
+  //check the null case
+  if(NbZipsPerTower<1) return;
+
+  //some measurements of the floor and fridge
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  G4double zHeightAboveFloor = tower_z-floorZ;
+
+  //set up some variables
+  //G4ThreeVector position_ldh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - (zPsdh[1]-zPsdh[0]) - zPldh[1] ); 
+  G4double voidThk = NbZipsPerTower*Zip_z + (NbZipsPerTower-1)*Zip_Space + (zPsdh[1]-zPsdh[0]) - Zip_z; //total height plus tiny extra space 
+  G4double z0 = Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]); //z position after top housing of position 1 
+
+  //G4ThreeVector positionZipArray = G4ThreeVector(0,0,Tower_zPcut[0]-(zPldh[1]-zPldh[0])-zPsdh[1]-Zip_z/2);
+  //G4ThreeVector positionZipArray = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1]); 
+  G4ThreeVector positionZipArray = G4ThreeVector(0,0, z0-voidThk/2.0); 
+  //G4cout << "Zip Array Position In Tower: " << Tower_zPcut[0]-(zPldh[1]-zPldh[0])-zPsdh[1]-Zip_z/2 << G4endl;
+  //G4cout << "Zip Array Position In Tower: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1] << G4endl; 
+  G4cout << "Zip Array Position In Tower: " << z0-voidThk/2.0 << G4endl;
+  G4cout << "Zip Height Above Floor: " << tower_z-floorZ-z0+Zip_z/2.0+(zPsdh[1]-zPsdh[0]-Zip_z)/2.0  << G4endl;
  //Corrected from: G4ThreeVector(0,0,Tower_zPcut[0]+(zPldh[1]-zPldh[0]) + zPsdh[1]);
-  G4Tubs* solidZipArray = new G4Tubs("ZipArray_S", 0.0, Zip_Rout, 6*Zip_Househeight/2,  0, 2*pi);
+  //G4Tubs* solidZipArray = new G4Tubs("ZipArray_S", 0.0, Zip_Rout, 6*Zip_Househeight/2,  0, 2*pi);
+  G4Tubs* solidZipArray = new G4Tubs("ZipArray_S", 0.0, Zip_Rout, voidThk/2,  0, 2*pi);
 
   //------------------------------ 
   // Individual Zips
@@ -799,8 +948,9 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
 
   // Using the parameterisation defined in the PixelParameteriation class.
   zipParam = 
-    new k100_ZipParameterisation(NbZipsPerTower,   // NoZips/Tower
-				 Zip_Househeight, // Z spacing of centers
+    new k100_ZipParameterisation(voidThk, //total thickness
+		                 NbZipsPerTower,   // NoZips/Tower
+				 Zip_Space, // Z spacing between 
 				 Zip_Rout,       // Zip Radius
 				 Zip_z,         // Depth of pixel (in Z)
 				 DetMaterials, // Zip Materials
@@ -814,7 +964,11 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
   if(towerNb==1) {
     G4LogicalVolume* logicalZip1Array = new G4LogicalVolume(solidZipArray, defaultMat, "ZipArray1_L", 0,0,0);
     G4VPhysicalVolume* physicalZip1Array = new G4PVPlacement(0, positionZipArray, "ZipArray1_P", logicalZip1Array,
-							     physicalTower, false,  0);
+   							     physicalTower, false,  0);
+
+    zHeightAboveFloor-=positionZipArray.z();            //minus sign because tower rotated
+    zHeightAboveFloor-=zipParam->GetCoordinates(0).z(); //minus sign because tower rotated
+    G4cout << "Zip Height Above Floor (2nd calc): " << zHeightAboveFloor  << G4endl;
     // Visualization attributes
     G4VisAttributes* VisAttZipArr = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
     VisAttZipArr->SetForceSolid(true);
@@ -833,6 +987,12 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
 
 			  zipParam,          // Use this parameterisation
 			  false);
+
+
+    G4ThreeVector Zip0Coord = zipParam->GetCoordinates(0);
+    G4cout << "Coordinates of Zip w/ copy no = 0: " << Zip0Coord.x() << "," << Zip0Coord.y() << "," << Zip0Coord.z() << G4endl;
+    G4ThreeVector Zip1Coord = zipParam->GetCoordinates(1);
+    G4cout << "Coordinates of Zip w/ copy no = 1: " << Zip1Coord.x() << "," << Zip1Coord.y() << "," << Zip1Coord.z() << G4endl;
 
 // Since the ZIPs coordinates are not very clear from above function calls here is some information to
 // understand the results:
@@ -873,10 +1033,19 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4int collID = -1; collID = SDman->GetCollectionID(detectorZipSDname);
     k100_ZipSD* azipSD1;
     ConstructGenericSensitiveInt=1; 
-    azipSD1 = new k100_ZipSD(detectorZipSDname, towerNb);
-    k100CollName[detectorZipSDname] = towerNb;
-    SDman->AddNewDetector(azipSD1);
-    //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
+
+    //if(collID==-1){
+    if(true){
+      azipSD1 = new k100_ZipSD(detectorZipSDname, towerNb);
+      G4cout << "Tower 1 is detector " << towerNb << G4endl;
+      k100CollName[detectorZipSDname] = towerNb;
+      k100CollPoint[detectorZipSDname] = azipSD1;
+      SDman->AddNewDetector(azipSD1);
+      //    G4cout << "#### DetCon : zipCollID[ii]  " << SDman->GetCollectionID(detectorZipSDname) << G4endl;
+    }
+    else{
+      azipSD1 = k100CollPoint[detectorZipSDname];
+    }
     logicalZip1->SetSensitiveDetector(azipSD1);
   }
 
@@ -1024,6 +1193,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Working from the top down: this is the `copper upper tower', mass 2.0 kg
   //-------------------------------------------------------------------------
   G4ThreeVector position_top = G4ThreeVector(0,0,+Tower_zPcut[1] - zPcut[1]);
+  G4cout << "z shift for Tower Guts: " << Tower_zPcut[1] - zPcut[1] << G4endl;
+  G4cout << "Height of copper upper tower: " << zPcut[1] - zPcut[0] << G4endl;
   G4Polyhedra* cu_tops=new G4Polyhedra("cu_top",0.*deg,360.*deg,6,nZcut,zPcut,rIcut,rOcut);
   G4LogicalVolume* cu_topl1 = new G4LogicalVolume(cu_tops,towerMat,"cutl1");
   G4PVPlacement* cu_topp1 = new G4PVPlacement(0,position_top,"cutp1",cu_topl1,physicalTower,false,0);
@@ -1033,6 +1204,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, the lower cap of the `copper upper tower', mass 0.233 kg/tower
   //----------------------------------------------------------------------
   G4ThreeVector position_clc = G4ThreeVector(0,0,+Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - zPclc[1]);
+  G4cout << "z shift for Tower lower cap: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) << G4endl;
+  G4cout << "Height of copper lower cap: " << zPclc[1] - zPclc[0] << G4endl;
   G4Polyhedra* cu_clcs=new G4Polyhedra("cu_clc",0.*deg,360.*deg,6,nZclc,zPclc,rIclc,rOclc);
   G4LogicalVolume* cu_clcl1 = new G4LogicalVolume(cu_clcs,towerMat,"clcl1");
   G4PVPlacement* cu_clcp1 = new G4PVPlacement(0,position_clc,"clcp1",cu_clcl1,physicalTower,false,0);
@@ -1042,6 +1215,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, connector tube, mass 0.140 kg/tower (next ring excluded...)
   //------------------------------------------------------------------
   G4ThreeVector position_ctu = G4ThreeVector(0,0,+Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - zHctu);
+  G4cout << "z shift for spool: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - zHctu << G4endl;
+  G4cout << "Height of spool: " << 2*zHctu << G4endl;
   G4Tubs* cu_ctus=new G4Tubs("cu_ctu",rIctu,rOctu,zHctu,0.*deg,360.*deg);
   G4LogicalVolume* cu_ctul1=new G4LogicalVolume(cu_ctus,towerMat,"ctul1");
   G4PVPlacement* cu_ctup1=new G4PVPlacement(0,position_ctu,"ctup1",cu_ctul1,physicalTower,false,0);
@@ -1052,6 +1227,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, ring at base of connector tube, mass 0.051 kg/tower
   //--------------------------------------------------------------
   G4ThreeVector position_rb = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu); // QUESTION : Is this ring centered on the bottom of the tower ??
+  G4cout << "z shift for base ring: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu << G4endl;
+  G4cout << "Height of base ring: " << 2*zHrb << G4endl;
   G4Tubs* cu_rbs=new G4Tubs("cu_rb",rIrb,rOrb,zHrb,0.*deg,360.*deg);
   G4LogicalVolume* cu_rbl1=new G4LogicalVolume(cu_rbs,towerMat,"crbl1");
   G4PVPlacement* cu_rbp1=new G4PVPlacement(0,position_rb,"crbp1",cu_rbl1,physicalTower,false,0);
@@ -1062,6 +1239,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   // (about 0.044 kg/tower actually included in ring at base above)
   //------------------------------------------------------------------
   G4ThreeVector position_udh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - zPudh[1]); 
+  G4cout << "z shift for upper det housing cap: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - zPudh[1] << G4endl;
+  G4cout << "Height of upper det housing cap: " << zPudh[1] - zPudh[0] << G4endl;
   G4Polyhedra* cu_udhs=new G4Polyhedra("cu_udh",0.*deg,360.*deg,6,nZudh,zPudh,rIudh,rOudh);
   G4LogicalVolume* cu_udhl1 = new G4LogicalVolume(cu_udhs,towerMat,"udhl1");
   G4PVPlacement* cu_udhp1 = new G4PVPlacement(0, position_udh,"udhp1",cu_udhl1,physicalTower,false,0);
@@ -1072,6 +1251,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, the side detector housing, mass 0.384 kg/tower
   //--------------------------------------------------------------
   G4ThreeVector position_sdh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1]); 
+  G4cout << "z shift for side det housing: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - zPsdh[1] << G4endl;
+  G4cout << "Height of side det housing: " << zPsdh[1] - zPsdh[0] << G4endl;
   G4Polyhedra* cu_sdhs=new G4Polyhedra("cu_sdh",0.*deg,360.*deg,6,nZsdh,zPsdh,rIsdh,rOsdh);
   G4LogicalVolume* cu_sdhl1 = new G4LogicalVolume(cu_sdhs,towerMat,"sdhl1");
   G4PVPlacement* cu_sdhp1 = new G4PVPlacement(0,position_sdh,"sdhp1",cu_sdhl1,physicalTower,false,0);
@@ -1083,6 +1264,8 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //Next, the lower cap of the detector housing, mass 0.078 kg/tower
   //------------------------------------------------------------------
   G4ThreeVector position_ldh = G4ThreeVector(0,0, Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - (zPsdh[1]-zPsdh[0]) - zPldh[1] ); 
+  G4cout << "z shift for lower det housing cap: " << Tower_zPcut[1] - (zPcut[1]-zPcut[0]) - (zPclc[1]-zPclc[0]) - 2*zHctu - zHrb - (zPudh[1]-zPudh[0]) - (zPsdh[1]-zPsdh[0]) - zPldh[1] << G4endl;
+  G4cout << "Height of lower det housing cap: " << zPldh[1] - zPldh[0] << G4endl;
   G4Polyhedra* cu_ldhs=new G4Polyhedra("cu_ldh",0.*deg,360.*deg,6,nZldh,zPldh,rIldh,rOldh);
   G4LogicalVolume* cu_ldhl1 = new G4LogicalVolume(cu_ldhs,towerMat,"ldhl1");
   G4PVPlacement* cu_ldhp1 = new G4PVPlacement(0,position_ldh,"ldhp1",cu_ldhl1,physicalTower,false,0);
@@ -1140,7 +1323,7 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
 
   G4double coaxpos;
   coaxpos = (Tower_zPcut[0]+zPldh[1] + (6-0.5-5)*Zip_Househeight + sdcx_lenH[0]);
-  G4PVPlacement* physcoax1 = new G4PVPlacement(0,G4ThreeVector(0.*cm,-(sdcx_thicknessH+rOsdh[0]),coaxpos),"coax1",logiccoax1,physicalTower,false,0);
+  //G4PVPlacement* physcoax1 = new G4PVPlacement(0,G4ThreeVector(0.*cm,-(sdcx_thicknessH+rOsdh[0]),coaxpos),"coax1",logiccoax1,physicalTower,false,0);
 
   //G4PVPlacement* physcoax1 = new G4PVPlacement(0,G4ThreeVector(0.*cm,-4.18*cm,coaxpos),"coax1",logiccoax1,physicalTower,false,0);
 
@@ -1151,7 +1334,7 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //G4PVPlacement* physcoax3 = new G4PVPlacement(coaxrotation2,G4ThreeVector(0+3.62*cm,0+2.09*cm,coaxpos),"coax3",logiccoax3,physicalTower,false,0);
 
   coaxpos = (Tower_zPcut[0]+zPldh[1] + (6-0.5-5)*Zip_Househeight + sdcx_lenH[3]);
-  G4PVPlacement* physcoax4 = new G4PVPlacement(0,G4ThreeVector(0,sdcx_thicknessH+rOsdh[0],coaxpos),"coax4",logiccoax4,physicalTower,false,0);  
+  //G4PVPlacement* physcoax4 = new G4PVPlacement(0,G4ThreeVector(0,sdcx_thicknessH+rOsdh[0],coaxpos),"coax4",logiccoax4,physicalTower,false,0);  
 
   //G4PVPlacement* physcoax4 = new G4PVPlacement(0,G4ThreeVector(0,0+4.18*cm,coaxpos),"coax4",logiccoax4,physicalTower,false,0);
 
@@ -1159,7 +1342,7 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   //G4PVPlacement* physcoax5 = new G4PVPlacement(coaxrotation1,G4ThreeVector(0-3.62*cm,0+2.09*cm,coaxpos),"coax5",logiccoax5,physicalTower,false,0);
 
   coaxpos = (Tower_zPcut[0]+zPldh[1] + (6-0.5-5)*Zip_Househeight + sdcx_lenH[5]);
-  G4PVPlacement* physcoax6 = new G4PVPlacement(coaxrotation2,G4ThreeVector(-(sdcx_thicknessH+rOsdh[0])*sin(60*deg),-(sdcx_thicknessH+rOsdh[0])*cos(60*deg),coaxpos),"coax6",logiccoax6,physicalTower,false,0);
+  //G4PVPlacement* physcoax6 = new G4PVPlacement(coaxrotation2,G4ThreeVector(-(sdcx_thicknessH+rOsdh[0])*sin(60*deg),-(sdcx_thicknessH+rOsdh[0])*cos(60*deg),coaxpos),"coax6",logiccoax6,physicalTower,false,0);
 
   //G4PVPlacement* physcoax6 = new G4PVPlacement(coaxrotation2,G4ThreeVector(0-3.62*cm,0-2.09*cm,coaxpos),"coax6",logiccoax6,physicalTower,false,0);
 
@@ -1179,6 +1362,12 @@ void k100_DetectorConstruction::ConstructEverything(G4LogicalVolume*  logicalWor
   if(ConstructVetoBool)    {ConstructVeto(logicalWorld);}
   if(ConstructShieldsBool) {ConstructShields(logicalWorld);}
   if(ConstructIceBoxBool)  {ConstructIceBox(logicalWorld);}
+  if(ConstructFloorBool)  {ConstructFloor(physicalWorld);}
+  if(ConstructWallsBool)  {ConstructWalls(physicalWorld);}
+  if(ConstructCeilingBool)  {ConstructCeiling(physicalWorld);}
+  if(ConstructWestReflectorBool)  {ConstructWestReflector(physicalWorld);}
+  if(ConstructFrameBool)  {ConstructFrame(physicalWorld);}
+  if(ConstructPuBeSourceAndShieldBool)  {ConstructPuBeSourceAndShield(physicalWorld);}
   if(ConstructThermalNeutronBoxBool)  {ConstructThermalNeutronBox(physicalWorld);}
 
 } // ends ConstructEverything
@@ -1312,24 +1501,27 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // --------------------- Poly Panels --------------------------
   // poly visuals
   G4VisAttributes* polyVis = new G4VisAttributes(G4Colour(255/255.,255/255.,255/255.));
-  polyVis->SetForceSolid(false);
+  polyVis->SetForceSolid(true);
   
   // base panel setup
   G4ThreeVector panelPosition = G4ThreeVector(frame_x+10*2.54*cm,frame_y+12*2.54*cm,frame_z-23.5*2.54*cm);
   G4Box* baseShield = new G4Box("baseShield", 11*2.54*cm, 11*2.54*cm, 4*2.54*cm);
   G4LogicalVolume* logicBase = new G4LogicalVolume(baseShield, polyMat, "logicBase",0,0,0);
-  new G4PVPlacement(0,panelPosition,"physicBase",logicBase,physicalWorld,false,0);
+  if(shieldParams.addBasePoly) //usually dont put poly panels on base 
+    new G4PVPlacement(0,panelPosition,"physicBase",logicBase,physicalWorld,false,0);
   logicBase->SetVisAttributes(polyVis);
 
   // square side panels
   // initial setup
   G4Box* squareBase = new G4Box("squareBase",11*2.54*cm,4*2.54*cm,27.5*2.54*cm);
-  G4Tubs* hole = new G4Tubs("hole", 0, .55*2.54*cm, 2.1*2.54*cm, 0, 2*pi);
+  //G4Tubs* hole = new G4Tubs("hole", 0, .55*2.54*cm, 2.1*2.54*cm, 0, 2*pi);
+  G4Tubs* hole = new G4Tubs("hole", 0, .55*2.54*cm, 4.1*2.54*cm, 0, 2*pi);
   G4ThreeVector off(1*m,1*m,1*m);
   G4RotationMatrix holeRot;
   holeRot.rotateX(pi/2*rad);
   G4Transform3D offset(holeRot,off);
-  G4SubtractionSolid* oldSquare = new G4SubtractionSolid("oldSquare", squareBase, hole, offset);
+  //G4SubtractionSolid* oldSquare = new G4SubtractionSolid("oldSquare", squareBase, hole, offset);
+  G4SubtractionSolid* oldSquare = (G4SubtractionSolid*) squareBase; //not good to put a subtraction outside original solid, especially not just for convenience, try casting
   G4SubtractionSolid* square;
 
   // Loop to put in holes
@@ -1350,9 +1542,12 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // place squares
   G4LogicalVolume* logicSquare = new G4LogicalVolume(square,polyMat,"logicSquare",0,0,0);
   panelPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y-5*2.54*cm,frame_z);
-  new G4PVPlacement(0,panelPosition,"physicSquare",logicSquare,physicalWorld,false,0);
+  G4cout << "Is Pu/Be Mod? " << shieldParams.mod << G4endl;
+  if((shieldParams.mod!=2) || (ConstructPuBeSourceAndShieldBool==false)) //mod 2 is simply without this poly
+    new G4PVPlacement(0,panelPosition,"physicSquare",logicSquare,physicalWorld,false,0);
   panelPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y+29*2.54*cm,frame_z);
-  new G4PVPlacement(0,panelPosition,"physicSquare1",logicSquare,physicalWorld,false,1);
+  if(((shieldParams.mod!=1)&&(shieldParams.mod!=2)&&(!pubeNaIParams.doOrb)) || (ConstructPuBeSourceAndShieldBool==false)) //mod 1 and 2 is simply without this poly
+    new G4PVPlacement(0,panelPosition,"physicSquare1",logicSquare,physicalWorld,false,1);
   logicSquare->SetVisAttributes(polyVis);
 
   // rect side panels
@@ -1381,11 +1576,134 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // place rects
   G4LogicalVolume* logicRect = new G4LogicalVolume(rect,polyMat,"logicRect",0,0,0);
   panelPosition=G4ThreeVector(frame_x-5*2.54*cm,frame_y+12*2.54*cm,frame_z);
-  new G4PVPlacement(0,panelPosition,"physicRect",logicRect,physicalWorld,false,0);
+  if(!shieldParams.addNaISouth) //only place south panels when NOT using NaI detectors 
+    new G4PVPlacement(0,panelPosition,"physicRect",logicRect,physicalWorld,false,0);
   panelPosition=G4ThreeVector(frame_x+25*2.54*cm,frame_y+12*2.54*cm,frame_z);
   new G4PVPlacement(0,panelPosition,"physicRect1",logicRect,physicalWorld,false,1);
   logicRect->SetVisAttributes(polyVis);
 
+ // -------------- Make NaI detector frame (and place upon request) ------------
+
+ //variables
+ G4double plateSpace=3.0*2.54*cm;
+
+ // lead visuals
+ G4VisAttributes* detVis = new G4VisAttributes(G4Colour(255/255.,0/255.,255/255.));
+ detVis->SetForceSolid(false);
+ detVis->SetForceWireframe(true);  //I want a Wireframe
+ G4VisAttributes* naiAndLightGuideVis = new G4VisAttributes(G4Colour(255/255.,255/255.,0/255.));
+ naiAndLightGuideVis->SetForceSolid(true);
+
+ if(shieldParams.addNaISouth){
+ 
+	 
+   //FIXME using simple supports, could use 8020 
+   G4Box* naiSupport = new G4Box("naiSupport",0.5*1.5*2.54*cm,0.5*1.5*2.54*cm,30.0*2.54*cm);
+   G4LogicalVolume* logicNaISupport = new G4LogicalVolume(naiSupport,G4NISTAl,"logicNaISupport",0,0,0);
+
+   G4ThreeVector supportPosition;
+   supportPosition=G4ThreeVector(frame_x-(13.25-0.25-0.5*1.5)*2.54*cm,frame_y+(12-0.5*(18-1.5))*2.54*cm,frame_z+(30-27)*2.54*cm); //pole shifted to sit on platform
+   new G4PVPlacement(0,supportPosition,"physicNaISupport0",logicNaISupport,physicalWorld,false,0);
+   supportPosition=G4ThreeVector(frame_x-(13.25-0.25-0.5*1.5)*2.54*cm,frame_y+(12+0.5*(18-1.5))*2.54*cm,frame_z+(30-27)*2.54*cm); //pole shifted to sit on platform
+   new G4PVPlacement(0,supportPosition,"physicNaISupport0",logicNaISupport,physicalWorld,false,0);
+   logicNaISupport->SetVisAttributes(frameVis);
+
+   //plates
+   G4VSolid* naiPlate = new G4Box("naiPlate",0.5*0.25*2.54*cm,0.5*18.0*2.54*cm,0.5*18.0*2.54*cm);
+   G4Tubs* large_hole = new G4Tubs("large_hole",0.0,0.5*8.0*2.54*cm,2*2.54*cm,0.0,2*pi);
+   //have to make a rotation for the corner plate cut 
+   G4RotationMatrix *holerot = new G4RotationMatrix;
+   holerot->rotateY(-M_PI/2.0*rad);
+   naiPlate = new G4SubtractionSolid("naiPlate_Cut",naiPlate,large_hole,holerot,G4ThreeVector(0,0,0));
+   G4LogicalVolume* logicNaIPlate = new G4LogicalVolume(naiPlate,G4NISTAl,"logicNaIPlate",0,0,0);
+
+   G4ThreeVector platePosition;
+   platePosition=G4ThreeVector(frame_x-(13.25-0.25-1.5-0.5*0.25)*2.54*cm,frame_y+(12)*2.54*cm,frame_z-(0.5*18)*2.54*cm-0.5*plateSpace); 
+   new G4PVPlacement(0,platePosition,"physicNaIPlate0",logicNaIPlate,physicalWorld,false,0);
+   platePosition=G4ThreeVector(frame_x-(13.25-0.25-1.5-0.5*0.25)*2.54*cm,frame_y+(12)*2.54*cm,frame_z+(0.5*18)*2.54*cm+0.5*plateSpace); 
+   new G4PVPlacement(0,platePosition,"physicNaIPlate1",logicNaIPlate,physicalWorld,false,0);
+   logicNaIPlate->SetVisAttributes(frameVis);
+
+   //detectors
+   G4VSolid* collet = new G4Tubs("collet",0,0.5*10.0*2.54*cm,0.5*1.0*2.54*cm,0.0,2*pi);
+   G4VSolid* casing = new G4Tubs("casing",0,0.5*8.0*2.54*cm,0.5*8.0*2.54*cm,0.0,2*pi);
+   G4VSolid* naiHouse = new G4UnionSolid("naiHouse",collet,casing,0,G4ThreeVector(0,0,+0.5*(8.0+1.0)*2.54*cm));
+   G4LogicalVolume* logicNaIHousing = new G4LogicalVolume(naiHouse,G4NISTAl,"logicNaIHousing",0,0,0);
+   
+   G4ThreeVector detPosition;
+   detPosition=G4ThreeVector(frame_x-(13.25-0.25-1.5+0.5*1.0)*2.54*cm,frame_y+(12)*2.54*cm,frame_z-(0.5*18)*2.54*cm-0.5*plateSpace); 
+   G4PVPlacement *det0 = new G4PVPlacement(holerot,detPosition,"physicNaIDet0",logicNaIHousing,physicalWorld,false,0);
+   detPosition=G4ThreeVector(frame_x-(13.25-0.25-1.5+0.5*1.0)*2.54*cm,frame_y+(12)*2.54*cm,frame_z+(0.5*18)*2.54*cm+0.5*plateSpace); 
+   G4PVPlacement *det1 = new G4PVPlacement(holerot,detPosition,"physicNaIDet1",logicNaIHousing,physicalWorld,false,0);
+   logicNaIHousing->SetVisAttributes(detVis);
+
+   //detectors
+   G4double naiThk = 6.0; //in inches
+   G4double sp = 0.0; //in inches, theoretical space between LG and NaI, nominally this is zero but use it for visualization
+   G4double lgThk = (9.0-6.0-0.125-sp); // in inches
+   G4VSolid* nai = new G4Tubs("nai",0,0.5*(8.0-0.25)*2.54*cm,0.5*(naiThk)*2.54*cm,0.0,2*pi);
+   G4VSolid* lg = new G4Tubs("lg",0,0.5*(8.0-0.25)*2.54*cm,0.5*(lgThk)*2.54*cm,0.0,2*pi);
+   G4LogicalVolume* logicNaIB = new G4LogicalVolume(nai,G4NISTNaI,"logicNaIB",0,0,0);
+   G4LogicalVolume* logicNaIC = new G4LogicalVolume(nai,G4NISTNaI,"logicNaIC",0,0,0);
+   G4LogicalVolume* logicLG = new G4LogicalVolume(lg,G4NISTlucite,"logicLG",0,0,0);
+
+   G4ThreeVector matPosition;
+   matPosition=G4ThreeVector(0,0,(0.5+8.0-(naiThk/2.0)-0.125)*2.54*cm); 
+   new G4PVPlacement(0,matPosition,"physicNaI0",logicNaIB,det0,false,0);
+   matPosition=G4ThreeVector(0,0,(-0.5+(lgThk/2.0))*2.54*cm); 
+   new G4PVPlacement(0,matPosition,"physicLG0",logicLG,det0,false,0);
+   matPosition=G4ThreeVector(0,0,(0.5+8.0-(naiThk/2.0)-0.125)*2.54*cm); 
+   new G4PVPlacement(0,matPosition,"physicNaI1",logicNaIC,det1,false,0);
+   matPosition=G4ThreeVector(0,0,(-0.5+(lgThk/2.0))*2.54*cm); 
+   new G4PVPlacement(0,matPosition,"physicLG1",logicLG,det1,false,0);
+   logicNaIB->SetVisAttributes(naiAndLightGuideVis);
+   logicNaIC->SetVisAttributes(naiAndLightGuideVis);
+   logicLG->SetVisAttributes(naiAndLightGuideVis);
+
+   //------------------------------------------------ 
+   // Coincident Sensitive detectors
+   //------------------------------------------------ 
+      
+   // Prepare to declare sensitive detectors
+   G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+   G4String SDname = "NaIB";
+   G4int collID = -1; collID = SDman->GetCollectionID(SDname);
+   k100_ZipSD* naiSD0;
+   ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+
+   //if(collID==-1){
+   if(true){
+     k100CollName[SDname] = 7;
+     naiSD0 = new k100_ZipSD(SDname,k100CollName[SDname]);
+     G4cout << "NaI B is Detector " << k100CollName[SDname] << G4endl;
+     k100CollPoint[SDname] = naiSD0;
+     SDman->AddNewDetector(naiSD0);
+   }
+   else{
+     naiSD0 = k100CollPoint[SDname];
+   }
+   logicNaIB->SetSensitiveDetector(naiSD0);
+
+   SDname = "NaIC";
+   collID = -1; collID = SDman->GetCollectionID(SDname);
+   k100_ZipSD* naiSD1;
+   ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+
+   //if(collID==-1){
+   if(true){
+     k100CollName[SDname] = 8;
+     naiSD1 = new k100_ZipSD(SDname,k100CollName[SDname]);
+     G4cout << "NaI C is Detector " << k100CollName[SDname] << G4endl;
+     k100CollPoint[SDname] = naiSD1;
+     SDman->AddNewDetector(naiSD1);
+   }
+   else{
+     naiSD1 = k100CollPoint[SDname];
+   }
+   logicNaIC->SetSensitiveDetector(naiSD1);
+
+  }// end addNaISouth if statement
 
  // --------------------- Lead Frame Panels --------------------------
   // This section contains the aluminum fram that surrounds the lead shield.
@@ -1397,8 +1715,9 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
  // --------------------- Lead Panels --------------------------
 
   // lead visuals
-  G4VisAttributes* leadVis = new G4VisAttributes(G4Colour(102/255.,0/255.,187/255.));
-  leadVis->SetForceSolid(false);
+  //G4VisAttributes* leadVis = new G4VisAttributes(G4Colour(102/255.,0/255.,187/255.));
+  G4VisAttributes* leadVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+  leadVis->SetForceSolid(true);
 
   // base lead panel setup
   G4ThreeVector leadPosition = G4ThreeVector(frame_x+10*2.54*cm,frame_y+12*2.54*cm,frame_z-27.75*2.54*cm);
@@ -1421,7 +1740,8 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
     } 
 
   G4LogicalVolume* logicLeadBase = new G4LogicalVolume(leadBase, shieldPbMat, "logicLeadBase",0,0,0);
-  new G4PVPlacement(0,leadPosition,"physicLeadBase",logicLeadBase,physicalWorld,false,0);
+  if(shieldParams.addBaseLead)//usually do NOT add base lead sheets
+    new G4PVPlacement(0,leadPosition,"physicLeadBase",logicLeadBase,physicalWorld,false,0);
   logicLeadBase->SetVisAttributes(leadVis);
 
   // square side panels
@@ -1434,23 +1754,43 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   leadPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y-(11.25)*2.54*cm,frame_z);
   new G4PVPlacement(0,leadPosition,"physicLeadSquare",logicLeadSquare,physicalWorld,false,0);
   leadPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y+(35.25)*2.54*cm,frame_z);
-  new G4PVPlacement(0,leadPosition,"physicLeadSquare1",logicLeadSquare,physicalWorld,false,1);
+  if(!pubeNaIParams.doOrb) //don't place this lead if doing orb
+    new G4PVPlacement(0,leadPosition,"physicLeadSquare1",logicLeadSquare,physicalWorld,false,1);
   logicLeadSquare->SetVisAttributes(leadVis);
 
 
   // rect side panels
   // initial setup
 
-  G4Box* rectLeadBase = new G4Box("rectLeadBase",0.25*2.54*cm,23*2.54*cm,27.5*2.54*cm);
+  G4Box* rectLeadBaseY = new G4Box("rectLeadBase",0.25*2.54*cm,0.5*45*2.54*cm,27.5*2.54*cm);
+  G4Box* rectLeadBaseY_forNaI = new G4Box("rectLeadBase",0.25*2.54*cm,0.5*19.0*2.54*cm,27.5*2.54*cm);
+  G4Box* rectLeadBaseX = new G4Box("rectLeadBase",0.5*45*2.54*cm,0.25*2.54*cm,27.5*2.54*cm);
   
   //place squares
-  G4LogicalVolume* logicLeadRect = new G4LogicalVolume(rectLeadBase,shieldPbMat,"logicLeadRect",0,0,0);
-  leadPosition=G4ThreeVector(frame_x-(11.25)*2.54*cm,frame_y+12*2.54*cm,frame_z);
-  new G4PVPlacement(0,leadPosition,"physicLeadRect",logicLeadRect,physicalWorld,false,0);
-  leadPosition=G4ThreeVector(frame_x+(31.25)*2.54*cm,frame_y+12*2.54*cm,frame_z);
-  new G4PVPlacement(0,leadPosition,"physicLeadRect1",logicLeadRect,physicalWorld,false,1);
-  logicLeadRect->SetVisAttributes(leadVis);
+  G4LogicalVolume* logicLeadRectY = new G4LogicalVolume(rectLeadBaseY,shieldPbMat,"logicLeadRectY",0,0,0);
+  G4LogicalVolume* logicLeadRectY_forNaI = new G4LogicalVolume(rectLeadBaseY_forNaI,shieldPbMat,"logicLeadRectY_forNaI",0,0,0);
+  if(!shieldParams.addNaISouth){//change lead on side with NaI detectors
+    leadPosition=G4ThreeVector(frame_x-(11.25)*2.54*cm,frame_y+12*2.54*cm,frame_z);
+    new G4PVPlacement(0,leadPosition,"physicLeadRectY0",logicLeadRectY,physicalWorld,false,0);
+  }
+  else{
+    leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12+22.5-(19.0/2.0))*2.54*cm,frame_z);
+    new G4PVPlacement(0,leadPosition,"physicLeadRectY_forNaI0",logicLeadRectY_forNaI,physicalWorld,false,0);
+    leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12-22.5+(19.0/2.0))*2.54*cm,frame_z);
+    new G4PVPlacement(0,leadPosition,"physicLeadRectY_forNaI1",logicLeadRectY_forNaI,physicalWorld,false,0);
+  }
+  leadPosition=G4ThreeVector(frame_x+(33.25)*2.54*cm,frame_y+12*2.54*cm,frame_z);
+  new G4PVPlacement(0,leadPosition,"physicLeadRectY1",logicLeadRectY,physicalWorld,false,1);
+  logicLeadRectY->SetVisAttributes(leadVis);
+  logicLeadRectY_forNaI->SetVisAttributes(leadVis);
 
+  G4LogicalVolume* logicLeadRectX = new G4LogicalVolume(rectLeadBaseX,shieldPbMat,"logicLeadRectX",0,0,0);
+  leadPosition=G4ThreeVector(frame_x+(10.0)*2.54*cm,frame_y+(12+25)*2.54*cm,frame_z);
+  if(!pubeNaIParams.doOrb) //don't place this lead if doing orb
+    new G4PVPlacement(0,leadPosition,"physicLeadRectX0",logicLeadRectX,physicalWorld,false,0);
+  leadPosition=G4ThreeVector(frame_x+(10.0)*2.54*cm,frame_y+(12-25)*2.54*cm,frame_z);
+  new G4PVPlacement(0,leadPosition,"physicLeadRectX1",logicLeadRectX,physicalWorld,false,1);
+  logicLeadRectX->SetVisAttributes(leadVis);
                           
 } // ends Shield Construction
 
@@ -1492,22 +1832,28 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   
   // ------------------------- 30 mK shield ---------------------------
   G4ThreeVector mK30Pos(fridge_x,fridge_y,fridge_z);
-  G4Tubs* mK30Solid = new G4Tubs("mK30Solid", .5*4.438*2.54*cm,.5*4.5*2.54*cm, .5*9.75*2.54*cm, 0, 2*pi);
+  G4double r30 = 0.5*5.7*2.54*cm;
+  G4double thk30 = 0.5*0.12*2.54*cm;
+  //G4Tubs* mK30Solid = new G4Tubs("mK30Solid", 5*4.438*2.54*cm,.5*4.5*2.54*cm, .5*9.75*2.54*cm, 0, 2*pi);
+  G4Tubs* mK30Solid = new G4Tubs("mK30Solid", r30-thk30,r30, .5*9.75*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicmK30 = new G4LogicalVolume(mK30Solid,towerMat,"logicmK30",0,0,0);
   new G4PVPlacement(0,mK30Pos,"physicmK30",logicmK30,physicalWorld,false,0);
   logicmK30->SetVisAttributes(copperVis);
 
   // upper endcap
   G4ThreeVector mK30topPos(fridge_x,fridge_y,fridge_z+5.*2.54*cm);
-  G4Tubs* mK30top = new G4Tubs("mK30top", 0, .5*4.5*2.54*cm, .5*.25*2.54*cm,0,2*pi);
+  //G4Tubs* mK30top = new G4Tubs("mK30top", 0, .5*4.5*2.54*cm, .5*.25*2.54*cm,0,2*pi);
+  G4Tubs* mK30top = new G4Tubs("mK30top", 0, r30, .5*.25*2.54*cm,0,2*pi);
   G4LogicalVolume* logicmK30top = new G4LogicalVolume(mK30top,towerMat,"logicmK30top",0,0,0);
   new G4PVPlacement(0,mK30topPos,"physicmK30top",logicmK30top,physicalWorld,false,0);
   logicmK30top->SetVisAttributes(copperVis);
 
   // lower endcap
   G4ThreeVector mK30lowPos(fridge_x,fridge_y,fridge_z-5.*2.54*cm);
-  G4Tubs* mK30lowbase = new G4Tubs("mK30lowbase",0,.5*4.5*2.54*cm,.5*.25*2.54*cm,0,2*pi);
-  G4Polyhedra* towerHole = new G4Polyhedra("towerHole",0.*deg,360.*deg,6,Tower_nZcut,Tower_zPcut,Tower_rIcut,Tower_rOcut);
+  //G4Tubs* mK30lowbase = new G4Tubs("mK30lowbase",0,.5*4.5*2.54*cm,.5*.25*2.54*cm,0,2*pi);
+  G4Tubs* mK30lowbase = new G4Tubs("mK30lowbase",0,r30,.5*.25*2.54*cm,0,2*pi);
+  //G4Polyhedra* towerHole = new G4Polyhedra("towerHole",0.*deg,360.*deg,6,Tower_nZcut,Tower_zPcut,Tower_rIcut,Tower_rOcut);
+  G4Tubs* towerHole = new G4Tubs("towerHole",0,Tower_rOcut[0]+0.5*cm,400*cm,0,2*pi); //FIXME temporary slopply but large hole
   G4SubtractionSolid* mK30low = new G4SubtractionSolid("mK30low",mK30lowbase,towerHole);
   G4LogicalVolume* logicmK30low=new G4LogicalVolume(mK30low,towerMat,"logicmK30low",0,0,0);
   new G4PVPlacement(0,mK30lowPos,"physicmK30low",logicmK30low,physicalWorld,false,0);
@@ -1545,7 +1891,7 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   logicuBrLow->SetVisAttributes(brassVis); 
 
   // copper cylinder
-  G4ThreeVector uCuPos(fridge_x,fridge_y,fridge_x+9.06*2.54*cm);
+  G4ThreeVector uCuPos(fridge_x,fridge_y,fridge_z+9.06*2.54*cm);
   G4Tubs* uCu = new G4Tubs("uCu",.5*3.375*2.54*cm,.5*3.5*2.54*cm,.5*5.944*2.54*cm,0,2*pi);
   G4LogicalVolume* logicuCu = new G4LogicalVolume(uCu,towerMat,"logicuCu",0,0,0);
   new G4PVPlacement(0,uCuPos,"physicuCu",logicuCu,physicalWorld,false,0);
@@ -1559,35 +1905,35 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   logicuBrTop->SetVisAttributes(brassVis);
 
   // -------------------- inner vacuum can ---------------------------
-  G4ThreeVector ivcPos(fridge_x,fridge_y,fridge_z-1.3035*2.54*cm);
+  G4ThreeVector ivcPos(fridge_x,fridge_y,fridge_z-1.3035*2.54*cm+1.0*2.54*cm);
   G4Tubs* ivc = new G4Tubs("ivc", .5*8.87*2.54*cm, .5*9.*2.54*cm, .5*13.483*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicivc = new G4LogicalVolume(ivc,steel,"logicivc",0,0,0);
   new G4PVPlacement(0,ivcPos,"physicivc",logicivc,physicalWorld,false,0);
   logicivc->SetVisAttributes(steelVis); 
   
   // upper endcap
-  G4ThreeVector ivcTopPos(fridge_x,fridge_y,fridge_z+5.888*2.54*cm);
+  G4ThreeVector ivcTopPos(fridge_x,fridge_y,fridge_z+5.888*2.54*cm+1.0*2.54*cm);
   G4Tubs* ivcTop = new G4Tubs("ivcTop", .5*4.*2.54*cm, .5*9.*2.54*cm, .5*.9*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicivcTop = new G4LogicalVolume(ivcTop,steel,"logicivcTop",0,0,0);
   new G4PVPlacement(0,ivcTopPos,"physicivcTop",logicivcTop,physicalWorld,false,0);
   logicivcTop->SetVisAttributes(steelVis); 
 
   // upper pipe
-  G4ThreeVector uppPos(fridge_x,fridge_y,fridge_z+14.191*2.54*cm);
+  G4ThreeVector uppPos(fridge_x,fridge_y,fridge_z+14.191*2.54*cm+1.0*2.54*cm);
   G4Tubs* upp = new G4Tubs("upp", .5*3.834*2.54*cm, .5*4.*2.54*cm, .5*17.506*2.54*cm,0,2*pi);
   G4LogicalVolume* logicupp = new G4LogicalVolume(upp,steel,"logicupp",0,0,0);
   new G4PVPlacement(0,uppPos,"physicupp",logicupp,physicalWorld,false,0);
   logicupp->SetVisAttributes(steelVis);
 
   // upper pipe cap
-  G4ThreeVector upcPos(fridge_x,fridge_y,fridge_z+23.144*2.54*cm);
+  G4ThreeVector upcPos(fridge_x,fridge_y,fridge_z+23.144*2.54*cm+1.0*2.54*cm);
   G4Tubs* upc = new G4Tubs("upc", 0,.5*4.*2.54*cm,.5*.4*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicupc = new G4LogicalVolume(upc,steel,"logicupc",0,0,0);
   new G4PVPlacement(0,upcPos,"physicupc",logicupc,physicalWorld,false,0);
   logicupc->SetVisAttributes(steelVis);
 
   // lower endcap
-  G4ThreeVector ivcLowPos(fridge_x,fridge_y,fridge_z-8.495*2.54*cm);
+  G4ThreeVector ivcLowPos(fridge_x,fridge_y,fridge_z-8.495*2.54*cm+1.0*2.54*cm);
   G4Tubs* ivcLowBase = new G4Tubs("ivcLowBase", 0, .5*9.*2.54*cm, .5*.9*2.54*cm,0,2*pi);
   G4SubtractionSolid* ivcLow = new G4SubtractionSolid("ivcLow",ivcLowBase,towerHole);
   G4LogicalVolume* logicivcLow = new G4LogicalVolume(ivcLow,steel,"logicivcLow",0,0,0);
@@ -1595,128 +1941,135 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
   logicivcLow->SetVisAttributes(steelVis); 
 
   // electronics box
-  G4ThreeVector eboxPos(fridge_x,fridge_y,fridge_z-10.785*2.54*cm);
+  G4ThreeVector eboxPos(fridge_x,fridge_y,fridge_z-10.785*2.54*cm+1.0*2.54*cm);
   G4Tubs* ebox = new G4Tubs("ebox", .5*7.87*2.54*cm, .5*8.*2.54*cm, .5*3.68*2.54*cm,0,2*pi);
   G4LogicalVolume* logicebox = new G4LogicalVolume(ebox,steel,"logicebox",0,0,0);
   new G4PVPlacement(0,eboxPos,"physicebox",logicebox,physicalWorld,false,0);
   logicebox->SetVisAttributes(steelVis);
 
   // lower cap for electronics box
-  G4ThreeVector ecapPos(fridge_x,fridge_y,fridge_z-12.75*2.54*cm);
+  G4ThreeVector ecapPos(fridge_x,fridge_y,fridge_z-12.75*2.54*cm+1.0*2.54*cm);
   G4Tubs* ecap = new G4Tubs("ecap", 0, .5*8.*2.54*cm, .5*.25*2.54*cm,0,2*pi);
   G4LogicalVolume* logicecap=new G4LogicalVolume(ecap,steel,"logicecap",0,0,0);
   new G4PVPlacement(0,ecapPos,"physicebox",logicecap,physicalWorld,false,0);
   logicecap->SetVisAttributes(steelVis);
 
   // ---------------------------- Liquid Helium --------------------------
+  //
+
+  G4Material *thishelium;
+  if(fridgeParams.pure3HeBath)
+    thishelium = stillHe;
+  else
+    thishelium = helium;
   // top piece
-  G4ThreeVector topHePos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm);
+  G4ThreeVector topHePos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm+1.0*2.54*cm);
   G4Tubs* topHe = new G4Tubs("topHe", 0, .5*10.*2.54*cm, .5*18.563*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logictopHe = new G4LogicalVolume(topHe,helium,"logictopHe",0,0,0);
+  G4LogicalVolume* logictopHe = new G4LogicalVolume(topHe,thishelium,"logictopHe",0,0,0);
   new G4PVPlacement(0,topHePos,"physictopHe",logictopHe,physicalWorld,false,0);
   logictopHe->SetVisAttributes(heliumVis);
 
   // top center piece
-  G4ThreeVector tcHePos(fridge_x,fridge_y,fridge_z+24.985*2.54*cm);
+  G4ThreeVector tcHePos(fridge_x,fridge_y,fridge_z+24.985*2.54*cm+1.0*2.54*cm);
   G4Tubs* tcHe = new G4Tubs("tcHe", 0, .5*14.*2.54*cm, .5*3.282*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logictcHe = new G4LogicalVolume(tcHe,helium,"logictcHe",0,0,0);
+  G4LogicalVolume* logictcHe = new G4LogicalVolume(tcHe,thishelium,"logictcHe",0,0,0);
   new G4PVPlacement(0,tcHePos,"physictcHe",logictcHe,physicalWorld,false,0);
   logictcHe->SetVisAttributes(heliumVis);
 
   // center piece
-  G4ThreeVector ceHePos(fridge_x,fridge_y,fridge_z+14.841*2.54*cm);
+  G4ThreeVector ceHePos(fridge_x,fridge_y,fridge_z+14.841*2.54*cm+1.0*2.54*cm);
   G4Tubs* ceHe = new G4Tubs("ceHe", .5*4.*2.54*cm, .5*14.*2.54*cm, .5*17.006*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logiceHe = new G4LogicalVolume(ceHe,helium,"logiceHe",0,0,0);
+  G4LogicalVolume* logiceHe = new G4LogicalVolume(ceHe,thishelium,"logiceHe",0,0,0);
   new G4PVPlacement(0,ceHePos,"physiceHe",logiceHe,physicalWorld,false,0);
   logiceHe->SetVisAttributes(heliumVis);
   
   // lower center piece
-  G4ThreeVector lcHePos(fridge_x,fridge_y,fridge_z+5.8255*2.54*cm);
+  G4ThreeVector lcHePos(fridge_x,fridge_y,fridge_z+5.8255*2.54*cm+1.0*2.54*cm);
   G4Tubs* lcHe = new G4Tubs("lcHe", .5*9.*2.54*cm, .5*14.*2.54*cm, .5*1.025*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logiclcHe = new G4LogicalVolume(lcHe,helium,"logiclcHe",0,0,0);
+  G4LogicalVolume* logiclcHe = new G4LogicalVolume(lcHe,thishelium,"logiclcHe",0,0,0);
   new G4PVPlacement(0,lcHePos,"physiclcHe",logiclcHe,physicalWorld,0,0,0);
   logiclcHe->SetVisAttributes(heliumVis);
   
   // upper lower piece
-  G4ThreeVector ulHePos(fridge_x,fridge_y,fridge_z-1.816*2.54*cm);
+  G4ThreeVector ulHePos(fridge_x,fridge_y,fridge_z-1.816*2.54*cm+1.0*2.54*cm);
   G4Tubs* ulHe = new G4Tubs("ulHe", .5*9.*2.54*cm, .5*10.*2.54*cm, .5*14.258*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logiculHe = new G4LogicalVolume(ulHe,helium,"logiculHe",0,0,0);
+  G4LogicalVolume* logiculHe = new G4LogicalVolume(ulHe,thishelium,"logiculHe",0,0,0);
   new G4PVPlacement(0,ulHePos,"physiculHe",logiculHe,physicalWorld,0,0,0);
   logiculHe->SetVisAttributes(heliumVis);
 
   // center lower piece
-  G4ThreeVector clHePos(fridge_x,fridge_y,fridge_z-10.91*2.54*cm);
+  G4ThreeVector clHePos(fridge_x,fridge_y,fridge_z-10.91*2.54*cm+1.0*2.54*cm);
   G4Tubs* clHe = new G4Tubs("clHe", .5*8.*2.54*cm, .5*10.*2.54*cm, .5*3.93*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logiclHe = new G4LogicalVolume(clHe,helium,"logiclHe",0,0,0);
+  G4LogicalVolume* logiclHe = new G4LogicalVolume(clHe,thishelium,"logiclHe",0,0,0);
   new G4PVPlacement(0,clHePos,"physiclHe",logiclHe,physicalWorld,0,0,0);
   logiclHe->SetVisAttributes(heliumVis);
 
   // bottom piece
-  G4ThreeVector botHePos(fridge_x,fridge_y,fridge_z-13.*2.54*cm);
+  G4ThreeVector botHePos(fridge_x,fridge_y,fridge_z-13.*2.54*cm+1.0*2.54*cm);
   G4Tubs* botHe = new G4Tubs("botHe", 0, .5*10.*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
-  G4LogicalVolume* logicbotHe = new G4LogicalVolume(botHe,helium,"logicbotHe",0,0,0);
+  G4LogicalVolume* logicbotHe = new G4LogicalVolume(botHe,thishelium,"logicbotHe",0,0,0);
   new G4PVPlacement(0,botHePos,"physicbotHe",logicbotHe,physicalWorld,0,0,0);
   logicbotHe->SetVisAttributes(heliumVis);
 
   // ------------------------- Shell ----------------------
   // Outer Edge
-  G4ThreeVector oeShellPos(fridge_x,fridge_y,fridge_z+12.9045*2.54*cm);
+  G4ThreeVector oeShellPos(fridge_x,fridge_y,fridge_z+12.9045*2.54*cm+2.0*2.54*cm);
   G4Tubs* oeShell = new G4Tubs("oeShell", .5*21.5*2.54*cm, .5*22.*2.54*cm, .5*64.067*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicoeShell = new G4LogicalVolume(oeShell,steel,"logicoeShell",0,0,0);
   new G4PVPlacement(0,oeShellPos,"physicoeShell",logicoeShell,physicalWorld,false,0);
   logicoeShell->SetVisAttributes(steelVis);
 
   // Top Edge
-  G4ThreeVector teShellPos(fridge_x,fridge_y,fridge_z+45.063*2.54*cm);
+  G4ThreeVector teShellPos(fridge_x,fridge_y,fridge_z+45.063*2.54*cm+2.0*2.54*cm);
   G4Tubs* teShell = new G4Tubs("teShell", .5*10.*2.54*cm, .5*22.*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicteShell = new G4LogicalVolume(teShell,steel,"logicteShell",0,0,0);
   new G4PVPlacement(0,teShellPos,"physicteShell",logicteShell,physicalWorld,false,0);
   logicteShell->SetVisAttributes(steelVis);
 
   // Bottom Edge
-  G4ThreeVector btShellPos(fridge_x,fridge_y,fridge_z-19.254*2.54*cm);
+  G4ThreeVector btShellPos(fridge_x,fridge_y,fridge_z-19.254*2.54*cm+2.0*2.54*cm);
   G4Tubs* btShell = new G4Tubs("btShell", 0, .5*22.*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicbtShell = new G4LogicalVolume(btShell,steel,"logicbtShell",0,0,0);
   new G4PVPlacement(0,btShellPos,"physicbtShell",logicbtShell,physicalWorld,false,0);
   logicbtShell->SetVisAttributes(steelVis);
 
   // Upper Inner (core)
-  G4ThreeVector ucShellPos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm);
-  G4Tubs* ucShell = new G4Tubs("ucShell", .5*10.*2.54*cm, .5*10.5*2.54*cm, .5*18.063*2.54*cm, 0, 2*pi);
+  G4ThreeVector ucShellPos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm+1.5*2.54*cm);
+  G4Tubs* ucShell = new G4Tubs("ucShell", .5*10.1*2.54*cm, .5*10.2*2.54*cm, .5*18.063*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicucShell = new G4LogicalVolume(ucShell,steel,"logicucShell",0,0,0);
   new G4PVPlacement(0,ucShellPos,"physicucShell",logicucShell,physicalWorld,false,0);
   logicucShell->SetVisAttributes(steelVis);
 
   // Upper Interface
-  G4ThreeVector uiShellPos(fridge_x,fridge_y,fridge_z+26.751*2.54*cm);
-  G4Tubs* uiShell = new G4Tubs("uiShell", .5*10.*2.54*cm, .5*14.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
+  G4ThreeVector uiShellPos(fridge_x,fridge_y,fridge_z+26.751*2.54*cm+1.5*2.54*cm);
+  G4Tubs* uiShell = new G4Tubs("uiShell", .5*10.1*2.54*cm, .5*14.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicuiShell = new G4LogicalVolume(uiShell,steel,"logicuiShell",0,0,0);
-  new G4PVPlacement(0,uiShellPos,"physicuiShell",logicuiShell,physicalWorld,false,0);
+  //new G4PVPlacement(0,uiShellPos,"physicuiShell",logicuiShell,physicalWorld,false,0);
   logicuiShell->SetVisAttributes(steelVis);
 
   // Middle Inner (core)
-  G4ThreeVector mcShellPos(fridge_x,fridge_y,fridge_z+15.9695*2.54*cm);
-  G4Tubs* mcShell = new G4Tubs("mcShell", .5*14.*2.54*cm, .5*14.5*2.54*cm, .5*21.313*2.54*cm, 0, 2*pi);
+  G4ThreeVector mcShellPos(fridge_x,fridge_y,fridge_z+15.9695*2.54*cm+1.0*2.54*cm);
+  G4Tubs* mcShell = new G4Tubs("mcShell", .5*14.1*2.54*cm, .5*14.5*2.54*cm, .5*21.313*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicmcShell = new G4LogicalVolume(mcShell,steel,"logicmcShell",0,0,0);
   new G4PVPlacement(0,mcShellPos,"physicmcShell",logicmcShell,physicalWorld,false,0);
   logicmcShell->SetVisAttributes(steelVis);
 
   // Lower Interface
-  G4ThreeVector liShellPos(fridge_x,fridge_y,fridge_z+5.188*2.54*cm);
-  G4Tubs* liShell = new G4Tubs("liShell", .5*10.*2.54*cm, .5*14.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
+  G4ThreeVector liShellPos(fridge_x,fridge_y,fridge_z+5.188*2.54*cm+1.0*2.54*cm);
+  G4Tubs* liShell = new G4Tubs("liShell", .5*10.1*2.54*cm, .5*14.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicliShell = new G4LogicalVolume(liShell,steel,"logicliShell",0,0,0);
   new G4PVPlacement(0,liShellPos,"physicliShell",logicliShell,physicalWorld,false,0);
   logicliShell->SetVisAttributes(steelVis);
 
   // Lower Inner (core)
-  G4ThreeVector lcShellPos(fridge_x,fridge_y,fridge_z-4.031*2.54*cm);
-  G4Tubs* lcShell = new G4Tubs("lcShell", .5*10.*2.54*cm, .5*10.5*2.54*cm, .5*18.188*2.54*cm, 0, 2*pi);
+  G4ThreeVector lcShellPos(fridge_x,fridge_y,fridge_z-4.031*2.54*cm+1.0*2.54*cm);
+  G4Tubs* lcShell = new G4Tubs("lcShell", .5*10.1*2.54*cm, .5*10.5*2.54*cm, .5*18.188*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logiclcShell = new G4LogicalVolume(lcShell,steel,"logiclcShell",0,0,0);
   new G4PVPlacement(0,lcShellPos,"physiclcShell",logiclcShell,physicalWorld,false,0);
   logiclcShell->SetVisAttributes(steelVis);
 
   // Lower Cap
-  G4ThreeVector lpShellPos(fridge_x,fridge_y,fridge_z-13.25*2.54*cm);
+  G4ThreeVector lpShellPos(fridge_x,fridge_y,fridge_z-13.25*2.54*cm+1.0*2.54*cm);
   G4Tubs* lpShell = new G4Tubs("lpShell", 0, .5*10.5*2.54*cm, .5*.25*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logiclpShell = new G4LogicalVolume(lpShell,steel,"logiclpShell",0,0,0);
   new G4PVPlacement(0,lpShellPos,"physiclpShell",logiclpShell,physicalWorld,false,0);
@@ -1724,35 +2077,698 @@ void k100_DetectorConstruction::ConstructIceBox(G4LogicalVolume*  logicalWorld)
 
   // ------------------------ Insulation --------------------
   // Upper piece
-  G4ThreeVector upInPos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm);
+  G4ThreeVector upInPos(fridge_x,fridge_y,fridge_z+35.9075*2.54*cm+1.0*2.54*cm);
   G4Tubs* upIn = new G4Tubs("upIn", .5*10.5*2.54*cm, .5*21.5*2.54*cm, .5*18.063*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicupIn = new G4LogicalVolume(upIn,super,"logicupIn",0,0,0);
   new G4PVPlacement(0,upInPos,"physicupIn",logicupIn,physicalWorld,false,0);
   logicupIn->SetVisAttributes(superVis);
 
   // Middle piece
-  G4ThreeVector miInPos(fridge_x,fridge_y,fridge_z+15.9695*2.54*cm);
+  G4ThreeVector miInPos(fridge_x,fridge_y,fridge_z+15.9695*2.54*cm+1.0*2.54*cm);
   G4Tubs* miIn = new G4Tubs("miIn", .5*14.5*2.54*cm, .5*21.5*2.54*cm, .5*21.813*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicmiIn = new G4LogicalVolume(miIn,super,"logicmiIn",0,0,0);
   new G4PVPlacement(0,miInPos,"physicmiIn",logicmiIn,physicalWorld,false,0);
   logicmiIn->SetVisAttributes(superVis);
 
   // Lower piece
-  G4ThreeVector loInPos(fridge_x,fridge_y,fridge_z-4.156*2.54*cm);
+  G4ThreeVector loInPos(fridge_x,fridge_y,fridge_z-4.156*2.54*cm+1.0*2.54*cm);
   G4Tubs* loIn = new G4Tubs("loIn", .5*10.5*2.54*cm, .5*21.5*2.54*cm, .5*18.438*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicloIn = new G4LogicalVolume(loIn,super,"logicloIn",0,0,0);
   new G4PVPlacement(0,loInPos,"physicloIn",logicloIn,physicalWorld,false,0);
   logicloIn->SetVisAttributes(superVis);
 
   // Bottom piece
-  G4ThreeVector btInPos(fridge_x,fridge_y,fridge_z-16.252*2.54*cm);
-  G4Tubs* btIn = new G4Tubs("btIn", 0, .5*21.5*2.54*cm, .5*5.754*2.54*cm, 0, 2*pi);
+  G4ThreeVector btInPos(fridge_x,fridge_y,fridge_z-16.252*2.54*cm+1.5*2.54*cm);
+  G4Tubs* btIn = new G4Tubs("btIn", 0, .5*21.5*2.54*cm, .5*4.754*2.54*cm, 0, 2*pi);
   G4LogicalVolume* logicbtIn = new G4LogicalVolume(btIn,super,"logicbtIn",0,0,0);
   new G4PVPlacement(0,btInPos,"physicbtIn",logicbtIn,physicalWorld,false,0);
   logicbtIn->SetVisAttributes(superVis);
 } // ends IceBox Construction
 
-// ---------------- end of class ---------------
+void k100_DetectorConstruction::ConstructFloor(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 Floor around the fridge in PAN 43 
+  // just to test...some zero crosshairs:
+  /*G4ThreeVector crosspos(0,0,0);
+  G4Box* xcross = new G4Box("xcross", 10.*cm, .01*cm, .01*cm);
+  G4LogicalVolume* logicross = new G4LogicalVolume(xcross,steel,"logicross",0,0,0);
+
+  new G4PVPlacement(0,crosspos,"physicross",logicross,physicalWorld,false,0);
+
+  G4RotationMatrix crot;
+  crot.rotateZ(90.*deg);
+  G4Transform3D transcross(crot, crosspos);
+  new G4PVPlacement(transcross, "physicross2",logicross,physicalWorld,false,1);
+
+  crot.rotateX(90.*deg);
+  transcross = G4Transform3D(crot, crosspos);
+  new G4PVPlacement(transcross, "physicross3",logicross,physicalWorld,false,2);*/
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* concreteVis = new G4VisAttributes(G4Colour(127/255.,128/255.,118/255.));
+  concreteVis->SetForceSolid(true);
+  G4VisAttributes* holeVis = new G4VisAttributes(G4Colour(0/255.,0/255.,0/255.));
+  holeVis->SetForceSolid(true);
+  G4VisAttributes* holeCapVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+  holeCapVis->SetForceSolid(true);
+  G4VisAttributes* polyVis = new G4VisAttributes(G4Colour(255/255.,255/255.,255/255.));
+  polyVis->SetForceSolid(true);
+  G4VisAttributes* leadVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+  leadVis->SetForceSolid(true);
+
+
+  // ------------------------- Solid Floor ----------------------
+  // Outer Edge
+  //G4ThreeVector oeShellPos(fridge_x,fridge_y,fridge_z+12.9045*2.54*cm);
+  //G4Tubs* oeShell = new G4Tubs("oeShell", .5*21.5*2.54*cm, .5*22.*2.54*cm, .5*64.067*2.54*cm, 0, 2*pi);
+  //G4LogicalVolume* logicoeShell = new G4LogicalVolume(oeShell,steel,"logicoeShell",0,0,0);
+  //new G4PVPlacement(0,oeShellPos,"physicoeShell",logicoeShell,physicalWorld,false,0);
+  //logicoeShell->SetVisAttributes(steelVis);
+
+  //Floor block
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceToFloorZ = fridge_z+12.9045*2.54*cm - fridgeHalfHeightToBottomPlate - 21.0*2.54*cm;
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+  G4double floorThk = floorZ - (-0.5*world_z);  //need minus sign because it is COORDINATE of bottom of world
+  //FIXME world_z should be checked as being big enough to fit a reasonable floor!
+  G4double floorMiddleZ = floorZ - 0.5*floorThk;
+  G4cout << "fridgeHalfHeightToBottomPlate: " << fridgeHalfHeightToBottomPlate << G4endl;
+  G4cout << "distanceCenterToFloor: " << distanceCenterToFloor << G4endl;
+  G4cout << "world_z: " << world_z << G4endl;
+  G4cout << "floorZ: " << floorZ << G4endl;
+  G4cout << "floorThk: " << floorThk << G4endl;
+  G4cout << "floorMiddleZ: " << floorMiddleZ << G4endl;
+  G4ThreeVector floorBlockPos(0,0,floorMiddleZ);
+  G4Box* floorBlockBox = new G4Box("floorBlock",0.5*world_x,0.5*world_y,0.5*floorThk);
+  G4LogicalVolume* logicalFloorBlock = new G4LogicalVolume(floorBlockBox,G4NISTconcrete,"logicalFloorBlock",0,0,0);
+  G4PVPlacement *floor = new G4PVPlacement(0,floorBlockPos,"physicalFloorBlock",logicalFloorBlock,world,false,0);
+  logicalFloorBlock->SetVisAttributes(concreteVis);
+
+  //hole 6ft deep 42" square
+  G4double lipThk = 1.5*2.54*cm;
+  G4double holeDepth = 6*12.0*2.54*cm; 
+  G4double holeWidth = 42.0*2.54*cm;
+  G4ThreeVector holePos(0,0,0.5*(floorThk-holeDepth-lipThk));
+  G4cout << "holeDepth: " << holeDepth << G4endl;
+  G4cout << "holePosZ: " << holePos.z() << G4endl;
+  //FIXME world_z should be checked as being big enough!
+  G4Box* holeBox = new G4Box("hole",0.5*holeWidth,0.5*holeWidth,0.5*(holeDepth-lipThk)); //minus the lip
+  G4LogicalVolume* logicalHole = new G4LogicalVolume(holeBox,G4NISTair,"logicalHoleBox",0,0,0);
+  G4PVPlacement *pitHole = new G4PVPlacement(0,holePos,"physicalHoleBox",logicalHole,floor,false,0);
+  logicalHole->SetVisAttributes(holeVis);
+
+  //hole cap
+  G4ThreeVector holeCapPos(0,0,0.5*(floorThk-lipThk));
+  G4Box* holeCap = new G4Box("holeCap",0.5*(holeWidth+2*lipThk),0.5*(holeWidth+2*lipThk),0.5*lipThk); //minus the lip
+  G4LogicalVolume* logicalHoleCap = new G4LogicalVolume(holeCap,G4NISTPVC,"logicalHoleCap",0,0,0);
+  new G4PVPlacement(0,holeCapPos,"physicalHoleCap",logicalHoleCap,floor,false,0);
+  logicalHoleCap->SetVisAttributes(holeCapVis);
+
+  //PuBe source modifications mod=1
+  if((pubeNaIParams.mod==1) && (ConstructPuBeSourceAndShieldBool==true)){
+
+    //poly
+    G4double distanceFromOrigin = 1.6*m; 
+    G4double x = distanceFromOrigin - lipThk + floorZ; //floorz is negative, this is intermediate var
+    G4double polyReflectorThk = 4.0*2.54*cm;
+    G4Box* polyReflectorBox = new G4Box("polyReflector",0.5*holeWidth,0.5*holeWidth,0.5*polyReflectorThk); 
+    G4LogicalVolume* logicalPolyReflector = new G4LogicalVolume(polyReflectorBox,polyMat,"logicalPolyReflector",0,0,0);
+    G4ThreeVector reflectorPos(0,0,0.5*(holeDepth-lipThk)-x);
+    new G4PVPlacement(0,reflectorPos,"physicalPolyReflector",logicalPolyReflector,pitHole,false,0);
+    logicalPolyReflector->SetVisAttributes(polyVis);
+
+    //lead
+    G4double leadThk = 4.0*2.54*cm;
+    G4double leadWidth = 12.0*2.54*cm;
+    G4Box* leadBox0 = new G4Box("lead0",0.5*holeWidth,0.5*leadWidth,0.5*leadThk); 
+    G4LogicalVolume* logicalLead0 = new G4LogicalVolume(leadBox0,shieldPbMat,"logicalLead",0,0,0);
+    G4ThreeVector leadPos(0,0,floorZ+0.5*leadThk);
+    new G4PVPlacement(0,leadPos,"physicalLead0",logicalLead0,world,false,0);
+    logicalLead0->SetVisAttributes(leadVis);
+    
+    leadThk = 8.0*2.54*cm;
+    G4Box* leadBox1 = new G4Box("lead0",0.5*holeWidth,0.5*leadWidth,0.5*leadThk); 
+    G4LogicalVolume* logicalLead1 = new G4LogicalVolume(leadBox1,shieldPbMat,"logicalLead",0,0,0);
+    leadPos = G4ThreeVector(0,0,0.5*(holeDepth-lipThk)-0.5*leadThk);
+    new G4PVPlacement(0,leadPos,"physicalLead1",logicalLead1,pitHole,false,0);
+    logicalLead1->SetVisAttributes(leadVis);
+   
+
+  }//end Source mod 1
+
+} // ends Floor Construction
+void k100_DetectorConstruction::ConstructWalls(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 South and West walls around the fridge in PAN 43 
+  // just to test...some zero crosshairs:
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* wallVis = new G4VisAttributes(G4Colour(215/255.,127/255.,0/255.));
+  wallVis->SetForceSolid(true);
+  G4VisAttributes* airVis = new G4VisAttributes(G4Colour(0/255.,191/255.,255/255.));
+  airVis->SetForceSolid(true);
+
+
+  // ------------------------- Wall Placement ----------------------
+  //Floor block
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  //ceiling height
+  G4double fridgeFrameHeight = (2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+4+0.75)*2.54*cm+1.735*m; //FIXME taken from hard-coded other places in code
+  G4double wallHeight = fridgeFrameHeight + 2.5*m;
+  G4double ceilingHeight = wallHeight + 0.5*m; //distance into hollow part of ceiling
+  G4double topSlabThk = 23.0*cm; //thickness of topmost concrete slab above concrete voids
+  G4double totalCeilingThk = 73.0*cm; //thickness of topmost concrete slab above concrete voids
+
+
+  //wall thickness
+  G4double dwallthk = (3.0/4.0)*2.54*cm; //3/4" assumption
+  G4double wallthk = 5.5*2.54*cm; //walls measured as 5.5" thick approx 
+  
+ 
+  //West wall
+  //G4Box* westWallBox = new G4Box("westWall",0.5*world_x,0.5*wallthk,-floorZ);
+  G4Box* westWallBox = new G4Box("westWall",0.5*world_x,0.5*wallthk,0.5*wallHeight);
+  G4LogicalVolume* logicalWestWall = new G4LogicalVolume(westWallBox,G4NISTair,"logicalWestWall",0,0,0);
+  G4ThreeVector westWallPos(0,0.5*world_y-0.5*wallthk,0.5*wallHeight-(-floorZ)); //floorZ is negative
+  G4PVPlacement *westWall = new G4PVPlacement(0,westWallPos,"physicalWestWall",logicalWestWall,world,false,0);
+  logicalWestWall->SetVisAttributes(airVis);
+
+  //G4Box* westDryWallBox = new G4Box("westDryWall",0.5*world_x,0.5*dwallthk,-floorZ);
+  G4Box* westDryWallBox = new G4Box("westDryWall",0.5*world_x,0.5*dwallthk,0.5*wallHeight);
+  G4LogicalVolume* logicalWestDryWall = new G4LogicalVolume(westDryWallBox,G4NISTGypsum,"logicalWestDryWall",0,0,0);
+  G4ThreeVector westDryWallPos(0,0.5*wallthk-0.5*dwallthk,0); //position inside of wall
+  G4PVPlacement *westDryWall0 = new G4PVPlacement(0,westDryWallPos,"physicalWestDryWall0",logicalWestDryWall,westWall,false,0);
+  westDryWallPos = G4ThreeVector(0,-0.5*wallthk+0.5*dwallthk,0); //position inside of wall
+  G4PVPlacement *westDryWall1 = new G4PVPlacement(0,westDryWallPos,"physicalWestDryWall1",logicalWestDryWall,westWall,false,0);
+  logicalWestDryWall->SetVisAttributes(wallVis);
+
+  //South wall
+  //G4Box* southWallBox = new G4Box("southWall",0.5*wallthk,0.5*(world_y-wallthk),-floorZ); //subtract thickness for other wall
+  G4Box* southWallBox = new G4Box("southWall",0.5*wallthk,0.5*(world_y-wallthk),0.5*wallHeight); //subtract thickness for other wall
+  G4LogicalVolume* logicalSouthWall = new G4LogicalVolume(southWallBox,G4NISTair,"logicalSouthWall",0,0,0);
+  G4ThreeVector southWallPos(-0.5*world_x+0.5*wallthk,-0.5*wallthk,0.5*wallHeight-(-floorZ)); //floorZ is negative
+  G4PVPlacement *southWall = new G4PVPlacement(0,southWallPos,"physicalSouthWall",logicalSouthWall,world,false,0);
+  logicalSouthWall->SetVisAttributes(airVis);
+
+  //G4Box* southDryWallBox = new G4Box("southDryWall",0.5*dwallthk,0.5*(world_y-wallthk),-floorZ);
+  G4Box* southDryWallBox = new G4Box("southDryWall",0.5*dwallthk,0.5*(world_y-wallthk),0.5*wallHeight);
+  G4LogicalVolume* logicalSouthDryWall = new G4LogicalVolume(southDryWallBox,G4NISTGypsum,"logicalSouthDryWall",0,0,0);
+  G4ThreeVector southDryWallPos(0.5*wallthk-0.5*dwallthk,0,0); //position inside of wall
+  G4PVPlacement *southDryWall0 = new G4PVPlacement(0,southDryWallPos,"physicalSouthDryWall0",logicalSouthDryWall,southWall,false,0);
+  southDryWallPos = G4ThreeVector(-0.5*wallthk+0.5*dwallthk,0,0); //position inside of wall
+  G4PVPlacement *southDryWall1 = new G4PVPlacement(0,southDryWallPos,"physicalSouthDryWall1",logicalSouthDryWall,southWall,false,0);
+  logicalSouthDryWall->SetVisAttributes(wallVis);
+
+} // ends Walls Construction
+void k100_DetectorConstruction::ConstructCeiling(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 South and West walls around the fridge in PAN 43 
+  // just to test...some zero crosshairs:
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* ceilVis = new G4VisAttributes(G4Colour(127/255.,128/255.,118/255.));
+  ceilVis->SetForceSolid(true);
+  G4VisAttributes* airVis = new G4VisAttributes(G4Colour(0/255.,191/255.,255/255.));
+  airVis->SetForceSolid(true);
+
+  // ------------------------- Ceiling Placement ----------------------
+  //Floor block
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  //ceiling height
+  G4double fridgeFrameHeight = (2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+4+0.75)*2.54*cm+1.735*m; //FIXME taken from hard-coded other places in code
+  G4double wallHeight = fridgeFrameHeight + 2.5*m;
+  G4double ceilingHeight = wallHeight + 0.5*m; //distance into hollow part of ceiling
+  G4double topSlabThk = 23.0*cm; //thickness of topmost concrete slab above concrete voids
+  G4double totalCeilingThk = 73.0*cm; //thickness of topmost concrete slab above concrete voids
+
+  //slab
+  G4Box* slabBox = new G4Box("slab",0.5*world_x,0.5*world_y,0.5*totalCeilingThk);
+  G4LogicalVolume* logicalSlab = new G4LogicalVolume(slabBox,G4NISTconcrete,"logicalSlab",0,0,0);
+  G4ThreeVector slabPos(0,0,wallHeight-(-floorZ)+0.5*totalCeilingThk);//floorZ is negative
+  G4PVPlacement *slab = new G4PVPlacement(0,slabPos,"physicalSlab",logicalSlab,world,false,0);
+  logicalSlab->SetVisAttributes(ceilVis);
+
+  //west voids
+  G4Box* westVoidBox = new G4Box("westVoid",0.5*0.5*(world_x-30*cm-5.5*2.54*cm),0.5*2.5*m,0.5*(totalCeilingThk-topSlabThk));
+  G4LogicalVolume* logicalWestVoid = new G4LogicalVolume(westVoidBox,G4NISTair,"logicalWestVoid",0,0,0);
+  G4ThreeVector voidPos(-0.5*world_x+0.5*(0.5*(world_x-30*cm-5.5*2.54*cm))+5.5*2.54*cm,0.5*world_y-0.5*2.5*m-5.5*2.54*cm,-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
+  new G4PVPlacement(0,voidPos,"physicalWestVoid0",logicalWestVoid,slab,false,0);
+  voidPos = G4ThreeVector(0.5*world_x-0.5*(0.5*(world_x-30*cm-5.5*2.54*cm)),0.5*world_y-0.5*2.5*m-5.5*2.54*cm,-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
+  new G4PVPlacement(0,voidPos,"physicalWestVoid1",logicalWestVoid,slab,false,0);
+  logicalWestVoid->SetVisAttributes(airVis);
+
+  //east voids
+  G4Box* eastVoidBox = new G4Box("eastVoid",0.5*0.5*(world_x-30*cm-5.5*2.54*cm),0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),0.5*(totalCeilingThk-topSlabThk));
+  G4LogicalVolume* logicalEastVoid = new G4LogicalVolume(eastVoidBox,G4NISTair,"logicalEastVoid",0,0,0);
+  voidPos = G4ThreeVector(-0.5*world_x+0.5*(0.5*(world_x-30*cm-5.5*2.54*cm))+5.5*2.54*cm,-0.5*world_y+0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
+  new G4PVPlacement(0,voidPos,"physicalEastVoid",logicalEastVoid,slab,false,0);
+  voidPos = G4ThreeVector(0.5*world_x-0.5*(0.5*(world_x-30*cm-5.5*2.54*cm)),-0.5*world_y+0.5*(world_y-2.5*m-30*cm-5.5*2.54*cm),-0.5*totalCeilingThk+0.5*(totalCeilingThk-topSlabThk));//floorZ is negative
+  new G4PVPlacement(0,voidPos,"physicalEastVoid",logicalEastVoid,slab,false,0);
+  logicalEastVoid->SetVisAttributes(airVis);
+
+
+} // ends Ceiling Construction
+
+void k100_DetectorConstruction::ConstructWestReflector(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 West wall reflector 
+  // just to test...some zero crosshairs:
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* polyVis = new G4VisAttributes(G4Colour(255/255.,255/255.,255/255.));
+  polyVis->SetForceSolid(true);
+
+  // ------------------------- Panel Placement ----------------------
+  //Floor block
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+
+  //FIXME hard-coded post locations
+  std::vector<double> postPointsX,postPointsY; //X is north/south south toward positive Y is east/west west toward positive
+  //anti-clockwise facing south
+  postPointsY.push_back((-19.75-16.0)*2.54*cm); 
+  postPointsX.push_back(-22.0*2.54*cm); 
+  postPointsY.push_back((-19.75-16.0+73.6)*2.54*cm); 
+  postPointsX.push_back(-22.0*2.54*cm);
+  postPointsY.push_back((-19.75-16.0+73.6)*2.54*cm); 
+  postPointsX.push_back((-22.0+44.0)*2.54*cm);
+  postPointsY.push_back((-19.75-16.0)*2.54*cm); 
+  postPointsX.push_back((-22.0+44.0)*2.54*cm);
+
+  //ceiling height
+  G4double fridgeFrameHeight = (2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+4+0.75)*2.54*cm+1.735*m; //FIXME taken from hard-coded other places in code
+  G4double wallHeight = fridgeFrameHeight + 2.5*m;
+  G4double ceilingHeight = wallHeight + 0.5*m; //distance into hollow part of ceiling
+  G4double topSlabThk = 23.0*cm; //thickness of topmost concrete slab above concrete voids
+  G4double totalCeilingThk = 73.0*cm; //thickness of topmost concrete slab above concrete voids
+
+  //useful locations
+  //G4ThreeVector barrelPos = G4ThreeVector(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm,floorZ+0.5*21.0*2.54*cm);
+  //G4Tubs* steelBarrel = new G4Tubs("steelBarrel",0,0.5*(16.25)*2.54*cm,0.5*(21.0)*2.54*cm,0,2*pi);
+  G4double westmostEdge = postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm + 0.5*(16.25)*2.54*cm; //barrel center plus radius
+
+  //setable parameters
+  G4double slabReflectorThk = 4.0*2.54*cm; //4 inch thick
+  G4double slabReflectorH = 48.0*2.54*cm; //4ft tall 
+  G4double slabReflectorW = 36.0*2.54*cm; //3ft wide 
+
+  //slab Reflector
+  G4Box* slabReflectorBox = new G4Box("slabReflector",0.5*slabReflectorW,0.5*slabReflectorThk,0.5*slabReflectorH);
+  G4LogicalVolume* logicalSlabReflector = new G4LogicalVolume(slabReflectorBox,polyMat,"logicalSlabReflector",0,0,0);
+  G4ThreeVector slabPos(0,westmostEdge+0.5*slabReflectorThk,floorZ+0.5*slabReflectorH);//floorZ is negative
+  G4PVPlacement *slabReflector = new G4PVPlacement(0,slabPos,"physicalSlabReflector",logicalSlabReflector,world,false,0);
+  logicalSlabReflector->SetVisAttributes(polyVis);
+
+
+} // ends Reflector Construction
+
+void k100_DetectorConstruction::ConstructFrame(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 Floor around the fridge in PAN 43 
+  // just to test...some zero crosshairs:
+  /*G4ThreeVector crosspos(0,0,0);
+  G4Box* xcross = new G4Box("xcross", 10.*cm, .01*cm, .01*cm);
+  G4LogicalVolume* logicross = new G4LogicalVolume(xcross,steel,"logicross",0,0,0);
+
+  new G4PVPlacement(0,crosspos,"physicross",logicross,physicalWorld,false,0);
+
+  G4RotationMatrix crot;
+  crot.rotateZ(90.*deg);
+  G4Transform3D transcross(crot, crosspos);
+  new G4PVPlacement(transcross, "physicross2",logicross,physicalWorld,false,1);
+
+  crot.rotateX(90.*deg);
+  transcross = G4Transform3D(crot, crosspos);
+  new G4PVPlacement(transcross, "physicross3",logicross,physicalWorld,false,2);*/
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* concreteVis = new G4VisAttributes(G4Colour(127/255.,128/255.,118/255.));
+  concreteVis->SetForceSolid(true);
+  G4VisAttributes* alVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+  alVis->SetForceSolid(true);
+  G4VisAttributes* sandVis = new G4VisAttributes(G4Colour(255/255.,255/255.,0/255.));
+  sandVis->SetForceSolid(true);
+
+
+  // ------------------------- Floor Feet and Posts ----------------------
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+  std::vector<double> postPointsX,postPointsY; //X is north/south south toward positive Y is east/west west toward positive
+  //anti-clockwise facing south
+  postPointsY.push_back((-19.75-16.0)*2.54*cm); 
+  postPointsX.push_back(-22.0*2.54*cm); 
+  postPointsY.push_back((-19.75-16.0+73.6)*2.54*cm); 
+  postPointsX.push_back(-22.0*2.54*cm);
+  postPointsY.push_back((-19.75-16.0+73.6)*2.54*cm); 
+  postPointsX.push_back((-22.0+44.0)*2.54*cm);
+  postPointsY.push_back((-19.75-16.0)*2.54*cm); 
+  postPointsX.push_back((-22.0+44.0)*2.54*cm);
+
+  //Floor feet 
+  //FIXME check world_x and world_y are large enough
+  G4Box* floorFootC = new G4Box("floorFootC",0.5*16*2.54*cm,0.5*16*2.54*cm,0.5*2.0*2.54*cm);
+  G4LogicalVolume* logicalFootC = new G4LogicalVolume(floorFootC,G4NISTconcrete,"logicalFloorFootC",0,0,0);
+  for(int i=0;i<postPointsY.size();i++){
+    G4ThreeVector footPos_C(postPointsX[i],postPointsY[i],floorZ+1.0*2.54*cm);
+    std::ostringstream name;
+    name << "physicalFloorFootC_" << i;
+    new G4PVPlacement(0,footPos_C,name.str().c_str(),logicalFootC,world,false,0);
+  }
+  logicalFootC->SetVisAttributes(concreteVis);
+
+  //Post plates 
+  G4Box* postPlate = new G4Box("postPlate",0.5*14*2.54*cm,0.5*14*2.54*cm,0.5*0.25*2.54*cm);
+  G4LogicalVolume* logicalPostPlate = new G4LogicalVolume(postPlate,G4NISTAl,"logicalPostPlate",0,0,0);
+  for(int i=0;i<postPointsY.size();i++){
+    G4ThreeVector postPos(postPointsX[i],postPointsY[i],floorZ+(2.0+0.125)*2.54*cm);
+    std::ostringstream name;
+    name << "physicalPostPlate_" << i;
+    new G4PVPlacement(0,postPos,name.str().c_str(),logicalPostPlate,world,false,0);
+  }
+  logicalPostPlate->SetVisAttributes(alVis);
+
+  //Posts 
+  //G4Tubs* post = new G4Tubs("post",0.5*27*cm-0.5*2.54*cm,0.5*27*cm,0.5*1.735*m,0,2*pi); //hollow
+  G4Tubs* post = new G4Tubs("post",0,0.5*27*cm,0.5*1.735*m,0,2*pi); //with sand
+  G4Tubs* sand = new G4Tubs("post",0,0.5*27*cm-0.5*2.54*cm,0.5*1.735*m,0,2*pi);
+  G4LogicalVolume* logicalPost = new G4LogicalVolume(post,G4NISTAl,"logicalPost",0,0,0);
+  G4LogicalVolume* logicalSand = new G4LogicalVolume(sand,blastsand,"logicalSand",0,0,0);
+  for(int i=0;i<postPointsY.size();i++){
+    G4ThreeVector postPos(postPointsX[i],postPointsY[i],floorZ+(2.0+0.25)*2.54*cm+0.5*1.735*m);
+    std::ostringstream name,sand_name;
+    name << "physicalPost_" << i;
+    sand_name << "physicalPostSand_" << i;
+    G4PVPlacement *thispost = new G4PVPlacement(0,postPos,name.str().c_str(),logicalPost,world,false,0);
+    new G4PVPlacement(0,G4ThreeVector(0,0,0),sand_name.str().c_str(),logicalSand,thispost,false,0);
+  }
+  logicalPost->SetVisAttributes(alVis);
+  logicalSand->SetVisAttributes(sandVis);
+
+  //Post top plates 
+  G4Box* postTopPlate = new G4Box("postTopPlate",0.5*12*2.54*cm,0.5*12*2.54*cm,0.5*(7.0/8.0)*2.54*cm);
+  G4LogicalVolume* logicalPostTopPlate = new G4LogicalVolume(postTopPlate,G4NISTAl,"logicalPostTopPlate",0,0,0);
+  for(int i=0;i<postPointsY.size();i++){
+    G4ThreeVector postPos(postPointsX[i],postPointsY[i],floorZ+(2.0+0.25+(7.0/16.0))*2.54*cm+1.735*m);
+    std::ostringstream name;
+    name << "physicalPostTopPlate_" << i;
+    new G4PVPlacement(0,postPos,name.str().c_str(),logicalPostTopPlate,world,false,0);
+  }
+  logicalPostTopPlate->SetVisAttributes(alVis);
+
+  //Post top assemblies 
+  G4Box* postBoxedIBeam = new G4Box("postBoxedIBeam",0.5*6*2.54*cm,0.5*2.75*2.54*cm,0.5*8.0*2.54*cm);
+  G4Box* postBoxedIBeam_AirPocket = new G4Box("postBoxedIBeam_AirPocket",0.5*(6-1)*2.54*cm,0.5*0.5*(2.75-0.25)*2.54*cm,0.5*(8.0-0.5)*2.54*cm);
+  G4LogicalVolume* logicalPostBoxedIBeam = new G4LogicalVolume(postBoxedIBeam,G4NISTAl,"logicalPostBoxedIBeam",0,0,0);
+  G4LogicalVolume* logicalPostBoxedIBeam_AirPocket = new G4LogicalVolume(postBoxedIBeam_AirPocket,G4NISTair,"logicalPostBoxedIBeam_AirPocket",0,0,0);
+  for(int i=0;i<postPointsY.size();i++){
+    G4ThreeVector postPosWest(postPointsX[i],postPointsY[i]-(6.0-0.5*2.75)*2.54*cm,floorZ+(2.0+0.25+(7.0/8.0)+4.0)*2.54*cm+1.735*m);
+    G4ThreeVector postPosEast(postPointsX[i],postPointsY[i]+(6.0-0.5*2.75)*2.54*cm,floorZ+(2.0+0.25+(7.0/8.0)+4.0)*2.54*cm+1.735*m);
+    G4ThreeVector airShiftWest(0,(0.5*0.25+0.5*0.5*(2.75-0.25))*2.54*cm,0);
+    G4ThreeVector airShiftEast(0,-(0.5*0.25+0.5*0.5*(2.75-0.25))*2.54*cm,0);
+    std::ostringstream nameW,nameE,nameWa,nameEa;
+    nameW << "physicalPostBoxedIBeamW_" << i;
+    nameE << "physicalPostBoxedIBeamE_" << i;
+    nameWa << "physicalPostBoxedIBeamW_AirPocket_" << i;
+    nameEa << "physicalPostBoxedIBeamE_AirPocket_" << i;
+    G4PVPlacement * w = new G4PVPlacement(0,postPosWest,nameW.str().c_str(),logicalPostBoxedIBeam,world,false,0);
+    G4PVPlacement * e = new G4PVPlacement(0,postPosEast,nameE.str().c_str(),logicalPostBoxedIBeam,world,false,0);
+    new G4PVPlacement(0,airShiftWest,nameWa.str().c_str(),logicalPostBoxedIBeam_AirPocket,w,false,0);
+    new G4PVPlacement(0,airShiftEast,nameEa.str().c_str(),logicalPostBoxedIBeam_AirPocket,e,false,0);
+  }
+  logicalPostBoxedIBeam->SetVisAttributes(alVis);
+  logicalPostBoxedIBeam_AirPocket->SetVisAttributes(sandVis);
+
+  //Post top assembly plates 
+  G4Box* postTopAPlate = new G4Box("postTopAPlate",0.5*10*2.54*cm,0.5*12*2.54*cm,0.5*(7.0/8.0)*2.54*cm);
+  G4LogicalVolume* logicalPostTopAPlate = new G4LogicalVolume(postTopAPlate,G4NISTAl,"logicalPostTopAPlate",0,0,0);
+  for(int i=0;i<postPointsY.size();i++){
+    G4ThreeVector postPos(postPointsX[i],postPointsY[i],floorZ+(2.0+0.25+(7.0/8.0)+8+(7.0/16.0))*2.54*cm+1.735*m);
+    std::ostringstream name;
+    name << "physicalPostTopAPlate_" << i;
+    new G4PVPlacement(0,postPos,name.str().c_str(),logicalPostTopAPlate,world,false,0);
+  }
+  logicalPostTopAPlate->SetVisAttributes(alVis);
+
+  //Top Struts
+  G4Box* postTopStrutY = new G4Box("postTopStrutY",0.5*4*2.54*cm,0.5*(73.6+8.0)*2.54*cm,0.5*4*2.54*cm);
+  G4LogicalVolume* logicalTopStrutY = new G4LogicalVolume(postTopStrutY,G4NISTAl,"logicalPostTopStrutY",0,0,0);
+  G4Box* postTopStrutY_AirPocket = new G4Box("postTopStrutY_AirPocket",0.5*(4-0.5)*2.54*cm,0.5*(73.6+8.0)*2.54*cm,0.5*(4-0.5)*2.54*cm);
+  G4LogicalVolume* logicalTopStrutY_AirPocket = new G4LogicalVolume(postTopStrutY_AirPocket,G4NISTair,"logicalPostTopStrutY_AirPocket",0,0,0);
+  G4Box* postTopStrutX = new G4Box("postTopStrutX",0.5*(44-4)*2.54*cm,0.5*4*2.54*cm,0.5*4*2.54*cm);
+  G4LogicalVolume* logicalTopStrutX = new G4LogicalVolume(postTopStrutX,G4NISTAl,"logicalPostTopStrutX",0,0,0);
+  G4Box* postTopStrutX_AirPocket = new G4Box("postTopStrutX_AirPocket",0.5*(44-4)*2.54*cm,0.5*(4-0.5)*2.54*cm,0.5*(4-0.5)*2.54*cm);
+  G4LogicalVolume* logicalTopStrutX_AirPocket = new G4LogicalVolume(postTopStrutX_AirPocket,G4NISTair,"logicalPostTopStrutX_AirPocket",0,0,0);
+    
+  G4ThreeVector northYStrutPos(postPointsX[0],postPointsY[0]+(postPointsY[1]-postPointsY[0])/2.0,floorZ+(2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+2)*2.54*cm+1.735*m);
+  G4PVPlacement *northYStrut = new G4PVPlacement(0,northYStrutPos,"physicalNorthYStrut",logicalTopStrutY,world,false,0);
+  new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalNorthYStrut_AirPocket",logicalTopStrutY_AirPocket,northYStrut,false,0);
+
+  G4ThreeVector southYStrutPos(postPointsX[2],postPointsY[0]+(postPointsY[1]-postPointsY[0])/2.0,floorZ+(2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+2)*2.54*cm+1.735*m);
+  G4PVPlacement *southYStrut = new G4PVPlacement(0,southYStrutPos,"physicalSouthYStrut",logicalTopStrutY,world,false,0);
+  new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalSouthYStrut_AirPocket",logicalTopStrutY_AirPocket,southYStrut,false,0);
+
+  G4ThreeVector eastXStrutPos(postPointsX[1]+(postPointsX[2]-postPointsX[1])/2.0,postPointsY[0],floorZ+(2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+2)*2.54*cm+1.735*m);
+  G4PVPlacement *eastXStrut = new G4PVPlacement(0,eastXStrutPos,"physicalEastXStrut",logicalTopStrutX,world,false,0);
+  new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalEastXStrut_AirPocket",logicalTopStrutX_AirPocket,eastXStrut,false,0);
+
+  G4ThreeVector westXStrutPos(postPointsX[1]+(postPointsX[2]-postPointsX[1])/2.0,postPointsY[1],floorZ+(2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+2)*2.54*cm+1.735*m);
+  G4PVPlacement *westXStrut = new G4PVPlacement(0,westXStrutPos,"physicalWestXStrut",logicalTopStrutX,world,false,0);
+  new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalWestXStrut_AirPocket",logicalTopStrutX_AirPocket,westXStrut,false,0);
+
+  logicalTopStrutY->SetVisAttributes(alVis);
+  logicalTopStrutY_AirPocket->SetVisAttributes(sandVis);
+  logicalTopStrutX->SetVisAttributes(alVis);
+  logicalTopStrutX_AirPocket->SetVisAttributes(sandVis);
+
+  //frame plates
+  G4VSolid* framePlateMiddle = new G4Box("framePlateMiddle",0.5*(44+4)*2.54*cm,0.5*(33.75)*2.54*cm,0.5*1.5*2.54*cm);
+  G4Tubs* large_hole = new G4Tubs("large_hole",0.0,0.5*22.1*2.54*cm,2*2.54*cm,0.0,2*pi);
+  framePlateMiddle = new G4SubtractionSolid("framePlateMiddle_Cut",framePlateMiddle,large_hole,NULL,G4ThreeVector(0,0,0));
+  // using "light" aluminum to simulate the existence of a lattice of 1/4-20 holes with a pitch of 2" about 99% of area is filled and same fraction
+  // of volume becaus they are through-holes
+  G4LogicalVolume* logicalFramePlateMiddle = new G4LogicalVolume(framePlateMiddle,lightaluminum,"logicalFramePlateMiddle",0,0,0);
+
+  G4ThreeVector framePlateMiddlePos(0,0,floorZ+(2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+4+0.75)*2.54*cm+1.735*m);
+  G4PVPlacement *framePlateMiddlePV = new G4PVPlacement(0,framePlateMiddlePos,"physicalFramePlateMiddle",logicalFramePlateMiddle,world,false,0);
+  logicalFramePlateMiddle->SetVisAttributes(alVis);
+
+  G4Box* framePlateEast = new G4Box("framePlateEast",0.5*(44+4)*2.54*cm,0.5*(23.75)*2.54*cm,0.5*0.25*2.54*cm);
+  G4LogicalVolume* logicalFramePlateEast = new G4LogicalVolume(framePlateEast,G4NISTAl,"logicalFramePlateEast",0,0,0);
+
+  G4ThreeVector framePlateEastPos(0,-0.5*(33.75+23.75)*2.54*cm,floorZ+(2.0+0.25+(7.0/8.0)+8+(7.0/8.0)+4+0.125)*2.54*cm+1.735*m);
+  G4PVPlacement *framePlateEastPV = new G4PVPlacement(0,framePlateEastPos,"physicalFramePlateEast",logicalFramePlateEast,world,false,0);
+  logicalFramePlateEast->SetVisAttributes(alVis);
+
+} // ends Frame Construction
+
+void k100_DetectorConstruction::ConstructPuBeSourceAndShield(G4VPhysicalVolume*  world)
+{
+  // THIS AREA FOR THE K100 Floor around the fridge in PAN 43 
+  // just to test...some zero crosshairs:
+  /*G4ThreeVector crosspos(0,0,0);
+  G4Box* xcross = new G4Box("xcross", 10.*cm, .01*cm, .01*cm);
+  G4LogicalVolume* logicross = new G4LogicalVolume(xcross,steel,"logicross",0,0,0);
+
+  new G4PVPlacement(0,crosspos,"physicross",logicross,physicalWorld,false,0);
+
+  G4RotationMatrix crot;
+  crot.rotateZ(90.*deg);
+  G4Transform3D transcross(crot, crosspos);
+  new G4PVPlacement(transcross, "physicross2",logicross,physicalWorld,false,1);
+
+  crot.rotateX(90.*deg);
+  transcross = G4Transform3D(crot, crosspos);
+  new G4PVPlacement(transcross, "physicross3",logicross,physicalWorld,false,2);*/
+  
+  // --------------------------- visuals ------------------------------
+  G4VisAttributes* woodVis = new G4VisAttributes(G4Colour(209/255.,179/255.,127/255.));
+  woodVis->SetForceSolid(true);
+  G4VisAttributes* leadVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+  leadVis->SetForceSolid(true);
+  G4VisAttributes* alVis = new G4VisAttributes(G4Colour(0/255.,255/255.,0/255.));
+  alVis->SetForceSolid(true);
+  //alVis->SetForceWireframe(true);
+  G4VisAttributes* airVis = new G4VisAttributes(G4Colour(255/255.,255/255.,0/255.));
+  airVis->SetForceSolid(true);
+  //airVis->SetForceWireframe(true);
+  G4VisAttributes* steelVis = new G4VisAttributes(G4Colour(255/255.,0/255.,255/255.));
+  steelVis->SetForceSolid(true);
+  steelVis->SetForceWireframe(false);
+  G4VisAttributes* barrelVis = new G4VisAttributes(G4Colour(255/255.,0/255.,255/255.));
+  barrelVis->SetForceSolid(true);
+  //barrelVis->SetForceWireframe(false);
+  G4VisAttributes* paraffinVis = new G4VisAttributes(G4Colour(0/255.,255/255.,0/255.));
+  paraffinVis->SetForceSolid(true);
+  //paraffinVis->SetForceWireframe(true);
+  G4VisAttributes* luciteVis = new G4VisAttributes(G4Colour(255/255.,165/255.,0/255.));
+  luciteVis->SetForceSolid(true);
+
+
+  // ------------------------- Floor Feet and Posts ----------------------
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+  std::vector<double> postPointsX,postPointsY; //X is north/south south toward positive Y is east/west west toward positive
+  //anti-clockwise facing south
+  postPointsY.push_back((-19.75-16.0)*2.54*cm); 
+  postPointsX.push_back(-22.0*2.54*cm); 
+  postPointsY.push_back((-19.75-16.0+73.6)*2.54*cm); 
+  postPointsX.push_back(-22.0*2.54*cm);
+  postPointsY.push_back((-19.75-16.0+73.6)*2.54*cm); 
+  postPointsX.push_back((-22.0+44.0)*2.54*cm);
+  postPointsY.push_back((-19.75-16.0)*2.54*cm); 
+  postPointsX.push_back((-22.0+44.0)*2.54*cm);
+
+  if(pubeNaIParams.doR66){
+    //Wood
+    G4Box* woodBase = new G4Box("woodBase",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm,0.5*10.5*2.54*cm,0.5*1.5*2.54*cm);
+    G4LogicalVolume* logicalWoodBase = new G4LogicalVolume(woodBase,wood,"logicalWoodBase",0,0,0);
+    G4ThreeVector basePos(0,postPointsY[1]-(0.5*(16.0-10.5)+3.25)*2.54*cm,floorZ+0.5*1.5*2.54*cm);
+    new G4PVPlacement(0,basePos,"physicalWoodBase",logicalWoodBase,world,false,0);
+    logicalWoodBase->SetVisAttributes(woodVis);
+
+    //lead
+    G4Box* leadBase = new G4Box("leadBase",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm - 0.5*2.0*2.54*cm,0.5*8.0*2.54*cm,0.5*0.5*2.54*cm + 0.5*cm);
+    G4LogicalVolume* logicalLeadBase = new G4LogicalVolume(leadBase,shieldPbMat,"logicalLeadBase",0,0,0);
+    basePos =  G4ThreeVector(0,postPointsY[1]-(0.5*(16.0-10.5)+3.25)*2.54*cm,floorZ+1.5*2.54*cm+0.5*(0.5*2.54*cm + 1*cm));
+    new G4PVPlacement(0,basePos,"physicalleadBase",logicalLeadBase,world,false,0);
+    logicalLeadBase->SetVisAttributes(leadVis);
+
+    //aluminum box
+    G4VSolid* alBox = new G4Box("alBox",0.5*(postPointsX[2]-postPointsX[1]) -0.5*16.0*2.54*cm,0.5*25.5*cm,0.5*25.5*cm);
+    G4Box* alCap = new G4Box("alCap",0.5*1.0*cm,0.5*27.5*cm,0.5*27.5*cm);
+    alBox = new G4UnionSolid("alBox0",alBox,alCap,0,G4ThreeVector(0.5*(postPointsX[2]-postPointsX[1]) -0.5*16*2.54*cm +0.5*1.0*cm,0,0));
+    alBox = new G4UnionSolid("alBox1",alBox,alCap,0,G4ThreeVector(-0.5*(postPointsX[2]-postPointsX[1])+0.5*16*2.54*cm -0.5*1.0*cm,0,0));
+    G4LogicalVolume* logicalAlBox = new G4LogicalVolume(alBox,G4NISTAl,"logicalAlBox",0,0,0);
+    //G4ThreeVector boxPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+0.5*25.5*cm);
+    G4ThreeVector boxPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+2.0*2.54*cm+0.5*27.5*cm);
+    G4PVPlacement *alBoxWorld = new G4PVPlacement(0,boxPos,"physicalAlBox",logicalAlBox,world,false,0);
+    logicalAlBox->SetVisAttributes(alVis);
+
+    G4Box* airInAlBox = new G4Box("airInAlBox",0.5*28.0*2.54*cm,0.5*(25.5-0.6)*cm,0.5*(25.5-0.6)*cm);
+    G4LogicalVolume* logicalAirInAlBox = new G4LogicalVolume(airInAlBox,G4NISTair,"logicalAirInAlBox",0,0,0);
+    G4PVPlacement *airBoxWorld = new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalAirInAlBox",logicalAirInAlBox,alBoxWorld,false,0);
+    logicalAirInAlBox->SetVisAttributes(airVis);
+
+    G4Box* alIntPlate = new G4Box("alInt",0.5*(25.5-0.6)*cm + 1.0*2.54*cm,0.5*1.0*2.54*cm,0.5*(25.5-0.6)*cm);
+    G4LogicalVolume* logicalAlIntPlate = new G4LogicalVolume(alIntPlate,G4NISTAl,"logicalAlIntPlate",0,0,0);
+    new G4PVPlacement(0,G4ThreeVector(0,0,0),"physicalAlIntPlate",logicalAlIntPlate,airBoxWorld,false,0);
+    logicalAlIntPlate->SetVisAttributes(alVis);
+
+    //plate lead sits on
+    G4Box* alLeadPlate = new G4Box("alLeadPlate",0.5*(24-1.5)*2.54*cm,0.5*(12)*2.54*cm,0.5*(3.0/8.0)*2.54*cm);
+    G4LogicalVolume* logicalAlLeadPlate = new G4LogicalVolume(alLeadPlate,G4NISTAl,"logicalAlLeadPlate",0,0,0);
+    G4ThreeVector alLeadPlatePos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+0.5*(3.0/8.0)*2.54*cm);
+    new G4PVPlacement(0,alLeadPlatePos,"physicalAlLeadPlate",logicalAlLeadPlate,world,false,0);
+    logicalAlLeadPlate->SetVisAttributes(alVis);
+
+    //lead stack
+    G4Box* leadStack = new G4Box("leadStack",0.5*(24)*2.54*cm,0.5*(12)*2.54*cm,0.5*(16)*2.54*cm);
+    G4LogicalVolume* logicalLeadStack = new G4LogicalVolume(leadStack,shieldPbMat,"logicalLeadStack",0,0,0);
+    G4ThreeVector leadStackPos(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+0.5*16*2.54*cm);
+    new G4PVPlacement(0,leadStackPos,"physicalLeadStack",logicalLeadStack,world,false,0);
+    logicalLeadStack->SetVisAttributes(leadVis);
+
+    G4Box* leadStack1 = new G4Box("leadStack1",0.5*(8)*2.54*cm,0.5*(8)*2.54*cm,0.5*(6)*2.54*cm);
+    G4LogicalVolume* logicalLeadStack1 = new G4LogicalVolume(leadStack1,shieldPbMat,"logicalLeadStack1",0,0,0);
+    leadStackPos = G4ThreeVector(-(12-4.0)*2.54*cm,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm-2.0*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+16*2.54*cm+0.5*6.0*2.54*cm);
+    new G4PVPlacement(0,leadStackPos,"physicalLeadStack1",logicalLeadStack1,world,false,0);
+    logicalLeadStack1->SetVisAttributes(airVis);
+
+    G4Box* leadStack2 = new G4Box("leadStack2",0.5*(8)*2.54*cm,0.5*(4)*2.54*cm,0.5*(2)*2.54*cm);
+    G4LogicalVolume* logicalLeadStack2 = new G4LogicalVolume(leadStack2,shieldPbMat,"logicalLeadStack2",0,0,0);
+    leadStackPos = G4ThreeVector(-(12-4.0)*2.54*cm,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm-2.0*2.54*cm,floorZ+1.5*2.54*cm+0.5*2.54*cm+1*cm+25.5*cm+(3.0/8.0)*2.54*cm+16*2.54*cm+6.0*2.54*cm+0.5*2.0*2.54*cm);
+    new G4PVPlacement(0,leadStackPos,"physicalLeadStack2",logicalLeadStack2,world,false,0);
+    logicalLeadStack2->SetVisAttributes(airVis);
+
+    //barrel
+    if(pubeNaIParams.addBarrel){
+      G4Tubs* steelBarrel = new G4Tubs("steelBarrel",0,0.5*(16.25)*2.54*cm,0.5*(21.0)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalSteelBarrel = new G4LogicalVolume(steelBarrel,carbonsteel,"logicalSteelBarrel",0,0,0);
+      G4ThreeVector barrelPos = G4ThreeVector(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm,floorZ+0.5*21.0*2.54*cm);
+      G4PVPlacement *barrelWorld = new G4PVPlacement(0,barrelPos,"physicalBarrel",logicalSteelBarrel,world,false,0);
+      logicalSteelBarrel->SetVisAttributes(steelVis);
+
+      G4Tubs* paraffinInsert = new G4Tubs("paraffinInsert",0,0.5*(16.25-0.125)*2.54*cm,0.5*(21.0-(1.0/16.0))*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalParaffinInsert = new G4LogicalVolume(paraffinInsert,G4NISTparaffin,"logicalParaffinInsert",0,0,0);
+      G4ThreeVector paraffinPos = G4ThreeVector(0,0,(1.0/32.0)*2.54*cm);
+      G4PVPlacement *paraffinWorld = new G4PVPlacement(0,paraffinPos,"physicalParaffin",logicalParaffinInsert,barrelWorld,false,0);
+      logicalParaffinInsert->SetVisAttributes(paraffinVis);
+
+      G4cout << "floorZ: " << floorZ << G4endl;
+      G4Tubs* pipeInner = new G4Tubs("pipeInner",0,0.5*(2.5)*2.54*cm,0.5*(9.0)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalPipeInner = new G4LogicalVolume(pipeInner,carbonsteel,"logicalPipeInner",0,0,0);
+      G4ThreeVector pipePos = G4ThreeVector(0,0,0.5*(21.0-(1/16.0)-9.0)*2.54*cm-2*2.54*cm);
+      G4PVPlacement *pipeWorld = new G4PVPlacement(0,pipePos,"physicalPipe",logicalPipeInner,paraffinWorld,false,0);
+      logicalPipeInner->SetVisAttributes(steelVis);
+
+      G4Tubs* pipeAir = new G4Tubs("pipeAir",0,0.5*(2.5-0.25)*2.54*cm,0.5*(9.0-0.25)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalPipeAir = new G4LogicalVolume(pipeAir,G4NISTair,"logicalPipeAir",0,0,0);
+      G4ThreeVector airPos = G4ThreeVector(0,0,0.5*(1/8.0)*2.54*cm);
+      G4PVPlacement *airWorld = new G4PVPlacement(0,airPos,"physicalPipeAir",logicalPipeAir,pipeWorld,false,0);
+      logicalPipeAir->SetVisAttributes(airVis);
+
+      G4Tubs* barrelAir0 = new G4Tubs("barrelAir0",0,0.5*(16.25-0.125)*2.54*cm,0.5*(2.0)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalBarrelAir0 = new G4LogicalVolume(barrelAir0,G4NISTair,"logicalBarrelAir0",0,0,0);
+      airPos = G4ThreeVector(0,0,0.5*(21.0 - (1/16.0))*2.54*cm - 0.5*(2.0)*2.54*cm);
+      G4PVPlacement *abovePipeAirWorld = new G4PVPlacement(0,airPos,"physicalBarrelAir0",logicalBarrelAir0,paraffinWorld,false,0);
+      logicalBarrelAir0->SetVisAttributes(airVis);
+
+      G4Tubs* barrelAir1 = new G4Tubs("barrelAir1",0.5*2.5*2.54*cm,0.5*(16.25-0.125)*2.54*cm,0.5*(1.5)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalBarrelAir1 = new G4LogicalVolume(barrelAir1,G4NISTair,"logicalBarrelAir1",0,0,0);
+      airPos = G4ThreeVector(0,0,0.5*(21.0 - (1/16.0))*2.54*cm - (2.0)*2.54*cm - 0.5*(1.5)*2.54*cm );
+      new G4PVPlacement(0,airPos,"physicalBarrelAir1",logicalBarrelAir1,paraffinWorld,false,0);
+      logicalBarrelAir1->SetVisAttributes(airVis);
+
+      G4Tubs* luciteRodInPipe = new G4Tubs("luciteRodInPipe",0.,0.5*(2.0)*2.54*cm,0.5*(3.5)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalLuciteRodInPipe = new G4LogicalVolume(luciteRodInPipe,G4NISTlucite,"logicalLuciteRodInPipe",0,0,0);
+      G4ThreeVector lucitePos = G4ThreeVector(0,0,0.5*(9.0-0.25)*2.54*cm - 0.5*3.5*2.54*cm);
+      new G4PVPlacement(0,lucitePos,"physicalLuciteRodInPipe",logicalLuciteRodInPipe,airWorld,false,0);
+      logicalLuciteRodInPipe->SetVisAttributes(luciteVis);
+
+      G4Tubs* luciteRodAbovePipe = new G4Tubs("luciteRodAbovePipe",0.,0.5*(2.0)*2.54*cm,0.5*(2.0)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalLuciteRodAbovePipe = new G4LogicalVolume(luciteRodAbovePipe,G4NISTlucite,"logicalLuciteRodAbovePipe",0,0,0);
+      lucitePos = G4ThreeVector(0,0,0);
+      new G4PVPlacement(0,lucitePos,"physicalLuciteRodAbovePipe",logicalLuciteRodAbovePipe,abovePipeAirWorld,false,0);
+      logicalLuciteRodAbovePipe->SetVisAttributes(luciteVis);
+
+      G4Tubs* luciteRodAboveBarrel = new G4Tubs("luciteRodAboveBarrel",0.,0.5*(2.0)*2.54*cm,0.5*(9.75)*2.54*cm,0,2*pi);
+      G4LogicalVolume* logicalLuciteRodAboveBarrel = new G4LogicalVolume(luciteRodAboveBarrel,G4NISTlucite,"logicalLuciteRodAboveBarrel",0,0,0);
+      lucitePos = G4ThreeVector(0,postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm,floorZ+(21)*2.54*cm+0.5*(9.75)*2.54*cm);
+      new G4PVPlacement(0,lucitePos,"physicalLuciteRodAboveBarrel",logicalLuciteRodAboveBarrel,world,false,0);
+      logicalLuciteRodAboveBarrel->SetVisAttributes(luciteVis);
+    
+    } //end pubeNaIParams.addBarrel if statement
+    G4cout << "Position of Source: " << 0 << "," << postPointsY[1]-0.5*16*2.54*cm+0.5*27.5*cm-2.25*2.54*cm+0.5*12*2.54*cm+0.5*16.25*2.54*cm << "," << floorZ+(21-2.0-9.0+2.25)*2.54*cm << G4endl;
+  }//end do R66
+
+  if(pubeNaIParams.doOrb){
+
+    //lead
+    G4Orb* leadOrb = new G4Orb("leadOrb",pubeNaIParams.OrbRad);
+    G4LogicalVolume* logicalLeadOrb = new G4LogicalVolume(leadOrb,shieldPbMat,"logicalLeadOrb",0,0,0);
+    new G4PVPlacement(0,pubeNaIParams.OrbPos,"physicalleadOrb",logicalLeadOrb,world,false,0);
+    logicalLeadOrb->SetVisAttributes(leadVis);
+
+  } //end do Orb
+
+} // ends PuBe SourceAndShield 
+
 void k100_DetectorConstruction::ConstructThermalNeutronBox(G4VPhysicalVolume *world)
 {
         //displacement in world
@@ -1841,6 +2857,61 @@ void k100_DetectorConstruction::ConstructShieldTestEnvironment(G4VPhysicalVolume
 	logicalShieldBox->SetVisAttributes(VisAttShieldBox);  
 }
 void k100_DetectorConstruction::ConstructSimpleGammaCoin(G4VPhysicalVolume *world)
+{
+        //Get the coordinates of copies and source point and things
+	G4ThreeVector stackrel_detorigin = zipParam->GetCoordinates(0);  //is the first one is 0
+	G4double towerassy_shift = -6.5*cm; //FIXME hard-coded?
+	G4double zipstack_shift = -(Tower_zPcut[0] - (zPldh[1] - zPldh[0]) - zPsdh[1] -Zip_z/2.0); //negative because tower is flipped
+	G4double instack_shift = -stackrel_detorigin.z(); //negative because tower is flipped
+	G4ThreeVector detorigin = G4ThreeVector(0,0,towerassy_shift + zipstack_shift +instack_shift);
+	G4ThreeVector point(gammaCoinParams.xcntr,gammaCoinParams.ycntr,gammaCoinParams.zcntr);
+	G4ThreeVector relative = point - detorigin;
+
+	G4cout << "xdet: " << detorigin.x() << " ydet: " << detorigin.y() << " zdet: " << detorigin.z() << G4endl;
+	G4cout << "towerassy_shift: " << towerassy_shift << " zipstack_shift: " << zipstack_shift << " instack_shift: " << instack_shift << G4endl;
+
+	//Do the appropriate rotations
+	G4RotationMatrix *gammadetrot = new G4RotationMatrix;
+	gammadetrot->rotateZ(-relative.phi());
+	gammadetrot->rotateY(-relative.theta());
+
+	//create the simple rectangular shield
+	G4Tubs* GeGammaCyl = new G4Tubs("GeGammaCyl_S",0.0,gammaCoinParams.sizer,gammaCoinParams.sizethk/2.0,0,2*pi);
+	G4LogicalVolume* logicalGeGammaCyl;
+        logicalGeGammaCyl = new G4LogicalVolume(GeGammaCyl,gammaCoinParams.coinmaterial,"GeGammaCyl_L",0,0,0);
+	G4VPhysicalVolume* GeGammaCylWorld = new G4PVPlacement(gammadetrot, 
+								point - (relative.unit()*gammaCoinParams.sizethk/2.0), //put source at edge of shielding
+								"shieldBox_P",
+								logicalGeGammaCyl,
+								world,
+								false,
+								0);
+
+	// Visualization attributes
+	//G4VisAttributes* VisAttGeGammaCyl = new G4VisAttributes(G4Colour(128.0/255.0,0/255.,0/255.));
+	G4cout << "Gamma Coincidence Detector is: " << gammaCoinParams.coinmaterial->GetName() << G4endl;
+        G4VisAttributes* VisAttGeGammaCyl = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+	VisAttGeGammaCyl->SetForceWireframe(false);  //I want a Wireframe of the me
+	logicalGeGammaCyl->SetVisAttributes(VisAttGeGammaCyl);  
+
+	//------------------------------------------------ 
+        // Sensitive detectors
+        //------------------------------------------------ 
+    
+        // Prepare to declare sensitive detectors
+        G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+        G4String detectorZipSDname = "gammaCoin1";
+        G4int collID = -1; collID = SDman->GetCollectionID(detectorZipSDname);
+        k100_ZipSD* azipSD1;
+        ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+        azipSD1 = new k100_ZipSD(detectorZipSDname, k100CollName.size()+1);
+        k100CollName[detectorZipSDname] = k100CollName.size()+1;
+        SDman->AddNewDetector(azipSD1);
+        logicalGeGammaCyl->SetSensitiveDetector(azipSD1);
+  
+}
+void k100_DetectorConstruction::ConstructPuBeNaI(G4VPhysicalVolume *world)
 {
         //Get the coordinates of copies and source point and things
 	G4ThreeVector stackrel_detorigin = zipParam->GetCoordinates(0);  //is the first one is 0

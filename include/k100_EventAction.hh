@@ -25,8 +25,8 @@ class k100_EventAction : public G4UserEventAction
 {
 public :
 
-  k100_EventAction();
-  k100_EventAction(k100_RunAction*);
+  k100_EventAction(G4bool nCapSaveOnly);
+  k100_EventAction(k100_RunAction*,G4bool nCapSaveOnly);
   ~k100_EventAction();
 
 public :
@@ -37,6 +37,7 @@ public :
 private :
 
 
+  G4bool saveOnlyNCapture;
   G4bool drawEvent, saveEvent;
 
   //data output class. not used for initial encarnation

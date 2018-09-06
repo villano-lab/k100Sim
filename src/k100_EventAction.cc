@@ -28,17 +28,19 @@
 #include "k100_StdHit.hh"
 #include "k100_DataStorage.hh"
 
-k100_EventAction::k100_EventAction():drawEvent(true),saveEvent(true)
+k100_EventAction::k100_EventAction(G4bool nCapSaveOnly):drawEvent(true),saveEvent(true),saveOnlyNCapture(nCapSaveOnly)
 {
 	k100_Detector = 
     (k100_DetectorConstruction*)(G4RunManager::GetRunManager()->GetUserDetectorConstruction());
 
 }
-k100_EventAction::k100_EventAction(k100_RunAction* RunAction):drawEvent(true),saveEvent(true),pRunAction(RunAction)
+k100_EventAction::k100_EventAction(k100_RunAction* RunAction,G4bool nCapSaveOnly):drawEvent(true),saveEvent(true),pRunAction(RunAction),saveOnlyNCapture(nCapSaveOnly)
 {
 	k100_Detector = 
     (k100_DetectorConstruction*)(G4RunManager::GetRunManager()->GetUserDetectorConstruction());
 
+	//make the run action information consistent
+	pRunAction->SetSaveOnlyNCapture(saveOnlyNCapture);
 }
 k100_EventAction::~k100_EventAction()
 {
@@ -46,6 +48,8 @@ k100_EventAction::~k100_EventAction()
 }
 void k100_EventAction::BeginOfEventAction(const G4Event* evt)
 {
+	//be sure the RunAction copy of saveOnlyNCapture is used
+	saveOnlyNCapture = pRunAction->GetSaveOnlyNCapture();
 	
 	drawEvent = pRunAction->GetDrawEventCmd();
 	saveEvent = true; // for now this is simple logic
@@ -119,8 +123,23 @@ void k100_EventAction::EndOfEventAction(const G4Event* evt)
 	     else
 	       n_hit=0;
            }
+
+           //check the event to be sure at least one hit has an ncapture (parameter 22 of data array unity)
+	   G4bool gotNCap = false;
+           for (G4int ii=0; ii<n_hit; ii++)
+	   {
+	     if(!saveOnlyNCapture) break; //skip this if saving all events
+	     G4double *quickdata = (*GHC)[ii]->GetData();
+	     if(quickdata[22-1]==1){
+	       gotNCap = true;
+	       break;
+	     }
+	   }
+	   if(!gotNCap && saveOnlyNCapture) saveEvent=false;
     
            if(saveEvent) {
+
+
              //check to see if storage of this detector event will overflow current array
              if (dataOut->overflowArray(n_hit))
 	     {
@@ -141,7 +160,8 @@ void k100_EventAction::EndOfEventAction(const G4Event* evt)
 	       // modify the memory
 	       dataOut->getData()[1-1] = evt->GetEventID()+1;
                k100_EventInfo *anEventInfo = (k100_EventInfo*) evt->GetUserInformation();
-	       dataOut->getData()[18-1] = anEventInfo->GetBeLength();
+	       //FIXME this seems like a hack for gamma-Be running!  remove it
+	       //dataOut->getData()[18-1] = anEventInfo->GetBeLength();
 
 	       // add this data to the matrix array
 	       dataOut->addData();

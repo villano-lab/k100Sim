@@ -24,7 +24,7 @@
 
 #include <list>
 
-#define N_DATA 21 
+#define N_DATA 22 
 #define N_LENGTH 200000
 
 #ifdef ASCIIOUT

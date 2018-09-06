@@ -89,6 +89,72 @@ void k100_PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
    else
    {
      particleSource->GeneratePrimaryVertex(anEvent);
+     //found out particleSource returns the energy it JUST threw, not the one it will throw next by looking here:
+     //http://www.apc.univ-paris7.fr/~franco/g4doxy/html/classG4GeneralParticleSource.html#cfe1960793b123fe1b50facd722e76d5
+     G4double energy = particleSource->GetParticleEnergy();
+
+     //do some particle-gun throwing
+     particleGun->SetParticleDefinition(G4Gamma::Definition()); 
+     particleGun->SetParticlePosition(particleSource->GetParticlePosition());
+     G4int level=0;
+     if(energy>9.0){
+       level = 0; //ground state
+     }
+     else if(energy>6.0 && energy<=9.0){
+       level = 1;
+     }
+     else if(energy>1.75 && energy<=6.0){
+       level = 2;
+     }
+     else if(energy<=1.75){
+       level = 3;
+     }
+
+     //G4cout << "Level: " << level << G4endl; 
+     //G4cout << "N Energy: " << energy << G4endl; 
+     std::vector<G4double> angles = GenerateRandomDirection();
+     switch(level){
+
+       case 0:
+         //pure event, do nothing
+         //G4cout << "Ground State!" << G4endl;
+	 break;
+	
+       case 1:
+         //G4cout << "First State!" << G4endl;
+         particleGun->SetParticleEnergy(4.43803);
+         angles = GenerateRandomDirection();
+         particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
+         particleGun->GeneratePrimaryVertex(anEvent);
+	 break;
+
+       case 2:
+         //G4cout << "Second State!" << G4endl;
+         particleGun->SetParticleEnergy(4.43803);
+         angles = GenerateRandomDirection();
+         particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
+         particleGun->GeneratePrimaryVertex(anEvent);
+         particleGun->SetParticleEnergy(3.21483);
+         angles = GenerateRandomDirection();
+         particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
+         particleGun->GeneratePrimaryVertex(anEvent);
+	 break;
+
+       case 3:
+         //G4cout << "Third State!" << G4endl;
+         particleGun->SetParticleEnergy(9.637);
+         angles = GenerateRandomDirection();
+         particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
+         particleGun->GeneratePrimaryVertex(anEvent);
+	 break;
+
+       default:
+         //G4cout << "No Level Info!" << G4endl;
+	 break;
+
+     }
+
+
    }
   
 }

@@ -49,6 +49,7 @@ G4double DetBox_Rout, DetBox_z;
 
 G4double Tower_Center_Z; 
 G4double Zip_Househeight;
+G4double Zip_Space;
 ///////Tower_Bottom_Z, 
 
 G4double xtow[5], ytow[5], ztow[5];

@@ -38,7 +38,8 @@ class k100_ZipParameterisation : public G4VPVParameterisation
 
 public:
 
-  k100_ZipParameterisation(G4int NbZipsPerTower, 
+  k100_ZipParameterisation(G4double TotalThk,
+		           G4int NbZipsPerTower, 
 			   G4double ZSpacing,  
 			   G4double ZipRadius,   
 			   G4double ZipDepth,
@@ -80,7 +81,9 @@ private:
   G4double fStartX,fStartY,fStartXY;
   G4double fRadius;    //  The half-width of each pixel
   G4double fHalfDepth;    //  The half-depth of each pixel
-  G4double fZSpacing;      //  The distance between the pixels' center
+  G4double fZSpacing;      //  The space between the pixels' edges
+  G4double fVoidThk; //thickness of the entire detector enclosure
+  G4double fEdgeSpace; //derived parameter for edge space
   G4int* DetMaterialList;
   G4Material* zipGe;
   G4Material* zipSi;
