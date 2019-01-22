@@ -1674,7 +1674,7 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
    //if(collID==-1){
    if(true){
-     k100CollName[SDname] = 7;
+     k100CollName[SDname] = 9; //was 7
      naiSD0 = new k100_ZipSD(SDname,k100CollName[SDname]);
      G4cout << "NaI B is Detector " << k100CollName[SDname] << G4endl;
      k100CollPoint[SDname] = naiSD0;
