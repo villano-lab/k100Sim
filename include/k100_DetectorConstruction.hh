@@ -15,6 +15,7 @@ class G4VPhysicalVolume;
 
 class k100_DetectorConstructionMessenger;
 class k100_ZipSD;
+class k100_StdSD;
 class k100_ZipParameterisation;
 
   //complicated parameters for complex options (Fridge)
@@ -210,6 +211,7 @@ private:
   //SD map
   std::map<G4String,G4int> k100CollName;
   std::map<G4String,k100_ZipSD*> k100CollPoint;
+  std::map<G4String,k100_StdSD*> k100CollPointStd;
 
   k100_DetectorConstructionMessenger* detectorMessenger;  //pointer to the Messenger
   //  k100_ZipSD*   azipSD;

@@ -44,7 +44,7 @@
 #include "k100_DetectorConstructionMessenger.hh"
 #include "k100_ZipParameterisation.hh"
 #include "k100_ZipSD.hh"
-#include "k100_VetoSD.hh"
+#include "k100_StdSD.hh"
 
 #include "G4GeometryManager.hh"
 #include "G4PhysicalVolumeStore.hh"
@@ -1669,37 +1669,37 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
    G4String SDname = "NaIB";
    G4int collID = -1; collID = SDman->GetCollectionID(SDname);
-   k100_ZipSD* naiSD0;
+   k100_StdSD* naiSD0;
    ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
 
    //if(collID==-1){
    if(true){
-     k100CollName[SDname] = 9; //was 7
-     naiSD0 = new k100_ZipSD(SDname,k100CollName[SDname]);
+     k100CollName[SDname] = 1; //was 7
+     naiSD0 = new k100_StdSD(SDname,k100CollName[SDname]);
      G4cout << "NaI B is Detector " << k100CollName[SDname] << G4endl;
-     k100CollPoint[SDname] = naiSD0;
+     k100CollPointStd[SDname] = naiSD0;
      SDman->AddNewDetector(naiSD0);
    }
    else{
-     naiSD0 = k100CollPoint[SDname];
+     naiSD0 = k100CollPointStd[SDname];
    }
    logicNaIB->SetSensitiveDetector(naiSD0);
 
    SDname = "NaIC";
    collID = -1; collID = SDman->GetCollectionID(SDname);
-   k100_ZipSD* naiSD1;
+   k100_StdSD* naiSD1;
    ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
 
    //if(collID==-1){
    if(true){
-     k100CollName[SDname] = 8;
-     naiSD1 = new k100_ZipSD(SDname,k100CollName[SDname]);
+     k100CollName[SDname] = 2; //was 8
+     naiSD1 = new k100_StdSD(SDname,k100CollName[SDname]);
      G4cout << "NaI C is Detector " << k100CollName[SDname] << G4endl;
-     k100CollPoint[SDname] = naiSD1;
+     k100CollPointStd[SDname] = naiSD1;
      SDman->AddNewDetector(naiSD1);
    }
    else{
-     naiSD1 = k100CollPoint[SDname];
+     naiSD1 = k100CollPointStd[SDname];
    }
    logicNaIC->SetSensitiveDetector(naiSD1);
 
