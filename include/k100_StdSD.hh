@@ -34,6 +34,7 @@ private:
   k100_StdHitsCollection* stdCollection;
   G4int genericNb;
 
+  G4bool isNCap(G4Track* track,G4Step *aStep);
   k100_PrimaryGeneratorAction *Ngen;
 
 };

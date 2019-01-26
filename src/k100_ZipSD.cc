@@ -7,9 +7,12 @@
 #include "G4UnitsTable.hh"
 #include "G4HCofThisEvent.hh"
 #include "G4Step.hh"
+#include "G4Track.hh"
 #include "G4ThreeVector.hh"
 #include "G4SDManager.hh"
 #include "G4ios.hh"
+
+#include "G4Neutron.hh"
 
 #include "k100_ZipSD.hh"
 
@@ -101,6 +104,11 @@ G4bool k100_ZipSD::ProcessHits(G4Step* aStep, G4TouchableHistory* /*ROhist*/)
   dataVector[20-1] = aStep->GetPreStepPoint()->GetPosition().z();
   dataVector[21-1] = aStep->GetPreStepPoint()->GetGlobalTime();
 
+  //get some process information
+  G4Track* track = aStep->GetTrack();
+
+  dataVector[22-1] = isNCap(track,aStep);
+
   //for(int i=0;i<21;i++){
   //  G4cout << "vector[" << i << "]: " << dataVector[i] << G4endl;
   //}
@@ -154,3 +162,21 @@ void k100_ZipSD::EndOfEvent(G4HCofThisEvent* /*HCE*/)
 }
 
 // ------------------------------------------
+
+G4bool k100_ZipSD::isNCap(G4Track *track, G4Step *aStep){
+
+  static const G4ParticleDefinition* theNeutron = G4Neutron::Definition();
+
+  // Must be a neutron which has been stopped by a nucleus
+  if (track->GetDefinition() != theNeutron) return false;
+  if (track->GetTrackStatus() != fStopAndKill) return false;
+  
+  // Only tag if there were no neutron secondaries (identifies a capture)
+  const G4TrackVector* secondaries = aStep->GetSecondary();
+  size_t nsecs = secondaries->size();
+  for(size_t i=0; i < nsecs; ++i) {    //quicker to search in reverse order
+    if ((*secondaries)[nsecs-1-i]->GetDefinition() == theNeutron) return false;
+  }
+
+  return true;
+}

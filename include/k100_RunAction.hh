@@ -36,11 +36,13 @@ public :
 
   void SetDataFileNamePrefix(G4String nPrefix) {DataFileNamePrefix = nPrefix;}
   void SetOutputDataToFile(G4bool dataout)     {OutputDataToFile = dataout;}
+  void SetSaveOnlyNCapture(G4bool value)     {saveOnlyNCapture = value;}
   void SetDrawEventCmd(G4bool drawBool)        {DrawEventCmd = drawBool;}
   void SetSaltPillOutCmd(G4bool value)         {SaltPillOutCmd = value;}
   void SetAutoSeed (const G4bool value)        {autoSeed    = value;}
 
-  G4bool GetDataFileNamePrefix() {return DataFileNamePrefix;}
+  G4String GetDataFileNamePrefix() {return DataFileNamePrefix;}
+  G4bool GetSaveOnlyNCapture() {return saveOnlyNCapture;}
   G4bool GetOutputDataToFile()   {return OutputDataToFile;}
   G4bool GetDrawEventCmd()       {return DrawEventCmd;}
   G4bool GetSaltPillOutCmd()     {return SaltPillOutCmd;}
@@ -53,10 +55,12 @@ private :
   k100_RunActionMessenger* runMessenger; 
 
   G4bool   autoSeed;
+  G4bool   saveOnlyNCapture; //variable to cull the output list
   G4String DataFileNamePrefix;
   G4bool   DrawEventCmd;
   G4bool   SaltPillOutCmd;
   G4bool   OutputDataToFile;
+  G4bool   ResetRun;
   G4int    runN;
   long     randSeed;
 

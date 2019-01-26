@@ -15,13 +15,14 @@
 #include "G4Colour.hh"
 #include "G4VisAttributes.hh"
 
+#include "k100_DataStorage.hh" // This is used to get the value of N_DATA
 #include "k100_StdHit.hh"
 
 G4Allocator<k100_StdHit> k100_StdHitAllocator;
 
 k100_StdHit::k100_StdHit() 
 {
-  dataVector = new G4double[17];
+  dataVector = new G4double[N_DATA];
 }
 k100_StdHit::k100_StdHit(const k100_StdHit& right) : G4VHit()
 {

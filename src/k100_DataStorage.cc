@@ -55,6 +55,7 @@ k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed)
   sprintf(myNames[14], "PX1"); sprintf(myNames[15], "PY1"); sprintf(myNames[16], "PZ1");
   sprintf(myNames[17], "X1"); sprintf(myNames[18], "Y1"); sprintf(myNames[19], "Z1");
   sprintf(myNames[20], "time1");
+  sprintf(myNames[21], "nCap"); 
   for (int kk=0; kk<N_DATA; kk++)
     VariableNames[kk] = myNames[kk];
 

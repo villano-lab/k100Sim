@@ -61,6 +61,10 @@ k100_RunActionMessenger::k100_RunActionMessenger(k100_RunAction* k100_Run):pRunA
   setDrawEventCmd->SetParameterName("Draw", false);
   setDrawEventCmd->SetDefaultValue(true);
 
+  setNCapOutputCmd = new G4UIcmdWithABool("/run/k100/OnlyNCapOut",this);
+  setNCapOutputCmd->SetGuidance("Set true for only NCapture in Zip otuput. (default = false)");
+  setNCapOutputCmd->SetParameterName("OnlyNCapOut", false);
+  setNCapOutputCmd->SetDefaultValue(false);
 }
 k100_RunActionMessenger::~k100_RunActionMessenger()
 {
@@ -76,6 +80,11 @@ void k100_RunActionMessenger::SetNewValue(G4UIcommand* command, G4String newValu
     else {
       G4cout << "Turning OFF event drawing for all events." << G4endl; }
     pRunAction->SetDrawEventCmd(setDrawEventCmd->GetNewBoolValue(newValue));
+  }
+
+  if( command == setNCapOutputCmd ) {
+    G4bool truth = setNCapOutputCmd->GetNewBoolValue(newValue);
+    pRunAction->SetSaveOnlyNCapture(truth);
   }
 
   if( command == setRunFileName ){

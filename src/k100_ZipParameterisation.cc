@@ -4,6 +4,7 @@
 //
 // ------------------------------------------------
 
+#include "G4ExceptionSeverity.hh"
 #include "G4VPhysicalVolume.hh"
 #include "G4LogicalVolume.hh"
 #include "G4ThreeVector.hh"
@@ -16,7 +17,8 @@
 // ------------------------------------------------
 // ------------------------------------------------
 
-k100_ZipParameterisation::k100_ZipParameterisation(G4int    NbZipsPerTower,
+k100_ZipParameterisation::k100_ZipParameterisation(G4double TotalThk,
+		                                   G4int    NbZipsPerTower,
 						   G4double ZSpacing,
 						   G4double ZipRadius,
 						   G4double ZipDepth,
@@ -26,6 +28,7 @@ k100_ZipParameterisation::k100_ZipParameterisation(G4int    NbZipsPerTower,
 						   G4bool solidZipBool,
 						   G4int towerNb)
 {
+  fVoidThk = TotalThk;
   fNbZipsPerTower = NbZipsPerTower;
   fRadius     = ZipRadius;
   fZSpacing   = ZSpacing;
@@ -37,16 +40,22 @@ k100_ZipParameterisation::k100_ZipParameterisation(G4int    NbZipsPerTower,
   DrawSolidZipBool = solidZipBool;
   towerNumber = towerNb;
 
+  //set up some variables
+  G4double stackHeight = NbZipsPerTower*ZipDepth + (NbZipsPerTower-1)*fZSpacing; //total height 
+  fEdgeSpace = (fVoidThk - stackHeight)/2.0; //half total height minus detector space 
+
+  if (fVoidThk < stackHeight) {
+    G4Exception("Constructor","k100_ZipParameterisation",FatalException,"Stack height is more than total");
+  }
+
+
   //FIXME kludge to get the shield set up for copyNo zero
   G4int copyNo = 0;
-  G4double Zposition = (2.5 - copyNo)*fZSpacing;
+  G4double Zposition = fVoidThk/2.0 - fHalfDepth - fEdgeSpace - copyNo*(2.0*fHalfDepth+fZSpacing);
   G4double Xposition = 0;
   G4double Yposition = 0;
   G4ThreeVector origin(Xposition,Yposition,Zposition);
   k100ZipParCoords[copyNo] = origin;
-  if (fZSpacing < ZipDepth) {
-//    G4Exception("k100_ZipParameterisation construction: Thickness>Spacing");
-  }
 
 }
 
@@ -62,7 +71,8 @@ k100_ZipParameterisation::~k100_ZipParameterisation()
 void k100_ZipParameterisation::ComputeTransformation(const G4int copyNo,
 						     G4VPhysicalVolume* physVol) const
 {
-  G4double Zposition = (2.5 - copyNo)*fZSpacing;
+  //G4double Zposition = (2.5 - copyNo)*fZSpacing;
+  G4double Zposition = fVoidThk/2.0 - fHalfDepth - fEdgeSpace - copyNo*(2.0*fHalfDepth+fZSpacing);
   G4double Xposition = 0;
   G4double Yposition = 0;
   G4ThreeVector origin(Xposition,Yposition,Zposition);
