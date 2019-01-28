@@ -100,6 +100,13 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   PuBeConfigureCmd_Barrel->SetParameterName("choice",false);
   PuBeConfigureCmd_Barrel->AvailableForStates(G4State_Idle);
 
+  PuBeConfigureCmd_NaIsensitive = new G4UIcmdWithABool("/CDMS/PuBe/NaIsensitive",this);
+  PuBeConfigureCmd_NaIsensitive->SetGuidance("Toggle NaI sensitivity.");
+  PuBeConfigureCmd_NaIsensitive->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  PuBeConfigureCmd_NaIsensitive->SetGuidance("in order for change to take effect.");
+  PuBeConfigureCmd_NaIsensitive->SetParameterName("choice",false);
+  PuBeConfigureCmd_NaIsensitive->AvailableForStates(G4State_Idle);
+
   PuBeConfigureCmd_R66 = new G4UIcmdWithABool("/CDMS/PuBe/R66",this);
   PuBeConfigureCmd_R66->SetGuidance("Toggle R66 source construction conditions.");
   PuBeConfigureCmd_R66->SetGuidance("This command MUST be applied before \"beamOn\" ");
@@ -286,6 +293,11 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   if( command == PuBeConfigureCmd_Barrel ) { 
     G4bool truth = PuBeConfigureCmd_Barrel->GetNewBoolValue(newValue);
     k100_Detector->SetConstructPuBeSourceAndShield_addBarrel(truth);
+  }
+
+  if( command == PuBeConfigureCmd_NaIsensitive ) { 
+    G4bool truth = PuBeConfigureCmd_NaIsensitive->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_setNaISensitive(truth);
   }
 
   if( command == PuBeConfigureCmd_R66 ) { 
