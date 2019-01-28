@@ -52,6 +52,7 @@ private:
   G4UIcmdWithAnInteger*       ShieldConfigureCmd_mod;
   G4UIcmdWithABool*       FridgeConfigureCmd_pure3HeBath;
   G4UIcmdWithABool*       PuBeConfigureCmd_Barrel;
+  G4UIcmdWithABool*       PuBeConfigureCmd_NaIsensitive;
   G4UIcmdWithABool*       PuBeConfigureCmd_R66;
   G4UIcmdWithABool*       PuBeConfigureCmd_R62;
   G4UIcmdWithAnInteger*       PuBeConfigureCmd_mod;

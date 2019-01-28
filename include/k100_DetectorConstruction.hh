@@ -67,6 +67,7 @@ class k100_ZipParameterisation;
   //complicated parameters for complex options (PuBe setup)
   struct PuBeNaICoin {
     G4bool addBarrel;
+    G4bool NaIsensitivity; //true if dets are to be sensitive
     G4bool doR66;
     G4bool doR62;
     G4int mod; //parameter for doing different modifications:
@@ -107,6 +108,7 @@ public:
   void SetConstructFrameBool(G4bool newVal)     {ConstructFrameBool = newVal;}
   void SetConstructPuBeSourceAndShieldBool(G4bool newVal)     {ConstructPuBeSourceAndShieldBool = newVal;}
   void SetConstructPuBeSourceAndShield_addBarrel(G4bool newVal)    {pubeNaIParams.addBarrel = newVal;}
+  void SetConstructPuBeSourceAndShield_setNaISensitive(G4bool newVal)    {pubeNaIParams.NaIsensitivity = newVal;}
   void SetConstructPuBeSourceAndShield_doR66(G4bool newVal)    {pubeNaIParams.doR66 = newVal;}
   void SetConstructPuBeSourceAndShield_doR62(G4bool newVal)    {pubeNaIParams.doR62 = newVal;}
   void SetConstructPuBeSourceAndShield_doOrb(G4bool newVal)    {pubeNaIParams.doOrb = newVal;}

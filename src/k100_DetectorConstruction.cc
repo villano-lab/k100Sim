@@ -131,6 +131,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   shieldParams.mod = 0; 
   
   pubeNaIParams.addBarrel = true; //default to use barrel
+  pubeNaIParams.NaIsensitivity = true; //default to have NaI sensitive 
   pubeNaIParams.doR66 = true; //default to R66 shield 
   pubeNaIParams.doR62 = false; //FIXME not yet implemented
   pubeNaIParams.mod = 0; 
@@ -1667,41 +1668,31 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
    // Prepare to declare sensitive detectors
    G4SDManager* SDman = G4SDManager::GetSDMpointer();
 
-   G4String SDname = "NaIB";
-   G4int collID = -1; collID = SDman->GetCollectionID(SDname);
-   k100_StdSD* naiSD0;
-   ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+   if(pubeNaIParams.NaIsensitivity){
+     G4String SDname = "NaIB";
+     G4int collID = -1; collID = SDman->GetCollectionID(SDname);
+     k100_StdSD* naiSD0;
+     ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
 
-   //if(collID==-1){
-   if(true){
      k100CollName[SDname] = 1; //was 7
      naiSD0 = new k100_StdSD(SDname,k100CollName[SDname]);
      G4cout << "NaI B is Detector " << k100CollName[SDname] << G4endl;
      k100CollPointStd[SDname] = naiSD0;
      SDman->AddNewDetector(naiSD0);
-   }
-   else{
-     naiSD0 = k100CollPointStd[SDname];
-   }
-   logicNaIB->SetSensitiveDetector(naiSD0);
+     logicNaIB->SetSensitiveDetector(naiSD0);
 
-   SDname = "NaIC";
-   collID = -1; collID = SDman->GetCollectionID(SDname);
-   k100_StdSD* naiSD1;
-   ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+     SDname = "NaIC";
+     collID = -1; collID = SDman->GetCollectionID(SDname);
+     k100_StdSD* naiSD1;
+     ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
 
-   //if(collID==-1){
-   if(true){
      k100CollName[SDname] = 2; //was 8
      naiSD1 = new k100_StdSD(SDname,k100CollName[SDname]);
      G4cout << "NaI C is Detector " << k100CollName[SDname] << G4endl;
      k100CollPointStd[SDname] = naiSD1;
      SDman->AddNewDetector(naiSD1);
+     logicNaIC->SetSensitiveDetector(naiSD1);
    }
-   else{
-     naiSD1 = k100CollPointStd[SDname];
-   }
-   logicNaIC->SetSensitiveDetector(naiSD1);
 
   }// end addNaISouth if statement
 
