@@ -46,6 +46,7 @@ private:
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinPositionCmd;
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinSizeCmd;
   G4UIcmdWithAString*     SimpleGammaCoinMatCmd;
+  G4UIcmdWithABool*       ZipConfigureCmd_Mat1;
   G4UIcmdWithABool*       ShieldConfigureCmd_SouthNaI;
   G4UIcmdWithABool*       ShieldConfigureCmd_BasePoly;
   G4UIcmdWithABool*       ShieldConfigureCmd_BaseLead;

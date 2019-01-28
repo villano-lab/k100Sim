@@ -59,6 +59,13 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorDeActivateCmd->SetParameterName("choice",false);
   DetectorDeActivateCmd->AvailableForStates(G4State_Idle);
 
+  ZipConfigureCmd_Mat1 = new G4UIcmdWithABool("/CDMS/Zip1/IsGe",this);
+  ZipConfigureCmd_Mat1->SetGuidance("Toggle Ge/Si Material for Zip1.");
+  ZipConfigureCmd_Mat1->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  ZipConfigureCmd_Mat1->SetGuidance("in order for change to take effect.");
+  ZipConfigureCmd_Mat1->SetParameterName("choice",false);
+  ZipConfigureCmd_Mat1->AvailableForStates(G4State_Idle);
+
   ShieldConfigureCmd_SouthNaI = new G4UIcmdWithABool("/CDMS/Shield/SouthNaI",this);
   ShieldConfigureCmd_SouthNaI->SetGuidance("Toggle NaI construction on Shield.");
   ShieldConfigureCmd_SouthNaI->SetGuidance("This command MUST be applied before \"beamOn\" ");
@@ -263,6 +270,11 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(false);}
     else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(false);}
 
+  }
+
+  if( command == ZipConfigureCmd_Mat1 ) { 
+    G4bool truth = ZipConfigureCmd_Mat1->GetNewBoolValue(newValue);
+    k100_Detector->SetFirstDetGe(truth);
   }
 
   if( command == ShieldConfigureCmd_SouthNaI ) { 

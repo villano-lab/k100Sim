@@ -93,6 +93,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   SetConstructShieldTestEnvironmentBool(false); //note, requires construct ZIP bool
   SetConstructSimpleGammaCoinBool(false); //note, requires construct ZIP bool
   SetConstructPuBeNaIBool(false); //note, requires construct ZIP bool
+  SetFirstDetGe(true); //we only use the first detector in the array for now, should it be Ge?
 
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
@@ -141,7 +142,11 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 
   // ---------Detector Names--------------
   DetCollName = new char*[30];  TowCollName = new char*[5];     DetMaterials = new G4int [30];
-  DetCollName[0]  = "zip01";  DetMaterials[0]  = 1; //Ge  ///Ge = 1 Si = 0
+  DetCollName[0]  = "zip01";  
+  if(FirstDetGe)
+    DetMaterials[0]  = 1; //Ge  ///Ge = 1 Si = 0
+  else
+    DetMaterials[0]  = 0; //Si  ///Ge = 1 Si = 0
   DetCollName[1]  = "zip02";  DetMaterials[1]  = 1; //Ge
   DetCollName[2]  = "zip03";  DetMaterials[2]  = 1; //Ge
   DetCollName[3]  = "zip04";  DetMaterials[3]  = 0; //Si

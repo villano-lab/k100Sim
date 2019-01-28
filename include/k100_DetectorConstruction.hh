@@ -125,6 +125,7 @@ public:
   void SetConstructSimpleGammaCoinSize(G4double sizer, G4double sizethk);
   void SetConstructSimpleGammaCoinMat(G4String mat);
   void SetConstructPuBeNaIBool(G4bool newVal)  {ConstructPuBeNaIBool = newVal&&ConstructZipBool;} //requires construction of Zips
+  void SetFirstDetGe(G4bool newVal)  {FirstDetGe = newVal;}
   void SetNbOfTowers(G4int newVal)               {NbOfTowers = newVal;}
   void SetNbOfZips(G4int newVal)                 {NbOfZips = newVal;}
 
@@ -228,6 +229,7 @@ private:
   G4bool ConstructShieldTestEnvironmentBool;
   G4bool ConstructSimpleGammaCoinBool;
   G4bool ConstructPuBeNaIBool;
+  G4bool FirstDetGe;
   G4int ConstructGenericTrackerInt;
   G4int ConstructGenericSensitiveInt;
   G4int DesignNo;
