@@ -1365,6 +1365,12 @@ void k100_DetectorConstruction::ConstructEverything(G4LogicalVolume*  logicalWor
   // experimental apparatus
   //------------------------------ 
 
+  if(FirstDetGe)
+    DetMaterials[0]  = 1; //Ge  ///Ge = 1 Si = 0
+  else{
+    DetMaterials[0]  = 0; //Si  ///Ge = 1 Si = 0
+    G4cout << "Using silicon like the sands of time: flabergasting" << G4endl;
+  }
   if(ConstructVetoBool)    {ConstructVeto(logicalWorld);}
   if(ConstructShieldsBool) {ConstructShields(logicalWorld);}
   if(ConstructIceBoxBool)  {ConstructIceBox(logicalWorld);}
