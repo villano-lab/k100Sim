@@ -111,7 +111,7 @@ void k100_PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
      }
 
      //check if the gammas are on/off
-     if(Ndet->GetConstructPuBeSourceAndShield_doPuBeGamma()) level=5;
+     if(!Ndet->GetConstructPuBeSourceAndShield_doPuBeGamma()) level=5;
 
      //G4cout << "Level: " << level << G4endl; 
      //G4cout << "N Energy: " << energy << G4endl; 
