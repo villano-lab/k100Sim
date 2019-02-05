@@ -130,7 +130,8 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   shieldParams.addBasePoly = false;
   shieldParams.addBaseLead = false;
   shieldParams.mod = 0; 
-  
+ 
+  pubeNaIParams.doPuBeGamma = true; //default to do PuBe gammas
   pubeNaIParams.addBarrel = true; //default to use barrel
   pubeNaIParams.NaIsensitivity = true; //default to have NaI sensitive 
   pubeNaIParams.doR66 = true; //default to R66 shield 

@@ -100,6 +100,13 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   FridgeConfigureCmd_pure3HeBath->SetParameterName("choice",false);
   FridgeConfigureCmd_pure3HeBath->AvailableForStates(G4State_Idle);
 
+  PuBeConfigureCmd_doPuBeGammas = new G4UIcmdWithABool("/CDMS/PuBe/doPuBeGammas",this);
+  PuBeConfigureCmd_doPuBeGammas->SetGuidance("Do or do not do gammas.");
+  PuBeConfigureCmd_doPuBeGammas->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  PuBeConfigureCmd_doPuBeGammas->SetGuidance("in order for change to take effect.");
+  PuBeConfigureCmd_doPuBeGammas->SetParameterName("choice",false);
+  PuBeConfigureCmd_doPuBeGammas->AvailableForStates(G4State_Idle);
+
   PuBeConfigureCmd_Barrel = new G4UIcmdWithABool("/CDMS/PuBe/Barrel",this);
   PuBeConfigureCmd_Barrel->SetGuidance("Toggle Barrel addition to source.");
   PuBeConfigureCmd_Barrel->SetGuidance("This command MUST be applied before \"beamOn\" ");
@@ -300,6 +307,11 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   if( command == FridgeConfigureCmd_pure3HeBath ) { 
     G4bool truth = FridgeConfigureCmd_pure3HeBath->GetNewBoolValue(newValue);
     k100_Detector->SetConstructIceBox_pure3HeBath(truth);
+  }
+
+  if( command == PuBeConfigureCmd_doPuBeGammas ) { 
+    G4bool truth = PuBeConfigureCmd_doPuBeGammas->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_doPuBeGamma(truth);
   }
 
   if( command == PuBeConfigureCmd_Barrel ) { 
