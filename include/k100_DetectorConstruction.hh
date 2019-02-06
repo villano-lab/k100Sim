@@ -66,6 +66,7 @@ class k100_ZipParameterisation;
 
   //complicated parameters for complex options (PuBe setup)
   struct PuBeNaICoin {
+    G4bool westPolySensitivity; //default false
     G4bool doPuBeGamma; //default true
     G4bool addBarrel;
     G4bool NaIsensitivity; //true if dets are to be sensitive
@@ -108,6 +109,7 @@ public:
   void SetConstructWestReflectorBool(G4bool newVal)     {ConstructWestReflectorBool = newVal;}
   void SetConstructFrameBool(G4bool newVal)     {ConstructFrameBool = newVal;}
   void SetConstructPuBeSourceAndShieldBool(G4bool newVal)     {ConstructPuBeSourceAndShieldBool = newVal;}
+  void SetConstructPuBeSourceAndShield_westPolySensitivity(G4bool newVal)    {pubeNaIParams.westPolySensitivity = newVal;}
   void SetConstructPuBeSourceAndShield_doPuBeGamma(G4bool newVal)    {pubeNaIParams.doPuBeGamma = newVal;}
   void SetConstructPuBeSourceAndShield_addBarrel(G4bool newVal)    {pubeNaIParams.addBarrel = newVal;}
   void SetConstructPuBeSourceAndShield_setNaISensitive(G4bool newVal)    {pubeNaIParams.NaIsensitivity = newVal;}
@@ -140,6 +142,7 @@ public:
   G4bool GetConstructShields_addBasePoly()    {return shieldParams.addBasePoly;}
   G4bool GetConstructShields_addBaseLead()    {return shieldParams.addBaseLead;}
   G4int  GetConstructShields_mod()    {return shieldParams.mod;}
+  G4bool GetConstructPuBeSourceAndShield_westPolySensitivity()    {return pubeNaIParams.westPolySensitivity;}
   G4bool GetConstructPuBeSourceAndShield_doPuBeGamma()    {return pubeNaIParams.doPuBeGamma;}
   G4bool GetConstructPuBeSourceAndShield_addBarrel()    {return pubeNaIParams.addBarrel;}
   G4bool GetConstructPuBeSourceAndShield_doR66()    {return pubeNaIParams.doR66;}

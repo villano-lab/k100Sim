@@ -131,6 +131,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   shieldParams.addBaseLead = false;
   shieldParams.mod = 0; 
  
+  pubeNaIParams.westPolySensitivity = false; //default is not to make this sensitive 
   pubeNaIParams.doPuBeGamma = true; //default to do PuBe gammas
   pubeNaIParams.addBarrel = true; //default to use barrel
   pubeNaIParams.NaIsensitivity = true; //default to have NaI sensitive 
@@ -1553,6 +1554,25 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
   // place squares
   G4LogicalVolume* logicSquare = new G4LogicalVolume(square,polyMat,"logicSquare",0,0,0);
+
+  //can make this sensitive to count flux for Pu/Be runs
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+  if(pubeNaIParams.westPolySensitivity){
+    G4String SDname = "WestPoly";
+    G4int collID = -1; collID = SDman->GetCollectionID(SDname);
+    k100_StdSD* polyFlux;
+    ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+
+    k100CollName[SDname] = 0;
+    polyFlux = new k100_StdSD(SDname,k100CollName[SDname]);
+    G4cout << "West poly walll flux counter " << k100CollName[SDname] << G4endl;
+    k100CollPointStd[SDname] = polyFlux;
+    SDman->AddNewDetector(polyFlux);
+    logicSquare->SetSensitiveDetector(polyFlux);
+
+  }
+
   panelPosition=G4ThreeVector(frame_x+10*2.54*cm,frame_y-5*2.54*cm,frame_z);
   G4cout << "Is Pu/Be Mod? " << shieldParams.mod << G4endl;
   if((shieldParams.mod!=2) || (ConstructPuBeSourceAndShieldBool==false)) //mod 2 is simply without this poly
@@ -1677,7 +1697,7 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
    //------------------------------------------------ 
       
    // Prepare to declare sensitive detectors
-   G4SDManager* SDman = G4SDManager::GetSDMpointer();
+   //G4SDManager* SDman = G4SDManager::GetSDMpointer();
 
    if(pubeNaIParams.NaIsensitivity){
      G4String SDname = "NaIB";

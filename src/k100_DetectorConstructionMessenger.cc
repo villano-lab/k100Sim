@@ -100,6 +100,13 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   FridgeConfigureCmd_pure3HeBath->SetParameterName("choice",false);
   FridgeConfigureCmd_pure3HeBath->AvailableForStates(G4State_Idle);
 
+  PuBeConfigureCmd_westPolySensitive = new G4UIcmdWithABool("/CDMS/PuBe/westPolySensitive",this);
+  PuBeConfigureCmd_westPolySensitive->SetGuidance("Toggle west poly wall sensitivity.");
+  PuBeConfigureCmd_westPolySensitive->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  PuBeConfigureCmd_westPolySensitive->SetGuidance("in order for change to take effect.");
+  PuBeConfigureCmd_westPolySensitive->SetParameterName("choice",false);
+  PuBeConfigureCmd_westPolySensitive->AvailableForStates(G4State_Idle);
+
   PuBeConfigureCmd_doPuBeGammas = new G4UIcmdWithABool("/CDMS/PuBe/doPuBeGammas",this);
   PuBeConfigureCmd_doPuBeGammas->SetGuidance("Do or do not do gammas.");
   PuBeConfigureCmd_doPuBeGammas->SetGuidance("This command MUST be applied before \"beamOn\" ");
@@ -307,6 +314,11 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   if( command == FridgeConfigureCmd_pure3HeBath ) { 
     G4bool truth = FridgeConfigureCmd_pure3HeBath->GetNewBoolValue(newValue);
     k100_Detector->SetConstructIceBox_pure3HeBath(truth);
+  }
+
+  if( command == PuBeConfigureCmd_westPolySensitive ) { 
+    G4bool truth = PuBeConfigureCmd_westPolySensitive->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructPuBeSourceAndShield_westPolySensitivity(truth);
   }
 
   if( command == PuBeConfigureCmd_doPuBeGammas ) { 
