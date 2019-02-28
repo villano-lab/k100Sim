@@ -1609,7 +1609,7 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // place rects
   G4LogicalVolume* logicRect = new G4LogicalVolume(rect,polyMat,"logicRect",0,0,0);
   panelPosition=G4ThreeVector(frame_x-5*2.54*cm,frame_y+12*2.54*cm,frame_z);
-  if(!shieldParams.addNaISouth) //only place south panels when NOT using NaI detectors 
+  if(!shieldParams.addNaISouth&!shieldParams.HPGeboron) //only place south panels when NOT using NaI detectors or boron HPGe
     new G4PVPlacement(0,panelPosition,"physicRect",logicRect,physicalWorld,false,0);
   panelPosition=G4ThreeVector(frame_x+25*2.54*cm,frame_y+12*2.54*cm,frame_z);
   new G4PVPlacement(0,panelPosition,"physicRect1",logicRect,physicalWorld,false,1);
@@ -1805,11 +1805,11 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   //place squares
   G4LogicalVolume* logicLeadRectY = new G4LogicalVolume(rectLeadBaseY,shieldPbMat,"logicLeadRectY",0,0,0);
   G4LogicalVolume* logicLeadRectY_forNaI = new G4LogicalVolume(rectLeadBaseY_forNaI,shieldPbMat,"logicLeadRectY_forNaI",0,0,0);
-  if(!shieldParams.addNaISouth){//change lead on side with NaI detectors
+  if(!shieldParams.addNaISouth&!shieldParams.HPGeboron){//change lead on side with NaI detectors
     leadPosition=G4ThreeVector(frame_x-(11.25)*2.54*cm,frame_y+12*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY0",logicLeadRectY,physicalWorld,false,0);
   }
-  else{
+  else if(shieldParams.addNaISouth&!shieldParams.HPGeboron){
     leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12+22.5-(19.0/2.0))*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY_forNaI0",logicLeadRectY_forNaI,physicalWorld,false,0);
     leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12-22.5+(19.0/2.0))*2.54*cm,frame_z);
