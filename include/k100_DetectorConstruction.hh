@@ -37,6 +37,7 @@ class k100_ZipParameterisation;
   //complicated parameters for complex options (Shield)
   struct Shield {
     G4bool addLeadSupports; //not yet implemented
+    G4bool HPGeboron; //default false -- use if want remove South wall in favor of HPGe 
     G4bool addNaISouth; //add 2 NaI detectors to South shielding wall, make sensitive
     G4bool addBasePoly; //add poly panels on the bottom 
     G4bool addBaseLead; //add lead sheets on the bottom 
@@ -97,7 +98,16 @@ public:
   void SetConstructZipBool(G4bool newVal)        {ConstructZipBool = newVal;}
   void SetConstructVetoBool(G4bool newVal)       {ConstructVetoBool = newVal;}
   void SetConstructShieldsBool(G4bool newVal)    {ConstructShieldsBool = newVal;}
-  void SetConstructShields_addNaISouth(G4bool newVal)    {shieldParams.addNaISouth = newVal;}
+  void SetConstructShields_HPGeboron(G4bool newVal)    {
+    shieldParams.HPGeboron = newVal; 
+    if(newVal)
+      shieldParams.addNaISouth = !newVal
+  }
+  void SetConstructShields_addNaISouth(G4bool newVal)    {
+    shieldParams.addNaISouth = newVal; 
+    if(newVal)
+      shieldParams.HPGeboron = !newVal
+  }
   void SetConstructShields_addBasePoly(G4bool newVal)    {shieldParams.addBasePoly = newVal;}
   void SetConstructShields_addBaseLead(G4bool newVal)    {shieldParams.addBaseLead = newVal;}
   void SetConstructShields_mod(G4int newVal)    {shieldParams.mod = newVal;}
@@ -138,6 +148,7 @@ public:
   G4bool GetConstructZipBool()     {return ConstructZipBool;}
   G4bool GetConstructVetoBool()    {return ConstructVetoBool;}
   G4bool GetConstructShieldsBool() {return ConstructShieldsBool;}
+  G4bool GetConstructShields_HPGeboron()    {return shieldParams.HPGeboron;}
   G4bool GetConstructShields_addNaISouth()    {return shieldParams.addNaISouth;}
   G4bool GetConstructShields_addBasePoly()    {return shieldParams.addBasePoly;}
   G4bool GetConstructShields_addBaseLead()    {return shieldParams.addBaseLead;}
@@ -213,7 +224,7 @@ private:
   G4Material* carbonsteel;
   G4Material* lightaluminum;
   G4Material* wood;
-  G4Material* G4NISTconcrete,*G4NISTair,*G4NISTNaI,*G4NISTPVC,*G4NISTPE,*G4NISTlucite,*G4NISTparaffin;
+  G4Material* G4NISTconcrete,*G4NISTair,*G4NISTNaI,*G4NISTPVC,*G4NISTPE,*G4NISTlucite,*G4NISTparaffin,*G4NISTstainless;
   G4Material* G4NISTAl;
   G4Material* G4NISTGypsum; //drywall
 

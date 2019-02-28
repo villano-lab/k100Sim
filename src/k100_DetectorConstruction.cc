@@ -493,6 +493,7 @@ void k100_DetectorConstruction::DefineMaterials()
   G4NISTlucite  = man->FindOrBuildMaterial("G4_PLEXIGLASS");
   G4NISTparaffin  = man->FindOrBuildMaterial("G4_PARAFFIN");
   G4NISTGypsum  = man->FindOrBuildMaterial("G4_GYPSUM");
+  G4NISTstainless  = man->FindOrBuildMaterial("G4_STAINLESS-STEEL");
   // ------------------------------------------------
   // end define database materials
 
@@ -1727,6 +1728,19 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
   }// end addNaISouth if statement
 
+  if(shieldParams.HPGeboron){ //this should be mutually exclusive with addNaISouth
+ 
+   G4Tubs* dewar = new G4Tubs("dewar", ((17.0/2.0)-(1/8.0))*2.54*cm
+       ,(17.0/2.0)*2.54*cm, (16.0/2.0)*2.54*cm, 0, 2*pi);
+   G4LogicalVolume* logicDewar = new G4LogicalVolume(dewar,G4NISTstainless,"logicDewar",0,0,0);
+
+   G4ThreeVector dewarPosition;
+   dewarPosition=G4ThreeVector(frame_x-(13.25-0.25-0.5*1.5)*2.54*cm,frame_y+(12-0.5*(18-1.5))*2.54*cm,frame_z+((16.0/2.0)-27)*2.54*cm); //dewar shifted to sit on platform
+   new G4PVPlacement(0,supportPosition,"physicNaISupport0",logicNaISupport,physicalWorld,false,0);
+   logicDewar->SetVisAttributes(frameVis);
+	 
+
+  }// end HPGeboron if statement
  // --------------------- Lead Frame Panels --------------------------
   // This section contains the aluminum fram that surrounds the lead shield.
 
