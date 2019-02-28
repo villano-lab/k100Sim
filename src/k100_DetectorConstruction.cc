@@ -127,6 +127,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   fridgeParams.pure3HeBath = false;
 
   shieldParams.addNaISouth = false;
+  shieldParams.HPGeboron = false;
   shieldParams.addBasePoly = false;
   shieldParams.addBaseLead = false;
   shieldParams.mod = 0; 
