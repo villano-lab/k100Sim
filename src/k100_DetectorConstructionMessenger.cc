@@ -440,7 +440,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   }
 
   // Now call and update the detector
-  k100_Detector->UpdateGeometry();
+  //k100_Detector->UpdateGeometry();
 }
 
 // ------------------------------------------------
