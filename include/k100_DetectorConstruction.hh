@@ -101,12 +101,12 @@ public:
   void SetConstructShields_HPGeboron(G4bool newVal)    {
     shieldParams.HPGeboron = newVal; 
     if(newVal)
-      shieldParams.addNaISouth = !newVal
+      shieldParams.addNaISouth = !newVal;
   }
   void SetConstructShields_addNaISouth(G4bool newVal)    {
     shieldParams.addNaISouth = newVal; 
     if(newVal)
-      shieldParams.HPGeboron = !newVal
+      shieldParams.HPGeboron = !newVal;
   }
   void SetConstructShields_addBasePoly(G4bool newVal)    {shieldParams.addBasePoly = newVal;}
   void SetConstructShields_addBaseLead(G4bool newVal)    {shieldParams.addBaseLead = newVal;}

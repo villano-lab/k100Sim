@@ -1736,7 +1736,7 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
    G4ThreeVector dewarPosition;
    dewarPosition=G4ThreeVector(frame_x-(13.25-0.25-0.5*1.5)*2.54*cm,frame_y+(12-0.5*(18-1.5))*2.54*cm,frame_z+((16.0/2.0)-27)*2.54*cm); //dewar shifted to sit on platform
-   new G4PVPlacement(0,supportPosition,"physicNaISupport0",logicNaISupport,physicalWorld,false,0);
+   new G4PVPlacement(0,dewarPosition,"physicDewar",logicDewar,physicalWorld,false,0);
    logicDewar->SetVisAttributes(frameVis);
 	 
 
