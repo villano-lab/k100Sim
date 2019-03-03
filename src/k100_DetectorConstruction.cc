@@ -1731,15 +1731,71 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
   if(shieldParams.HPGeboron){ //this should be mutually exclusive with addNaISouth
  
-   G4Tubs* dewar = new G4Tubs("dewar", ((17.0/2.0)-(1/8.0))*2.54*cm
+   G4Tubs* dewar = new G4Tubs("dewar", ((17.0/2.0)-(1/2.0))*2.54*cm
        ,(17.0/2.0)*2.54*cm, (16.0/2.0)*2.54*cm, 0, 2*pi);
    G4LogicalVolume* logicDewar = new G4LogicalVolume(dewar,G4NISTstainless,"logicDewar",0,0,0);
 
    G4ThreeVector dewarPosition;
-   dewarPosition=G4ThreeVector(frame_x-(13.25-0.25-0.5*1.5)*2.54*cm,frame_y+(12-0.5*(18-1.5))*2.54*cm,frame_z+((16.0/2.0)-27)*2.54*cm); //dewar shifted to sit on platform
+   //dewarPosition=G4ThreeVector(frame_x-(13.25-0.25-0.5*1.5)*2.54*cm,frame_y+(12-0.5*(18-1.5))*2.54*cm,frame_z+((16.0/2.0)-27)*2.54*cm); //dewar shifted to sit on platform
+   dewarPosition=G4ThreeVector(-53*cm,-5*cm,frame_z+((16.0/2.0)-27)*2.54*cm); //dewar shifted to sit on platform
    new G4PVPlacement(0,dewarPosition,"physicDewar",logicDewar,physicalWorld,false,0);
-   logicDewar->SetVisAttributes(frameVis);
+   // frame visuals
+   G4VisAttributes* dewarVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+   //hpgeVis->SetForceSolid(true);
+   dewarVis->SetForceWireframe(true);
+   logicDewar->SetVisAttributes(dewarVis);
 	 
+
+   //Ok, let's build this pain-in-the-ass thing
+   G4double casethk = 1/4.0; //in inches
+   G4double rhpge = ((3-(2*casethk))/2)*2.54*cm; //3" minus 1/8" casing Al
+   G4double rhpge_bore = (1/7.0)*rhpge; //measured from Mirion/canberra brochure assuming to-scale
+   G4double lhpge = (3+(5/8))*2.54*cm; //anyone's guess on the length, this number was in the manual not clear if it's our model
+   G4double lhpge_bore = 0.75*lhpge; //measured from Mirion/canberra brochure.
+   //start with Ge:
+   //zipGeMat = Germanium;
+   G4Tubs* hpge_core = new G4Tubs("hpge_core", rhpge_bore ,rhpge, lhpge_bore/2.0, 0, 2*pi);
+   G4Tubs* hpge_top = new G4Tubs("hpge_top", 0 ,rhpge, (lhpge-lhpge_bore)/2.0, 0, 2*pi);
+   G4VSolid* hpge = new G4UnionSolid("hpge",hpge_core,hpge_top,0,G4ThreeVector(0,0,(lhpge_bore/2.0)+((lhpge-lhpge_bore)/2.0)));
+   G4LogicalVolume* logicHPGe = new G4LogicalVolume(hpge,zipGeMat,"logicHPGe",0,0,0);
+
+   //now do the casing
+   //G4NISTAl
+   G4double rhpge_case = (3.0/2)*2.54*cm; //3" 
+   G4double lhpge_case = (8)*2.54*cm; //casing is def 8"
+   G4Tubs* hpge_case = new G4Tubs("hpge_case", 0 ,rhpge_case, lhpge_case/2.0, 0, 2*pi);
+   G4LogicalVolume* logicHPGe_case = new G4LogicalVolume(hpge_case,G4NISTAl,"logicHPGe_case",0,0,0);
+
+   //now do some vacuum
+   //defaultMat = Vacuum;
+   G4double rhpge_vac = ((3-(2*casethk))/2)*2.54*cm; //same radius of Ge block 
+   G4double lhpge_vac = (8-(casethk))*2.54*cm; //casing is def 8", make the casing 1/8 thick 
+   G4Tubs* hpge_vac = new G4Tubs("hpge_vac", 0 ,rhpge_vac, lhpge_vac/2.0, 0, 2*pi);
+   G4LogicalVolume* logicHPGe_vac = new G4LogicalVolume(hpge_vac,defaultMat,"logicHPGe_vac",0,0,0);
+  
+
+
+   G4ThreeVector hpgePosition;
+   hpgePosition=G4ThreeVector(-53*cm,-5*cm,frame_z+(lhpge_case/2.0)+(-27+17)*2.54*cm); //hpge shifted to be on top of dewar 
+   G4PVPlacement* casing = new G4PVPlacement(0,hpgePosition,"physicHPGe_package",logicHPGe_case,physicalWorld,false,0);
+   G4VisAttributes* hpgeVis = new G4VisAttributes(G4Colour(255/255.,0/255.,255/255.));
+   hpgeVis->SetForceSolid(true);
+   //hpgeVis->SetForceWireframe(true);
+   logicHPGe->SetVisAttributes(hpgeVis);
+   G4VisAttributes* hpgecaseVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+   hpgecaseVis->SetForceWireframe(true);
+   //hpgecaseVis->SetForceSolid(true);
+   logicHPGe_case->SetVisAttributes(hpgecaseVis);
+   G4VisAttributes* hpgevacVis = new G4VisAttributes(G4Colour(255/255.,255/255.,153/255.));
+   hpgevacVis->SetForceWireframe(true);
+   logicHPGe_vac->SetVisAttributes(hpgevacVis);
+
+   //place everything inside the casing
+   G4ThreeVector relPosition;
+   relPosition=G4ThreeVector(0,0,(0.5*casethk)*2.54*cm); // 
+   G4PVPlacement* vac = new G4PVPlacement(0,relPosition,"vac",logicHPGe_vac,casing,false,0);
+   relPosition=G4ThreeVector(0,0,(lhpge_vac/2.0)-(lhpge_bore/2)-(lhpge-lhpge_bore)); // shift up by half-length of vac, down by half-length of bore, down by full length of top 
+   G4PVPlacement* hpge_in_vac = new G4PVPlacement(0,relPosition,"hpge_in_vac",logicHPGe,vac,false,0);
 
   }// end HPGeboron if statement
  // --------------------- Lead Frame Panels --------------------------
