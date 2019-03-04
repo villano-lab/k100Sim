@@ -1774,10 +1774,13 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
    G4LogicalVolume* logicHPGe_vac = new G4LogicalVolume(hpge_vac,defaultMat,"logicHPGe_vac",0,0,0);
   
 
+   //get the rotation for the casing
+   G4RotationMatrix *crot;
+   crot->rotateX(-90.*deg);
 
    G4ThreeVector hpgePosition;
    hpgePosition=G4ThreeVector(-53*cm,-5*cm,frame_z+(lhpge_case/2.0)+(-27+17)*2.54*cm); //hpge shifted to be on top of dewar 
-   G4PVPlacement* casing = new G4PVPlacement(0,hpgePosition,"physicHPGe_package",logicHPGe_case,physicalWorld,false,0);
+   G4PVPlacement* casing = new G4PVPlacement(crot,hpgePosition,"physicHPGe_package",logicHPGe_case,physicalWorld,false,0);
    G4VisAttributes* hpgeVis = new G4VisAttributes(G4Colour(255/255.,0/255.,255/255.));
    hpgeVis->SetForceSolid(true);
    //hpgeVis->SetForceWireframe(true);
@@ -1796,6 +1799,8 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
    G4PVPlacement* vac = new G4PVPlacement(0,relPosition,"vac",logicHPGe_vac,casing,false,0);
    relPosition=G4ThreeVector(0,0,(lhpge_vac/2.0)-(lhpge_bore/2)-(lhpge-lhpge_bore)); // shift up by half-length of vac, down by half-length of bore, down by full length of top 
    G4PVPlacement* hpge_in_vac = new G4PVPlacement(0,relPosition,"hpge_in_vac",logicHPGe,vac,false,0);
+
+   //make the boron shield
 
   }// end HPGeboron if statement
  // --------------------- Lead Frame Panels --------------------------
