@@ -1775,11 +1775,15 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   
 
    //get the rotation for the casing
-   G4RotationMatrix *crot;
-   crot->rotateX(-90.*deg);
+   G4RotationMatrix *crot = new G4RotationMatrix;
+   crot->rotateX(90.*deg);
+   crot->rotateY(-45.*deg);
+   //G4Transform3D r1(crot, G4ThreeVector(0,0,0));
 
    G4ThreeVector hpgePosition;
-   hpgePosition=G4ThreeVector(-53*cm,-5*cm,frame_z+(lhpge_case/2.0)+(-27+17)*2.54*cm); //hpge shifted to be on top of dewar 
+   G4double xdel = (3.5+1.375+(8/2.0))*sin(45*deg)*2.54*cm;
+   G4double ydel = (3.5+1.375+(8/2.0))*cos(45*deg)*2.54*cm;
+   hpgePosition=G4ThreeVector(-53*cm+xdel,-5*cm+ydel,frame_z+(lhpge_case/2.0)+(-27+17)*2.54*cm); //hpge shifted to be on top of dewar 
    G4PVPlacement* casing = new G4PVPlacement(crot,hpgePosition,"physicHPGe_package",logicHPGe_case,physicalWorld,false,0);
    G4VisAttributes* hpgeVis = new G4VisAttributes(G4Colour(255/255.,0/255.,255/255.));
    hpgeVis->SetForceSolid(true);
@@ -1799,6 +1803,19 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
    G4PVPlacement* vac = new G4PVPlacement(0,relPosition,"vac",logicHPGe_vac,casing,false,0);
    relPosition=G4ThreeVector(0,0,(lhpge_vac/2.0)-(lhpge_bore/2)-(lhpge-lhpge_bore)); // shift up by half-length of vac, down by half-length of bore, down by full length of top 
    G4PVPlacement* hpge_in_vac = new G4PVPlacement(0,relPosition,"hpge_in_vac",logicHPGe,vac,false,0);
+
+   //now make the HPGe sensitive
+   G4String SDname = "HPGe";
+   G4int collID = -1; collID = SDman->GetCollectionID(SDname);
+   k100_StdSD* HPGe_sensitive;
+   ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+
+   k100CollName[SDname] = 3; 
+   HPGe_sensitive = new k100_StdSD(SDname,k100CollName[SDname]);
+   k100CollPointStd[SDname] = HPGe_sensitive;
+   SDman->AddNewDetector(HPGe_sensitive);
+   logicHPGe->SetSensitiveDetector(HPGe_sensitive);
+
 
    //make the boron shield
 
