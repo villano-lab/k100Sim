@@ -1818,6 +1818,20 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
 
    //make the boron shield
+   G4double container_thk = 0.5*cm;
+   G4double rcontainer = (5.0/2.0)*2.54*cm;
+   G4double rhole = (3.0/2.0)*2.54*cm;
+   G4double lcontainer = (6.0)*2.54*cm;
+   G4double boron_thk = 1.5*cm; 
+   G4double lcontainer_hole = (6.0)*2.54*cm - 2*container_thk - boron_thk;
+   G4Tubs* bshield  = new G4Tubs("bshield", 0 ,rcontainer, lcontainer/2.0, 0, 2*pi);
+   G4Tubs* bshieldHole = new G4Tubs("bshieldHole", 0,rhole,lcontainer-1.0*2.54*cm,0,2*pi);
+  
+  G4ThreeVector bshieldHole_shift(0,0,(lcontainer/2.0)+(lcontainer_hole/2.0));
+  G4Transform3D off(noRot,bshieldHole_shift);
+  G4SubtractionSolid *new_bshield = new G4SubtractionSolid("bshield",bshield,bshieldHole,off);
+
+
 
   }// end HPGeboron if statement
  // --------------------- Lead Frame Panels --------------------------
