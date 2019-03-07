@@ -278,6 +278,9 @@ void k100_DetectorConstruction::DefineMaterials()
   MCLiquidHe->AddIsotope(isoHe3,0.12);
   MCLiquidHe->AddIsotope(isoHe4,0.88);
 
+  // Define Boron 
+  G4Element* elementB=new G4Element(name="Boron", symbol="B", z=5., a=10.811*g/mole);
+
   // Define Carbon
   G4Element* elementC=new G4Element(name="Carbon", symbol="C", z=6., a=12.011*g/mole);
 
@@ -346,6 +349,12 @@ void k100_DetectorConstruction::DefineMaterials()
   WOOD->AddElement(elementH , 4);
   WOOD->AddElement(elementO , 1);
   WOOD->AddElement(elementC , 2);
+
+  //sodium borate anhydrous
+  G4Material* sba = new G4Material(name="sodium_borate_anhydrous", density=2.367*g/cm3, ncomponents=3);
+  sba->AddElement(elementB , 4);
+  sba->AddElement(elementO , 7);
+  sba->AddElement(elementNa , 2);
 
   // Silicon 
   G4Material* Silicon = new G4Material(name="Silicon", density = 2.330*g/cm3, ncomponents=1);
@@ -579,6 +588,7 @@ void k100_DetectorConstruction::DefineMaterials()
   mumetalMat = mumetal;
   aluminum=Aluminum;
   lightaluminum=LightAluminum;
+  sodium_borate_anhydrous=sba;
   wood=WOOD;
   steel=Steel;
   carbonsteel=StandardSteel;
@@ -1827,10 +1837,17 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
    G4Tubs* bshield  = new G4Tubs("bshield", 0 ,rcontainer, lcontainer/2.0, 0, 2*pi);
    G4Tubs* bshieldHole = new G4Tubs("bshieldHole", 0,rhole,lcontainer-1.0*2.54*cm,0,2*pi);
   
-  G4ThreeVector bshieldHole_shift(0,0,(lcontainer/2.0)+(lcontainer_hole/2.0));
-  G4Transform3D off(noRot,bshieldHole_shift);
-  G4SubtractionSolid *new_bshield = new G4SubtractionSolid("bshield",bshield,bshieldHole,off);
+   G4ThreeVector bshieldHole_shift(0,0,(lcontainer/2.0)+(lcontainer_hole/2.0));
+   G4Transform3D off(noRot,bshieldHole_shift);
+   G4SubtractionSolid *new_bshield = new G4SubtractionSolid("bshield",bshield,bshieldHole,off);
 
+   G4double rpowder_in = rhole+container_thk;
+   G4double rpowder_out = rpowder_in+boron_thk;
+   G4Tubs* bpowder_base  = new G4Tubs("bpowder_base", rpowder_in ,rpowder_out, 
+       (lcontainer-2*container_thk-boron_thk)/2.0, 0, 2*pi);
+   G4Tubs* bpowder_top  = new G4Tubs("bpowder_top", 0 ,rpowder_out, 
+       boron_thk/2.0, 0, 2*pi);
+   G4VSolid* bpowder = new G4UnionSolid("bpowder",bpowder_base,bpowder_top,0,G4ThreeVector(0,0,(lcontainer-2*container_thk-boron_thk)/2.0+((boron_thk)/2.0)));
 
 
   }// end HPGeboron if statement

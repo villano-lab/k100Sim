@@ -224,6 +224,7 @@ private:
   G4Material* carbonsteel;
   G4Material* lightaluminum;
   G4Material* wood;
+  G4Material* sodium_borate_anhydrous; //https://www.fishersci.com/shop/products/sodium-tetraborate-anhydrous-99-5-metals-basis-alfa-aesar-2/AA12305A7
   G4Material* G4NISTconcrete,*G4NISTair,*G4NISTNaI,*G4NISTPVC,*G4NISTPE,*G4NISTlucite,*G4NISTparaffin,*G4NISTstainless;
   G4Material* G4NISTAl;
   G4Material* G4NISTGypsum; //drywall
