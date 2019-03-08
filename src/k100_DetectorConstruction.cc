@@ -127,6 +127,8 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   fridgeParams.pure3HeBath = false;
 
   shieldParams.addNaISouth = false;
+  shieldParams.HPGeboron = false;
+  shieldParams.HPGeboron_wshield = false;
   shieldParams.addBasePoly = false;
   shieldParams.addBaseLead = false;
   shieldParams.mod = 0; 
@@ -277,6 +279,9 @@ void k100_DetectorConstruction::DefineMaterials()
   MCLiquidHe->AddIsotope(isoHe3,0.12);
   MCLiquidHe->AddIsotope(isoHe4,0.88);
 
+  // Define Boron 
+  G4Element* elementB=new G4Element(name="Boron", symbol="B", z=5., a=10.811*g/mole);
+
   // Define Carbon
   G4Element* elementC=new G4Element(name="Carbon", symbol="C", z=6., a=12.011*g/mole);
 
@@ -345,6 +350,12 @@ void k100_DetectorConstruction::DefineMaterials()
   WOOD->AddElement(elementH , 4);
   WOOD->AddElement(elementO , 1);
   WOOD->AddElement(elementC , 2);
+
+  //sodium borate anhydrous
+  G4Material* sba = new G4Material(name="sodium_borate_anhydrous", density=2.367*g/cm3, ncomponents=3);
+  sba->AddElement(elementB , 4);
+  sba->AddElement(elementO , 7);
+  sba->AddElement(elementNa , 2);
 
   // Silicon 
   G4Material* Silicon = new G4Material(name="Silicon", density = 2.330*g/cm3, ncomponents=1);
@@ -493,6 +504,7 @@ void k100_DetectorConstruction::DefineMaterials()
   G4NISTlucite  = man->FindOrBuildMaterial("G4_PLEXIGLASS");
   G4NISTparaffin  = man->FindOrBuildMaterial("G4_PARAFFIN");
   G4NISTGypsum  = man->FindOrBuildMaterial("G4_GYPSUM");
+  G4NISTstainless  = man->FindOrBuildMaterial("G4_STAINLESS-STEEL");
   // ------------------------------------------------
   // end define database materials
 
@@ -577,6 +589,7 @@ void k100_DetectorConstruction::DefineMaterials()
   mumetalMat = mumetal;
   aluminum=Aluminum;
   lightaluminum=LightAluminum;
+  sodium_borate_anhydrous=sba;
   wood=WOOD;
   steel=Steel;
   carbonsteel=StandardSteel;
@@ -1608,7 +1621,7 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // place rects
   G4LogicalVolume* logicRect = new G4LogicalVolume(rect,polyMat,"logicRect",0,0,0);
   panelPosition=G4ThreeVector(frame_x-5*2.54*cm,frame_y+12*2.54*cm,frame_z);
-  if(!shieldParams.addNaISouth) //only place south panels when NOT using NaI detectors 
+  if(!shieldParams.addNaISouth&!shieldParams.HPGeboron) //only place south panels when NOT using NaI detectors or boron HPGe
     new G4PVPlacement(0,panelPosition,"physicRect",logicRect,physicalWorld,false,0);
   panelPosition=G4ThreeVector(frame_x+25*2.54*cm,frame_y+12*2.54*cm,frame_z);
   new G4PVPlacement(0,panelPosition,"physicRect1",logicRect,physicalWorld,false,1);
@@ -1727,6 +1740,162 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 
   }// end addNaISouth if statement
 
+  if(shieldParams.HPGeboron){ //this should be mutually exclusive with addNaISouth
+ 
+   G4Tubs* dewar = new G4Tubs("dewar", ((17.0/2.0)-(1/2.0))*2.54*cm
+       ,(17.0/2.0)*2.54*cm, (16.0/2.0)*2.54*cm, 0, 2*pi);
+   G4LogicalVolume* logicDewar = new G4LogicalVolume(dewar,G4NISTstainless,"logicDewar",0,0,0);
+
+   G4ThreeVector dewarPosition;
+   //dewarPosition=G4ThreeVector(frame_x-(13.25-0.25-0.5*1.5)*2.54*cm,frame_y+(12-0.5*(18-1.5))*2.54*cm,frame_z+((16.0/2.0)-27)*2.54*cm); //dewar shifted to sit on platform
+   dewarPosition=G4ThreeVector(-53*cm,-5*cm,frame_z+((16.0/2.0)-27)*2.54*cm); //dewar shifted to sit on platform
+   new G4PVPlacement(0,dewarPosition,"physicDewar",logicDewar,physicalWorld,false,0);
+   // frame visuals
+   G4VisAttributes* dewarVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+   //hpgeVis->SetForceSolid(true);
+   dewarVis->SetForceWireframe(true);
+   logicDewar->SetVisAttributes(dewarVis);
+	 
+
+   //Ok, let's build this pain-in-the-ass thing
+   G4double habove_dewar_inches = (16+7+2+3.25); //keep in inches
+   G4double casethk = 1/4.0; //in inches
+   G4double rhpge = ((3-(2*casethk))/2)*2.54*cm; //3" minus 1/8" casing Al
+   G4double rhpge_bore = (1/7.0)*rhpge; //measured from Mirion/canberra brochure assuming to-scale
+   G4double lhpge = (3+(5/8))*2.54*cm; //anyone's guess on the length, this number was in the manual not clear if it's our model
+   G4double lhpge_bore = 0.75*lhpge; //measured from Mirion/canberra brochure.
+   //start with Ge:
+   //zipGeMat = Germanium;
+   G4Tubs* hpge_core = new G4Tubs("hpge_core", rhpge_bore ,rhpge, lhpge_bore/2.0, 0, 2*pi);
+   G4Tubs* hpge_top = new G4Tubs("hpge_top", 0 ,rhpge, (lhpge-lhpge_bore)/2.0, 0, 2*pi);
+   G4VSolid* hpge = new G4UnionSolid("hpge",hpge_core,hpge_top,0,G4ThreeVector(0,0,(lhpge_bore/2.0)+((lhpge-lhpge_bore)/2.0)));
+   G4LogicalVolume* logicHPGe = new G4LogicalVolume(hpge,zipGeMat,"logicHPGe",0,0,0);
+
+   //now do the casing
+   //G4NISTAl
+   G4double rhpge_case = (3.0/2)*2.54*cm; //3" 
+   G4double lhpge_case = (8)*2.54*cm; //casing is def 8"
+   G4Tubs* hpge_case = new G4Tubs("hpge_case", 0 ,rhpge_case, lhpge_case/2.0, 0, 2*pi);
+   G4LogicalVolume* logicHPGe_case = new G4LogicalVolume(hpge_case,G4NISTAl,"logicHPGe_case",0,0,0);
+
+   //now do some vacuum
+   //defaultMat = Vacuum;
+   G4double rhpge_vac = ((3-(2*casethk))/2)*2.54*cm; //same radius of Ge block 
+   G4double lhpge_vac = (8-(casethk))*2.54*cm; //casing is def 8", make the casing 1/8 thick 
+   G4Tubs* hpge_vac = new G4Tubs("hpge_vac", 0 ,rhpge_vac, lhpge_vac/2.0, 0, 2*pi);
+   G4LogicalVolume* logicHPGe_vac = new G4LogicalVolume(hpge_vac,defaultMat,"logicHPGe_vac",0,0,0);
+  
+
+   //get the rotation for the casing
+   G4RotationMatrix *crot = new G4RotationMatrix;
+   crot->rotateX(90.*deg);
+   crot->rotateY(-45.*deg);
+   //G4Transform3D r1(crot, G4ThreeVector(0,0,0));
+
+   G4ThreeVector hpgePosition;
+   G4double xdel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0))*sin(45*deg);
+   G4double ydel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0))*cos(45*deg);
+   hpgePosition=G4ThreeVector(-53*cm+xdel,-5*cm+ydel,frame_z+(lhpge_case/2.0)+(-27+habove_dewar_inches)*2.54*cm); //hpge shifted to be on top of dewar 
+   G4PVPlacement* casing = new G4PVPlacement(crot,hpgePosition,"physicHPGe_package",logicHPGe_case,physicalWorld,false,0);
+   G4VisAttributes* hpgeVis = new G4VisAttributes(G4Colour(255/255.,0/255.,255/255.));
+   hpgeVis->SetForceSolid(true);
+   //hpgeVis->SetForceWireframe(true);
+   logicHPGe->SetVisAttributes(hpgeVis);
+   G4VisAttributes* hpgecaseVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+   hpgecaseVis->SetForceWireframe(true);
+   //hpgecaseVis->SetForceSolid(true);
+   logicHPGe_case->SetVisAttributes(hpgecaseVis);
+   G4VisAttributes* hpgevacVis = new G4VisAttributes(G4Colour(255/255.,255/255.,153/255.));
+   hpgevacVis->SetForceWireframe(true);
+   logicHPGe_vac->SetVisAttributes(hpgevacVis);
+
+   //place everything inside the casing
+   G4ThreeVector relPosition;
+   relPosition=G4ThreeVector(0,0,(0.5*casethk)*2.54*cm); // 
+   G4PVPlacement* vac = new G4PVPlacement(0,relPosition,"vac",logicHPGe_vac,casing,false,0);
+   relPosition=G4ThreeVector(0,0,(lhpge_vac/2.0)-(lhpge_bore/2)-(lhpge-lhpge_bore)); // shift up by half-length of vac, down by half-length of bore, down by full length of top 
+   G4PVPlacement* hpge_in_vac = new G4PVPlacement(0,relPosition,"hpge_in_vac",logicHPGe,vac,false,0);
+
+   //now make the HPGe sensitive
+   G4String SDname = "HPGe";
+   G4int collID = -1; collID = SDman->GetCollectionID(SDname);
+   k100_StdSD* HPGe_sensitive;
+   ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+
+   k100CollName[SDname] = 3; 
+   HPGe_sensitive = new k100_StdSD(SDname,k100CollName[SDname]);
+   k100CollPointStd[SDname] = HPGe_sensitive;
+   SDman->AddNewDetector(HPGe_sensitive);
+   logicHPGe->SetSensitiveDetector(HPGe_sensitive);
+
+   if(shieldParams.HPGeboron_wshield){
+     //make the boron shield
+     G4double container_thk = 0.5*cm;
+     G4double rcontainer = (5.0/2.0)*2.54*cm;
+     G4double rhole = (3.0/2.0)*2.54*cm;
+     G4double lcontainer = (6.0)*2.54*cm;
+     G4double boron_thk = 1.5*cm; 
+     G4double lcontainer_hole = (6.0)*2.54*cm - 2*container_thk - boron_thk;
+     G4Tubs* bshield  = new G4Tubs("bshield", 0 ,rcontainer, lcontainer/2.0, 0, 2*pi);
+     G4Tubs* bshieldHole = new G4Tubs("bshieldHole", 0,rhole,lcontainer-1.0*2.54*cm,0,2*pi);
+    
+     G4ThreeVector bshieldHole_shift(0,0,(lcontainer/2.0)+(lcontainer_hole/2.0));
+     G4Transform3D off(noRot,bshieldHole_shift);
+     G4SubtractionSolid *new_bshield = new G4SubtractionSolid("bshield",bshield,bshieldHole,off);
+     G4LogicalVolume* logic_bcontainer = new G4LogicalVolume(new_bshield,polyMat,"logic_bcontainer",0,0,0); //FIXME poly is probably way too dense
+
+     G4double rpowder_in = rhole+container_thk;
+     G4double rpowder_out = rpowder_in+boron_thk;
+     G4Tubs* bpowder_base  = new G4Tubs("bpowder_base", rpowder_in ,rpowder_out, 
+         (lcontainer-2*container_thk-boron_thk)/2.0, 0, 2*pi);
+     G4Tubs* bpowder_top  = new G4Tubs("bpowder_top", 0 ,rpowder_out, 
+         boron_thk/2.0, 0, 2*pi);
+     G4VSolid* bpowder = new G4UnionSolid("bpowder",bpowder_base,bpowder_top,0,G4ThreeVector(0,0,(lcontainer-2*container_thk-boron_thk)/2.0+((boron_thk)/2.0)));
+     G4LogicalVolume* logic_bpowder = new G4LogicalVolume(bpowder,sodium_borate_anhydrous,"logic_bpowder",0,0,0); 
+
+     G4ThreeVector bcontainerPosition;
+     xdel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0)+(lhpge_case/2.0)+(lcontainer/2.0)-(lcontainer_hole))*sin(45*deg);
+     ydel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0)+(lhpge_case/2.0)+(lcontainer/2.0)-(lcontainer_hole))*cos(45*deg);
+     //xdel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0))*sin(45*deg);
+     //ydel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0))*cos(45*deg);
+     bcontainerPosition=G4ThreeVector(-53*cm+xdel,-5*cm+ydel,frame_z+(lhpge_case/2.0)+(-27+habove_dewar_inches)*2.54*cm); //lots of shifts 
+     G4PVPlacement* bcontainer = new G4PVPlacement(crot,bcontainerPosition,"physic_bcontainer",logic_bcontainer,physicalWorld,false,0);
+     G4VisAttributes* bcontainerVis = new G4VisAttributes(G4Colour(255/255.,255/255.,255/255.));
+     //bcontainerVis->SetForceSolid(true);
+     bcontainerVis->SetForceWireframe(true);
+     logic_bcontainer->SetVisAttributes(bcontainerVis);
+    
+     //place the boron
+     G4PVPlacement* bpowder_phys = new G4PVPlacement(0,G4ThreeVector(0,0,((lcontainer-2*container_thk-boron_thk)/2.0)-lcontainer/2.0+container_thk),"physic_bpowder",logic_bpowder,bcontainer,false,0);
+     G4VisAttributes* bpowderVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+     bpowderVis->SetForceSolid(true);
+     //bpowderVis->SetForceWireframe(true);
+     logic_bpowder->SetVisAttributes(bpowderVis);
+
+     //now make the boron stuff sensitive
+     SDname = "boron";
+     collID = -1; collID = SDman->GetCollectionID(SDname);
+     k100_StdSD* boron_sensitive;
+
+     k100CollName[SDname] = 4; 
+     boron_sensitive = new k100_StdSD(SDname,k100CollName[SDname]);
+     k100CollPointStd[SDname] = boron_sensitive;
+     SDman->AddNewDetector(boron_sensitive);
+     logic_bpowder->SetSensitiveDetector(boron_sensitive);
+
+     SDname = "boron_case";
+     collID = -1; collID = SDman->GetCollectionID(SDname);
+     k100_StdSD* boron_case_sensitive;
+
+     k100CollName[SDname] = 5; 
+     boron_case_sensitive = new k100_StdSD(SDname,k100CollName[SDname]);
+     k100CollPointStd[SDname] = boron_case_sensitive;
+     SDman->AddNewDetector(boron_case_sensitive);
+     logic_bcontainer->SetSensitiveDetector(boron_case_sensitive);
+
+   }//end conditional for HPGeboron_shield casing
+
+  }// end HPGeboron if statement
  // --------------------- Lead Frame Panels --------------------------
   // This section contains the aluminum fram that surrounds the lead shield.
 
@@ -1791,11 +1960,11 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   //place squares
   G4LogicalVolume* logicLeadRectY = new G4LogicalVolume(rectLeadBaseY,shieldPbMat,"logicLeadRectY",0,0,0);
   G4LogicalVolume* logicLeadRectY_forNaI = new G4LogicalVolume(rectLeadBaseY_forNaI,shieldPbMat,"logicLeadRectY_forNaI",0,0,0);
-  if(!shieldParams.addNaISouth){//change lead on side with NaI detectors
+  if(!shieldParams.addNaISouth&!shieldParams.HPGeboron){//change lead on side with NaI detectors
     leadPosition=G4ThreeVector(frame_x-(11.25)*2.54*cm,frame_y+12*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY0",logicLeadRectY,physicalWorld,false,0);
   }
-  else{
+  else if(shieldParams.addNaISouth&!shieldParams.HPGeboron){
     leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12+22.5-(19.0/2.0))*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY_forNaI0",logicLeadRectY_forNaI,physicalWorld,false,0);
     leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12-22.5+(19.0/2.0))*2.54*cm,frame_z);
