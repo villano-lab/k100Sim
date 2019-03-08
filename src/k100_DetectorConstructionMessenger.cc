@@ -66,6 +66,13 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   ZipConfigureCmd_Mat1->SetParameterName("choice",false);
   ZipConfigureCmd_Mat1->AvailableForStates(G4State_Idle);
 
+  ShieldConfigureCmd_HPGeboron_shield = new G4UIcmdWithABool("/CDMS/Shield/HPGeboron_shield",this);
+  ShieldConfigureCmd_HPGeboron_shield->SetGuidance("Toggle HPGe boron Shield.");
+  ShieldConfigureCmd_HPGeboron_shield->SetGuidance("This command MUST be applied before \"beamOn\" ");
+  ShieldConfigureCmd_HPGeboron_shield->SetGuidance("in order for change to take effect.");
+  ShieldConfigureCmd_HPGeboron_shield->SetParameterName("choice",false);
+  ShieldConfigureCmd_HPGeboron_shield->AvailableForStates(G4State_Idle);
+
   ShieldConfigureCmd_HPGeboron = new G4UIcmdWithABool("/CDMS/Shield/HPGeboron",this);
   ShieldConfigureCmd_HPGeboron->SetGuidance("Toggle HPGe construction on Shield.");
   ShieldConfigureCmd_HPGeboron->SetGuidance("This command MUST be applied before \"beamOn\" ");
@@ -296,6 +303,11 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   if( command == ZipConfigureCmd_Mat1 ) { 
     G4bool truth = ZipConfigureCmd_Mat1->GetNewBoolValue(newValue);
     k100_Detector->SetFirstDetGe(truth);
+  }
+
+  if( command == ShieldConfigureCmd_HPGeboron_shield ) { 
+    G4bool truth = ShieldConfigureCmd_HPGeboron_shield->GetNewBoolValue(newValue);
+    k100_Detector->SetConstructShields_HPGeboron_wshield(truth);
   }
 
   if( command == ShieldConfigureCmd_HPGeboron ) { 

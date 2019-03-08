@@ -38,6 +38,7 @@ class k100_ZipParameterisation;
   struct Shield {
     G4bool addLeadSupports; //not yet implemented
     G4bool HPGeboron; //default false -- use if want remove South wall in favor of HPGe 
+    G4bool HPGeboron_wshield; //default false -- use if want have boron shield on 
     G4bool addNaISouth; //add 2 NaI detectors to South shielding wall, make sensitive
     G4bool addBasePoly; //add poly panels on the bottom 
     G4bool addBaseLead; //add lead sheets on the bottom 
@@ -98,6 +99,7 @@ public:
   void SetConstructZipBool(G4bool newVal)        {ConstructZipBool = newVal;}
   void SetConstructVetoBool(G4bool newVal)       {ConstructVetoBool = newVal;}
   void SetConstructShieldsBool(G4bool newVal)    {ConstructShieldsBool = newVal;}
+  void SetConstructShields_HPGeboron_wshield(G4bool newVal)    {shieldParams.HPGeboron_wshield = newVal;}
   void SetConstructShields_HPGeboron(G4bool newVal)    {
     shieldParams.HPGeboron = newVal; 
     if(newVal)
@@ -148,6 +150,7 @@ public:
   G4bool GetConstructZipBool()     {return ConstructZipBool;}
   G4bool GetConstructVetoBool()    {return ConstructVetoBool;}
   G4bool GetConstructShieldsBool() {return ConstructShieldsBool;}
+  G4bool GetConstructShields_HPGeboron_wshield()    {return shieldParams.HPGeboron_wshield;}
   G4bool GetConstructShields_HPGeboron()    {return shieldParams.HPGeboron;}
   G4bool GetConstructShields_addNaISouth()    {return shieldParams.addNaISouth;}
   G4bool GetConstructShields_addBasePoly()    {return shieldParams.addBasePoly;}

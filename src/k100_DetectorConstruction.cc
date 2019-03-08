@@ -128,6 +128,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
 
   shieldParams.addNaISouth = false;
   shieldParams.HPGeboron = false;
+  shieldParams.HPGeboron_wshield = false;
   shieldParams.addBasePoly = false;
   shieldParams.addBaseLead = false;
   shieldParams.mod = 0; 
@@ -1757,6 +1758,7 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
 	 
 
    //Ok, let's build this pain-in-the-ass thing
+   G4double habove_dewar_inches = (16+7+2+3.25); //keep in inches
    G4double casethk = 1/4.0; //in inches
    G4double rhpge = ((3-(2*casethk))/2)*2.54*cm; //3" minus 1/8" casing Al
    G4double rhpge_bore = (1/7.0)*rhpge; //measured from Mirion/canberra brochure assuming to-scale
@@ -1791,9 +1793,9 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
    //G4Transform3D r1(crot, G4ThreeVector(0,0,0));
 
    G4ThreeVector hpgePosition;
-   G4double xdel = (3.5+1.375+(8/2.0))*sin(45*deg)*2.54*cm;
-   G4double ydel = (3.5+1.375+(8/2.0))*cos(45*deg)*2.54*cm;
-   hpgePosition=G4ThreeVector(-53*cm+xdel,-5*cm+ydel,frame_z+(lhpge_case/2.0)+(-27+17)*2.54*cm); //hpge shifted to be on top of dewar 
+   G4double xdel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0))*sin(45*deg);
+   G4double ydel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0))*cos(45*deg);
+   hpgePosition=G4ThreeVector(-53*cm+xdel,-5*cm+ydel,frame_z+(lhpge_case/2.0)+(-27+habove_dewar_inches)*2.54*cm); //hpge shifted to be on top of dewar 
    G4PVPlacement* casing = new G4PVPlacement(crot,hpgePosition,"physicHPGe_package",logicHPGe_case,physicalWorld,false,0);
    G4VisAttributes* hpgeVis = new G4VisAttributes(G4Colour(255/255.,0/255.,255/255.));
    hpgeVis->SetForceSolid(true);
@@ -1826,29 +1828,72 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
    SDman->AddNewDetector(HPGe_sensitive);
    logicHPGe->SetSensitiveDetector(HPGe_sensitive);
 
+   if(shieldParams.HPGeboron_wshield){
+     //make the boron shield
+     G4double container_thk = 0.5*cm;
+     G4double rcontainer = (5.0/2.0)*2.54*cm;
+     G4double rhole = (3.0/2.0)*2.54*cm;
+     G4double lcontainer = (6.0)*2.54*cm;
+     G4double boron_thk = 1.5*cm; 
+     G4double lcontainer_hole = (6.0)*2.54*cm - 2*container_thk - boron_thk;
+     G4Tubs* bshield  = new G4Tubs("bshield", 0 ,rcontainer, lcontainer/2.0, 0, 2*pi);
+     G4Tubs* bshieldHole = new G4Tubs("bshieldHole", 0,rhole,lcontainer-1.0*2.54*cm,0,2*pi);
+    
+     G4ThreeVector bshieldHole_shift(0,0,(lcontainer/2.0)+(lcontainer_hole/2.0));
+     G4Transform3D off(noRot,bshieldHole_shift);
+     G4SubtractionSolid *new_bshield = new G4SubtractionSolid("bshield",bshield,bshieldHole,off);
+     G4LogicalVolume* logic_bcontainer = new G4LogicalVolume(new_bshield,polyMat,"logic_bcontainer",0,0,0); //FIXME poly is probably way too dense
 
-   //make the boron shield
-   G4double container_thk = 0.5*cm;
-   G4double rcontainer = (5.0/2.0)*2.54*cm;
-   G4double rhole = (3.0/2.0)*2.54*cm;
-   G4double lcontainer = (6.0)*2.54*cm;
-   G4double boron_thk = 1.5*cm; 
-   G4double lcontainer_hole = (6.0)*2.54*cm - 2*container_thk - boron_thk;
-   G4Tubs* bshield  = new G4Tubs("bshield", 0 ,rcontainer, lcontainer/2.0, 0, 2*pi);
-   G4Tubs* bshieldHole = new G4Tubs("bshieldHole", 0,rhole,lcontainer-1.0*2.54*cm,0,2*pi);
-  
-   G4ThreeVector bshieldHole_shift(0,0,(lcontainer/2.0)+(lcontainer_hole/2.0));
-   G4Transform3D off(noRot,bshieldHole_shift);
-   G4SubtractionSolid *new_bshield = new G4SubtractionSolid("bshield",bshield,bshieldHole,off);
+     G4double rpowder_in = rhole+container_thk;
+     G4double rpowder_out = rpowder_in+boron_thk;
+     G4Tubs* bpowder_base  = new G4Tubs("bpowder_base", rpowder_in ,rpowder_out, 
+         (lcontainer-2*container_thk-boron_thk)/2.0, 0, 2*pi);
+     G4Tubs* bpowder_top  = new G4Tubs("bpowder_top", 0 ,rpowder_out, 
+         boron_thk/2.0, 0, 2*pi);
+     G4VSolid* bpowder = new G4UnionSolid("bpowder",bpowder_base,bpowder_top,0,G4ThreeVector(0,0,(lcontainer-2*container_thk-boron_thk)/2.0+((boron_thk)/2.0)));
+     G4LogicalVolume* logic_bpowder = new G4LogicalVolume(bpowder,sodium_borate_anhydrous,"logic_bpowder",0,0,0); 
 
-   G4double rpowder_in = rhole+container_thk;
-   G4double rpowder_out = rpowder_in+boron_thk;
-   G4Tubs* bpowder_base  = new G4Tubs("bpowder_base", rpowder_in ,rpowder_out, 
-       (lcontainer-2*container_thk-boron_thk)/2.0, 0, 2*pi);
-   G4Tubs* bpowder_top  = new G4Tubs("bpowder_top", 0 ,rpowder_out, 
-       boron_thk/2.0, 0, 2*pi);
-   G4VSolid* bpowder = new G4UnionSolid("bpowder",bpowder_base,bpowder_top,0,G4ThreeVector(0,0,(lcontainer-2*container_thk-boron_thk)/2.0+((boron_thk)/2.0)));
+     G4ThreeVector bcontainerPosition;
+     xdel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0)+(lhpge_case/2.0)+(lcontainer/2.0)-(lcontainer_hole))*sin(45*deg);
+     ydel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0)+(lhpge_case/2.0)+(lcontainer/2.0)-(lcontainer_hole))*cos(45*deg);
+     //xdel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0))*sin(45*deg);
+     //ydel = (3.5*2.54*cm+1.375*2.54*cm+(lhpge_case/2.0))*cos(45*deg);
+     bcontainerPosition=G4ThreeVector(-53*cm+xdel,-5*cm+ydel,frame_z+(lhpge_case/2.0)+(-27+habove_dewar_inches)*2.54*cm); //lots of shifts 
+     G4PVPlacement* bcontainer = new G4PVPlacement(crot,bcontainerPosition,"physic_bcontainer",logic_bcontainer,physicalWorld,false,0);
+     G4VisAttributes* bcontainerVis = new G4VisAttributes(G4Colour(255/255.,255/255.,255/255.));
+     //bcontainerVis->SetForceSolid(true);
+     bcontainerVis->SetForceWireframe(true);
+     logic_bcontainer->SetVisAttributes(bcontainerVis);
+    
+     //place the boron
+     G4PVPlacement* bpowder_phys = new G4PVPlacement(0,G4ThreeVector(0,0,((lcontainer-2*container_thk-boron_thk)/2.0)-lcontainer/2.0+container_thk),"physic_bpowder",logic_bpowder,bcontainer,false,0);
+     G4VisAttributes* bpowderVis = new G4VisAttributes(G4Colour(255/255.,0/255.,0/255.));
+     bpowderVis->SetForceSolid(true);
+     //bpowderVis->SetForceWireframe(true);
+     logic_bpowder->SetVisAttributes(bpowderVis);
 
+     //now make the boron stuff sensitive
+     SDname = "boron";
+     collID = -1; collID = SDman->GetCollectionID(SDname);
+     k100_StdSD* boron_sensitive;
+
+     k100CollName[SDname] = 4; 
+     boron_sensitive = new k100_StdSD(SDname,k100CollName[SDname]);
+     k100CollPointStd[SDname] = boron_sensitive;
+     SDman->AddNewDetector(boron_sensitive);
+     logic_bpowder->SetSensitiveDetector(boron_sensitive);
+
+     SDname = "boron_case";
+     collID = -1; collID = SDman->GetCollectionID(SDname);
+     k100_StdSD* boron_case_sensitive;
+
+     k100CollName[SDname] = 5; 
+     boron_case_sensitive = new k100_StdSD(SDname,k100CollName[SDname]);
+     k100CollPointStd[SDname] = boron_case_sensitive;
+     SDman->AddNewDetector(boron_case_sensitive);
+     logic_bcontainer->SetSensitiveDetector(boron_case_sensitive);
+
+   }//end conditional for HPGeboron_shield casing
 
   }// end HPGeboron if statement
  // --------------------- Lead Frame Panels --------------------------
