@@ -194,6 +194,11 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   GPSShieldMatCmd->SetGuidance("Set a material, options: 'Lead', 'Poly'");
   // Select between Solid / WireFrame drawing mode
  
+  DetSizeCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/Det/setSize",this);
+  DetSizeCmd->SetGuidance("Set size for generic ZIP/HV detector.");
+  DetSizeCmd->SetParameterName("Diameter","Thickness","unsed",true,true);
+  DetSizeCmd->SetRange("Diameter != 0 && Thickness != 0 "); //none of these can be zero
+
   // Set parameters for gamma-coincidence detector
   GeGammaCoinPositionCmd = new G4UIcmdWith3VectorAndUnit("/CDMS/gammaCoin/setPosition",this);
   GeGammaCoinPositionCmd->SetGuidance("Set position for HPGe coincidence detector.");
@@ -414,6 +419,11 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
 
   if( command == GPSShieldMatCmd ) { 
     k100_Detector->SetConstructShieldTestEnvironmentMat(newValue);
+  }
+
+  if( command == DetSizeCmd ) { 
+    G4ThreeVector sz = GPSShieldSizeCmd->GetNew3VectorValue(newValue);
+    k100_Detector->DetSizeMod(sz.x(),sz.y());
   }
 
   if( command == GeGammaCoinPositionCmd ) { 

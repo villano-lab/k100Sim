@@ -42,6 +42,7 @@ private:
   G4UIcmdWithAnInteger*   NbTowersCmd;
   G4UIcmdWith3VectorAndUnit*   GPSShieldPositionCmd;
   G4UIcmdWith3VectorAndUnit*   GPSShieldSizeCmd;
+  G4UIcmdWith3VectorAndUnit*   DetSizeCmd;
   G4UIcmdWithAString*     GPSShieldMatCmd;
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinPositionCmd;
   G4UIcmdWith3VectorAndUnit*   GeGammaCoinSizeCmd;
