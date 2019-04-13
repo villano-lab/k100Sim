@@ -3157,3 +3157,9 @@ void k100_DetectorConstruction::ConstructPuBeNaI(G4VPhysicalVolume *world)
         logicalGeGammaCyl->SetSensitiveDetector(azipSD1);
   
 }
+void k100_DetectorConstruction::DetSizeMod(G4double R, G4double thk)
+{
+  Zip_Rout = R; 
+  Zip_z = thk;
+  return;
+}
