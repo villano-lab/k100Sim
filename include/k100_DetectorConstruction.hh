@@ -95,6 +95,8 @@ public:
 
   void UpdateGeometry();
 
+  void DetSizeMod(G4double R, G4double thk);
+
   void SetConstructTowerBool(G4bool newVal)      {ConstructTowerBool = newVal;}
   void SetConstructZipBool(G4bool newVal)        {ConstructZipBool = newVal;}
   void SetConstructVetoBool(G4bool newVal)       {ConstructVetoBool = newVal;}
