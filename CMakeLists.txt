@@ -2,7 +2,7 @@
 
 #----------------------------------------------------------------------------
 # Setup the project
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
 project(K100SIM)
 
 set(CMAKE_BUILD_TYPE None)
@@ -49,6 +49,8 @@ message(STATUS "CMAKE_PREFIX_PATH: " ${CMAKE_PREFIX_PATH})
 message(STATUS "CMAKE_MODULE_PATH: " ${CMAKE_PREFIX_PATH})
 get_directory_property(_vars_before VARIABLES)
 find_package(ROOT REQUIRED COMPONENTS RIO Net)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${ROOT_INCLUDE_DIRS})
 get_directory_property(_vars VARIABLES)
 
 
@@ -60,10 +62,10 @@ else()
     message(FATAL_ERROR "Failed to find ROOT.")
 endif()
 
-list(REMOVE_ITEM _vars _vars_before ${_vars_before})
-foreach(_var IN LISTS _vars)
-    message(STATUS "${_var} = ${${_var}}")
-endforeach()
+#list(REMOVE_ITEM _vars _vars_before ${_vars_before})
+#foreach(_var IN LISTS _vars)
+#    message(STATUS "${_var} = ${${_var}}")
+#endforeach()
 
 #----------------------------------------------------------------------------
 #Setup the ROOT include directories 
@@ -151,7 +153,7 @@ endforeach()
 # For internal Geant4 use - but has no effect if you build this
 # example standalone
 #
-add_custom_target(K100SIM DEPENDS k100Sim)
+#add_custom_target(K100SIM DEPENDS k100Sim)
 
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
