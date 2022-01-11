@@ -1,2 +1,3 @@
+cmake -DGeant4_DIR=/usr/local/Cellar/spack/0.17.1/opt/spack/darwin-mojave-skylake/apple-clang-10.0.1/geant4-10.7.2-bxphq6sjaajyz6isymqvwisn3knweo4l/ ~/k100Sim/
 cmake -DGeant4_DIR=/local/cdms/geant4.10.01.p02-install/lib64/Geant4-10.1.2/ /home/phys/villaa/k100_geant/k100Sim/
 make
