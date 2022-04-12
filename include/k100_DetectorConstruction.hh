@@ -146,7 +146,8 @@ public:
   void SetFirstDetGe(G4bool newVal)  {FirstDetGe = newVal;}
   void SetNbOfTowers(G4int newVal)               {NbOfTowers = newVal;}
   void SetNbOfZips(G4int newVal)                 {NbOfZips = newVal;}
-
+  //spandey
+  void SetConstructNaIBool(G4bool newVal)     {ConstructNaIArrayBool = newVal;}
 
   G4bool GetConstructTowerBool()   {return ConstructTowerBool;}
   G4bool GetConstructZipBool()     {return ConstructZipBool;}
@@ -215,6 +216,8 @@ private:
   G4bool ConstructWestReflectorBool;
   G4bool ConstructFrameBool;
   G4bool ConstructPuBeSourceAndShieldBool;
+  //spandey
+  G4bool ConstructNaIArrayBool;
 
   G4Material *zipGeMat, *zipSiMat, *towerMat, *scintMat;
   G4Material* polyMat, *mumetalMat;
@@ -289,7 +292,8 @@ private:
   void ConstructSimpleGammaCoin(G4VPhysicalVolume*  world);
   void ConstructPuBeNaI(G4VPhysicalVolume*  world);
   void FillTheTower(G4VPhysicalVolume* physicalTower, G4int towerNb);
-
+  //spandey
+  void ConstructNaIArray(G4LogicalVolume*  logicalWorld);
 #include "k100_DetectorParameterDef.hh"
 
 public:

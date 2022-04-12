@@ -6,7 +6,7 @@
        
 
       PURPOSE: Class to specify the format for data storage and handle
-               calls to the k100_AsciiOut class, which writes the
+               calls to the k100_ROOTOut class, which writes the
 	       data.
               
 ======================================================================*/
@@ -14,7 +14,7 @@
 #ifndef k100_DataStorage_H
 #define k100_DataStorage_H 1
 
-#define ASCIIOUT 1
+#define ROOTOUT 1
 
 
 #include "globals.hh"
@@ -27,8 +27,8 @@
 #define N_DATA 22 
 #define N_LENGTH 200000
 
-#ifdef ASCIIOUT
-class k100_AsciiOut;
+#ifdef ROOTOUT
+class k100_ROOTOut;
 #endif
 
 class k100_DataStorage
@@ -54,8 +54,8 @@ private:
   char** VariableNames;
   G4int NumDets;
 
-#ifdef ASCIIOUT
-  k100_AsciiOut* Out;
+#ifdef ROOTOUT
+  k100_ROOTOut* Out;
 #endif
 
 public:		

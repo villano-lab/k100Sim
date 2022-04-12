@@ -7,14 +7,14 @@
 
       PURPOSE:  Code support for the data storage class and routines
                 to handle the organization output data into various
-		forms which default to ascii supported by k100_AsciiOut.
+		forms which default to ascii supported by k100_ROOTOut.
               
 ======================================================================*/
 
 #include "k100_DataStorage.hh"
 
-#ifdef ASCIIOUT
-#include "k100_AsciiOut.hh"
+#ifdef ROOTOUT
+#include "k100_ROOTOut.hh"
 #endif
 
 #include "k100_DetectorConstruction.hh"
@@ -60,18 +60,18 @@ k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed)
     VariableNames[kk] = myNames[kk];
 
 
-#ifdef ASCIIOUT
+#ifdef ROOTOUT
 
   // Open the data file for writing 
   outfilename = filename + G4String("_") + NumtoStr(runID,3) + G4String("_"); 
-  Out = new k100_AsciiOut(outfilename + NumtoStr(n_files,3) + ".txt", VariableNames, n_data, NumDets);
+  Out = new k100_ROOTOut(outfilename + NumtoStr(n_files,3) + ".root", VariableNames, n_data, NumDets);
 
 #endif
 
 }
 k100_DataStorage::~k100_DataStorage()
 {
-#ifdef ASCIIOUT
+#ifdef ROOTOUT
   Out->DumpToFile(dataArray , n_entries, n_data);
   delete Out;
 #endif
@@ -132,12 +132,12 @@ void k100_DataStorage::writeArray()
 
 
 
-#ifdef ASCIIOUT
+#ifdef ROOTOUT
   Out->DumpToFile(dataArray , n_entries, n_data);
   delete Out;
   n_files++;
 
-  Out = new k100_AsciiOut(outfilename + NumtoStr(n_files,3) + G4String(".txt"), VariableNames, n_data, NumDets);
+  Out = new k100_ROOTOut(outfilename + NumtoStr(n_files,3) + G4String(".root"), VariableNames, n_data, NumDets);
 #endif
 
   resetArray();
