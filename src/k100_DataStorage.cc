@@ -24,7 +24,7 @@ k100_DataStorage::k100_DataStorage()
 {
   printf(" k100_DATA storage -- EMPTY constructor\n");
 }
-k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed, G4bool txtFileBool)
+k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed, G4bool rootFileBool)
 {  
 
   NumDets = 1;
@@ -40,7 +40,7 @@ k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed, G4
   randSeed = rseed;
   outfilename = filename;
 
-  textOutFlag = txtFileBool;
+  rootOutFlag = rootFileBool;
   data = new G4double [N_DATA];
   dataArray = new G4double[N_LENGTH*N_DATA];
  
@@ -70,7 +70,7 @@ k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed, G4
 // #endif
 
   outfilename = filename + G4String("_") + NumtoStr(runID,3) + G4String("_"); 
-  if(textOutFlag) {
+  if(!rootOutFlag) {
     OutTEXT = new k100_AsciiOut(outfilename + NumtoStr(n_files,3) + ".txt", VariableNames, n_data, NumDets);
   }
   else {
@@ -86,7 +86,7 @@ k100_DataStorage::~k100_DataStorage()
 //   delete Out;
 // #endif
 
-  if(textOutFlag) {
+  if(!rootOutFlag) {
     OutTEXT->DumpToFile(dataArray , n_entries, n_data);
     delete OutTEXT;
   }
@@ -159,7 +159,7 @@ void k100_DataStorage::writeArray()
 //   Out = new k100_ROOTOut(outfilename + NumtoStr(n_files,3) + G4String(".root"), VariableNames, n_data, NumDets);
 // #endif
 
-  if(textOutFlag) {
+  if(!rootOutFlag) {
     OutTEXT->DumpToFile(dataArray , n_entries, n_data);
     delete OutTEXT;
     n_files++;

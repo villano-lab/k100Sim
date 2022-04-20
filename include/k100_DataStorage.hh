@@ -57,7 +57,7 @@ private:
   char** VariableNames;
   G4int NumDets;
 
-  G4bool textOutFlag;
+  G4bool rootOutFlag;
   k100_ROOTOut* OutROOT;
   k100_AsciiOut* OutTEXT;
 // #ifdef ROOTOUT

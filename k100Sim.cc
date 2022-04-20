@@ -62,7 +62,7 @@ void print_usage (FILE* stream, int exit_code)
            "  -i, --infile       <filename>      name the input nrCasacadeSim file \n"
            "  -o, --outfile       <filename>     name the output file \n"
            "  -p, --only-ncap                    restrict event output to those including ncap \n"
-           "  -t, --txtoutput                    generate output in text file format \n"
+           "  -r, --rootoutput                   generate output in root tree format \n"
            "  -q, --quiet         <level>        quiet printing \n"
            "                                     optional argument integer > 0 \n"
            "                                     0,default: no non-event output\n"
@@ -93,13 +93,13 @@ int main(int argc, char** argv) {
   bool dataquiet=false;
   bool customgen=false;
   bool onlyncap=false;
-  bool txtOutput=false;
+  bool rootOutput=false;
    
   const struct option longopts[] =
   {
     {"customgen",     no_argument,  0, 'c'},
     {"infile",     required_argument,  0, 'i'},
-    {"txtOutput",     no_argument,  0, 't'},
+    {"rootOutput",     no_argument,  0, 'r'},
     {"outfile",     required_argument,  0, 'o'},
     {"only-ncap",     no_argument,  0, 'p'},
     {"quiet",     optional_argument,  0, 'q'},
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
   bool infile = false;
   while(iarg != -1)
   {
-    iarg = getopt_long(argc, argv, "+co:ti:pq::sv::V", longopts, &index);
+    iarg = getopt_long(argc, argv, "+co:ri:pq::sv::V", longopts, &index);
 
     switch (iarg)
     {
@@ -131,8 +131,8 @@ int main(int argc, char** argv) {
         infile = true;
         break;
       
-      case 't':
-        txtOutput = true;
+      case 'r':
+        rootOutput = true;
         break;
 
 
@@ -207,7 +207,7 @@ int main(int argc, char** argv) {
     filenames.push_back(argv[i]);
   }
 
-  // std::cout<<"textFileoutput = "<<txtOutput<<std::endl;
+  // std::cout<<"rootFileoutput = "<<rootOutput<<std::endl;
   // exit(0);
   //***********End get input*********************//
 
@@ -242,7 +242,7 @@ int main(int argc, char** argv) {
   runManager->SetUserAction(myPrimaryEventGenerator);
 
   //run action
-  k100_RunAction* pRunAction = new k100_RunAction(txtOutput);
+  k100_RunAction* pRunAction = new k100_RunAction(rootOutput);
   runManager->SetUserAction(pRunAction);
   k100_EventAction* pEventAction = new k100_EventAction(pRunAction,onlyncap);
   runManager->SetUserAction(pEventAction);
