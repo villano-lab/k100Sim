@@ -78,34 +78,49 @@ include_directories(${ROOT_INCLUDE_DIR})
 # You can set WITH_GEANT4_UIVIS to OFF via the command line or ccmake/cmake-gui
 # to build a batch mode only executable
 #
+#option(WITH_GEANT4_UIVIS "Build example with Geant4 UI and Vis drivers" ON)
+#if(WITH_GEANT4_UIVIS)
+#  message("using visualization")
+#  get_directory_property(_vars_before VARIABLES)
+#  find_package(Geant4 REQUIRED ui_all vis_all)
+#  get_directory_property(_vars VARIABLES)
+#else()
+#  message("NOT using visualization")
+#  get_directory_property(_vars_before VARIABLES)
+#  find_package(Geant4 REQUIRED)
+#  get_directory_property(_vars VARIABLES)
+#endif()
+#
+#if (Geant4_FOUND)
+#    message(STATUS "Libraries for Geant4 found")
+#    message(STATUS "Input directory: " ${Geant4_DIR})
+#    message(STATUS "Package Version: " ${Geant4_VERSION})
+#    message(STATUS "Include DIRS: " ${Geant4_INCLUDE_DIRS})
+#else()
+#    message(FATAL_ERROR "Failed to find Geant4.")
+#endif()
+#
+#
+#list(REMOVE_ITEM _vars _vars_before ${_vars_before})
+#foreach(_var IN LISTS _vars)
+#    message(STATUS "${_var} = ${${_var}}")
+#endforeach()
+
+
+#----------------------------------------------------------------------------
+# Find Geant4 package, activating all available UI and Vis drivers by default
+# You can set WITH_GEANT4_UIVIS to OFF via the command line or ccmake/cmake-gui
+# to build a batch mode only executable
+#
 option(WITH_GEANT4_UIVIS "Build example with Geant4 UI and Vis drivers" ON)
 if(WITH_GEANT4_UIVIS)
   message("using visualization")
-  get_directory_property(_vars_before VARIABLES)
   find_package(Geant4 REQUIRED ui_all vis_all)
-  get_directory_property(_vars VARIABLES)
 else()
-  message("NOT using visualization")
-  get_directory_property(_vars_before VARIABLES)
   find_package(Geant4 REQUIRED)
-  get_directory_property(_vars VARIABLES)
 endif()
 
-if (Geant4_FOUND)
-    message(STATUS "Libraries for Geant4 found")
-    message(STATUS "Input directory: " ${Geant4_DIR})
-    message(STATUS "Package Version: " ${Geant4_VERSION})
-    message(STATUS "Include DIRS: " ${Geant4_INCLUDE_DIRS})
-else()
-    message(FATAL_ERROR "Failed to find Geant4.")
-endif()
-
-
-list(REMOVE_ITEM _vars _vars_before ${_vars_before})
-foreach(_var IN LISTS _vars)
-    message(STATUS "${_var} = ${${_var}}")
-endforeach()
-
+#----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 # Setup Geant4 include directories and compile definitions
 # Setup include directory for this project
