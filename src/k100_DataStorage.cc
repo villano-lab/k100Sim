@@ -7,23 +7,24 @@
 
       PURPOSE:  Code support for the data storage class and routines
                 to handle the organization output data into various
-		forms which default to ascii supported by k100_AsciiOut.
+		forms which default to ascii supported by k100_ROOTOut.
               
 ======================================================================*/
 
 #include "k100_DataStorage.hh"
 
-#ifdef ASCIIOUT
+// #ifdef ROOTOUT
+// #include "k100_ROOTOut.hh"
+// #endif
 #include "k100_AsciiOut.hh"
-#endif
-
+#include "k100_ROOTOut.hh"
 #include "k100_DetectorConstruction.hh"
 
 k100_DataStorage::k100_DataStorage()
 {
   printf(" k100_DATA storage -- EMPTY constructor\n");
 }
-k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed)
+k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed, G4bool rootFileBool)
 {  
 
   NumDets = 1;
@@ -39,7 +40,7 @@ k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed)
   randSeed = rseed;
   outfilename = filename;
 
-
+  rootOutFlag = rootFileBool;
   data = new G4double [N_DATA];
   dataArray = new G4double[N_LENGTH*N_DATA];
  
@@ -60,21 +61,39 @@ k100_DataStorage::k100_DataStorage(G4String filename, G4int run, G4int rseed)
     VariableNames[kk] = myNames[kk];
 
 
-#ifdef ASCIIOUT
+// #ifdef ROOTOUT
 
-  // Open the data file for writing 
+//   // Open the data file for writing 
+//   outfilename = filename + G4String("_") + NumtoStr(runID,3) + G4String("_"); 
+//   Out = new k100_ROOTOut(outfilename + NumtoStr(n_files,3) + ".root", VariableNames, n_data, NumDets);
+
+// #endif
+
   outfilename = filename + G4String("_") + NumtoStr(runID,3) + G4String("_"); 
-  Out = new k100_AsciiOut(outfilename + NumtoStr(n_files,3) + ".txt", VariableNames, n_data, NumDets);
-
-#endif
+  if(!rootOutFlag) {
+    OutTEXT = new k100_AsciiOut(outfilename + NumtoStr(n_files,3) + ".txt", VariableNames, n_data, NumDets);
+  }
+  else {
+    OutROOT = new k100_ROOTOut(outfilename + NumtoStr(n_files,3) + ".root", VariableNames, n_data, NumDets);
+  }
 
 }
 k100_DataStorage::~k100_DataStorage()
 {
-#ifdef ASCIIOUT
-  Out->DumpToFile(dataArray , n_entries, n_data);
-  delete Out;
-#endif
+
+// #ifdef ROOTOUT
+//   Out->DumpToFile(dataArray , n_entries, n_data);
+//   delete Out;
+// #endif
+
+  if(!rootOutFlag) {
+    OutTEXT->DumpToFile(dataArray , n_entries, n_data);
+    delete OutTEXT;
+  }
+  else {
+    OutROOT->DumpToFile(dataArray , n_entries, n_data);
+    delete OutROOT;
+  }
 
   //delete data;  
   delete dataArray;
@@ -132,13 +151,28 @@ void k100_DataStorage::writeArray()
 
 
 
-#ifdef ASCIIOUT
-  Out->DumpToFile(dataArray , n_entries, n_data);
-  delete Out;
-  n_files++;
+// #ifdef ROOTOUT
+//   Out->DumpToFile(dataArray , n_entries, n_data);
+//   delete Out;
+//   n_files++;
 
-  Out = new k100_AsciiOut(outfilename + NumtoStr(n_files,3) + G4String(".txt"), VariableNames, n_data, NumDets);
-#endif
+//   Out = new k100_ROOTOut(outfilename + NumtoStr(n_files,3) + G4String(".root"), VariableNames, n_data, NumDets);
+// #endif
+
+  if(!rootOutFlag) {
+    OutTEXT->DumpToFile(dataArray , n_entries, n_data);
+    delete OutTEXT;
+    n_files++;
+
+    OutTEXT = new k100_AsciiOut(outfilename + NumtoStr(n_files,3) + G4String(".txt"), VariableNames, n_data, NumDets);
+  }
+  else {
+    OutROOT->DumpToFile(dataArray , n_entries, n_data);
+    delete OutROOT;
+    n_files++;
+
+    OutROOT = new k100_ROOTOut(outfilename + NumtoStr(n_files,3) + G4String(".root"), VariableNames, n_data, NumDets);
+  }
 
   resetArray();
 }

@@ -26,12 +26,14 @@
 char filename[200];
 
 
-k100_RunAction::k100_RunAction()
+k100_RunAction::k100_RunAction(G4bool rootOutput)
 {
  
   //set a default for saveOnlyNCapture
   saveOnlyNCapture = false;
   
+  //save output in textFile?
+  OutputRootFlag = rootOutput;
   // automatic (time-based) random seeds and filenames for each run
   struct timeval mytime;
   gettimeofday(&mytime, NULL);
@@ -82,7 +84,7 @@ void k100_RunAction::BeginOfRunAction(const G4Run* aRun)
        ResetRun=false;
      }
     //DataFileNamePrefix=DataFileNamePrefix+G4String(file);
-    dataOut = new k100_DataStorage(DataFileNamePrefix,runN,1); 
+    dataOut = new k100_DataStorage(DataFileNamePrefix,runN,1,OutputRootFlag); 
 
   }
 

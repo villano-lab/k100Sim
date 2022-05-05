@@ -19,7 +19,7 @@
 #include "globals.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
-
+#include "k100_nrCascadeTree.hh"
 #include "G4VUserPrimaryGeneratorAction.hh"
 
 //ROOT stuff
@@ -40,7 +40,7 @@ class k100_PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 
 public:
 
-  k100_PrimaryGeneratorAction(G4bool useGun=false);
+  k100_PrimaryGeneratorAction(G4bool useCapture=false, G4String infile="none");
   ~k100_PrimaryGeneratorAction();
 
 public:
@@ -50,7 +50,7 @@ public:
 private:
 
   k100_DetectorConstruction *Ndet; 
-
+  k100_nrCascadeTree* nrCascadeTree;
   G4ParticleGun* particleGun;
   G4GeneralParticleSource*      particleSource;	  
   G4RotationMatrix *xrot;
@@ -60,7 +60,8 @@ private:
   std::vector<G4double> GenerateRandomDirection();
 
   //useful variables
-  G4bool                        sourceGun; // false for GeneralParticleSource
+  G4bool                        throwCaptures; // false for GeneralParticleSource
+  G4String InFile;
 
 };
 

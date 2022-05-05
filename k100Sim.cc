@@ -38,6 +38,7 @@
 #include "k100_PrimaryGeneratorAction.hh"
 #include "k100_RunAction.hh"
 #include "k100_EventAction.hh"
+#include "k100_SteppingAction.hh"
 #include "Shielding_ComptonsUpdate.hh"
 
 #ifdef G4VIS_USE
@@ -57,9 +58,11 @@ void print_usage (FILE* stream, int exit_code)
   fprintf (stream, "Usage:  %s options [ inputfile(s) ]\n", program_name);
   fprintf (stream,
 	   //"\n"
-           "  -c, --customgen                    use custom particle generator \n"
+           "  -c, --customgen                    use custom particle generator for neutron captures\n"
+           "  -i, --infile       <filename>      name the input nrCasacadeSim file \n"
            "  -o, --outfile       <filename>     name the output file \n"
            "  -p, --only-ncap                    restrict event output to those including ncap \n"
+           "  -r, --rootoutput                   generate output in root tree format \n"
            "  -q, --quiet         <level>        quiet printing \n"
            "                                     optional argument integer > 0 \n"
            "                                     0,default: no non-event output\n"
@@ -82,6 +85,7 @@ int main(int argc, char** argv) {
   //***********Begin get input*********************//
  
   //set parameters for input system
+  G4String inputfile;
   std::string outputfile;
   uint verbosity=0;
   uint quietness=0;
@@ -89,10 +93,13 @@ int main(int argc, char** argv) {
   bool dataquiet=false;
   bool customgen=false;
   bool onlyncap=false;
+  bool rootOutput=false;
    
   const struct option longopts[] =
   {
     {"customgen",     no_argument,  0, 'c'},
+    {"infile",     required_argument,  0, 'i'},
+    {"rootOutput",     no_argument,  0, 'r'},
     {"outfile",     required_argument,  0, 'o'},
     {"only-ncap",     no_argument,  0, 'p'},
     {"quiet",     optional_argument,  0, 'q'},
@@ -107,10 +114,10 @@ int main(int argc, char** argv) {
 
   //turn off getopt error message
   opterr=1; 
-
+  bool infile = false;
   while(iarg != -1)
   {
-    iarg = getopt_long(argc, argv, "+co:pq::sv::V", longopts, &index);
+    iarg = getopt_long(argc, argv, "+co:ri:pq::sv::V", longopts, &index);
 
     switch (iarg)
     {
@@ -118,6 +125,16 @@ int main(int argc, char** argv) {
       case 'c':
         customgen = true;
         break;
+
+      case 'i':
+        inputfile = optarg;
+        infile = true;
+        break;
+      
+      case 'r':
+        rootOutput = true;
+        break;
+
 
       case 'o':
         outputfile = optarg;
@@ -177,6 +194,10 @@ int main(int argc, char** argv) {
     std::cerr << "eventAlignCheck: ERROR! no file supplied" << std::endl;
     exit(1);
   }
+  if(customgen && !infile) {
+    std::cout<<"Please provide input file if customgen flag is ON. Exiting..."<<std::endl;
+    exit(0);
+  }
   std::vector<std::string> filenames;
   for(int i = optind; i < argc; i++){
     if(verbosity>=1){
@@ -186,6 +207,8 @@ int main(int argc, char** argv) {
     filenames.push_back(argv[i]);
   }
 
+  // std::cout<<"rootFileoutput = "<<rootOutput<<std::endl;
+  // exit(0);
   //***********End get input*********************//
 
   for(int i=0;i<filenames.size();i++){
@@ -214,13 +237,17 @@ int main(int argc, char** argv) {
 
   // UserAction Classes============
   // event generator
-  k100_PrimaryGeneratorAction* myPrimaryEventGenerator=new k100_PrimaryGeneratorAction(customgen); //sourceGun is the custom generator  
+  
+  k100_PrimaryGeneratorAction* myPrimaryEventGenerator=new k100_PrimaryGeneratorAction(customgen,inputfile); //sourceGun is the custom generator  
   runManager->SetUserAction(myPrimaryEventGenerator);
 
   //run action
-  k100_RunAction* pRunAction = new k100_RunAction();
+  k100_RunAction* pRunAction = new k100_RunAction(rootOutput);
   runManager->SetUserAction(pRunAction);
-  runManager->SetUserAction(new k100_EventAction(pRunAction,onlyncap));
+  k100_EventAction* pEventAction = new k100_EventAction(pRunAction,onlyncap);
+  runManager->SetUserAction(pEventAction);
+  //runManager->SetUserAction(new k100_EventAction(pRunAction,onlyncap));
+  runManager->SetUserAction(new k100_SteppingAction(pEventAction));
 
   // Initialize G4 kernel
   runManager->Initialize();

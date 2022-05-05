@@ -15,7 +15,7 @@
 #include "G4Neutron.hh"
 
 #include "k100_ZipSD.hh"
-
+#include <string.h>
 // ------------------------------------------------
 
 k100_ZipSD::k100_ZipSD(G4String name, G4int towerNb)
@@ -79,8 +79,19 @@ G4bool k100_ZipSD::ProcessHits(G4Step* aStep, G4TouchableHistory* /*ROhist*/)
   }
 
   dataVector[1-1]  = 0; // Is not set in this function
-  dataVector[2-1]  = (6*(towNb-1)) + 
+  if(!strcmp(aStep->GetPreStepPoint()->GetTouchable()->GetVolume()->GetLogicalVolume()->GetName(),"NaI_tile_LV")) {
+    if(abs(aStep->GetPreStepPoint()->GetPosition().x()) < 0.5*(324.0 + 20.0) ) { // For bottom NaI array
+      dataVector[2-1] = 1000 + aStep->GetPreStepPoint()->GetTouchable()->GetReplicaNumber() + 1;
+    }
+    else { // For vertical NaI array
+      dataVector[2-1] = 2000 + aStep->GetPreStepPoint()->GetTouchable()->GetReplicaNumber() + 1;
+    }
+  }
+  else { // For Si/Ge crystal
+    dataVector[2-1]  = (6*(towNb-1)) + 
                      aStep->GetPreStepPoint()->GetTouchable()->GetReplicaNumber() + 1;
+  }
+  
   dataVector[3-1]  = 1e5 * aStep->GetTrack()->GetTrackID() +
                            aStep->GetTrack()->GetCurrentStepNumber();
   dataVector[4-1]  = 1e5 * aStep->GetTrack()->GetParentID();
@@ -108,6 +119,10 @@ G4bool k100_ZipSD::ProcessHits(G4Step* aStep, G4TouchableHistory* /*ROhist*/)
   G4Track* track = aStep->GetTrack();
 
   dataVector[22-1] = isNCap(track,aStep);
+
+
+  // std::cout<<"XXXXXXX"<<std::endl;
+  // std::cout<<"X1 : Y1 : Z1 : VolumeName : replicaNumber : DetID :: "<<dataVector[18-1]<<" : "<<dataVector[19-1]<<" : "<<dataVector[20-1]<<" : "<< aStep->GetPreStepPoint()->GetTouchable()->GetVolume()->GetLogicalVolume()->GetName()<<" : "<<aStep->GetPreStepPoint()->GetTouchable()->GetReplicaNumber()<<" : "<<dataVector[2-1]<<std::endl;
 
   //for(int i=0;i<21;i++){
   //  G4cout << "vector[" << i << "]: " << dataVector[i] << G4endl;
