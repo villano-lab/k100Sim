@@ -40,7 +40,7 @@ class k100_PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 
 public:
 
-  k100_PrimaryGeneratorAction(G4bool useGun=false, G4String infile="none");
+  k100_PrimaryGeneratorAction(G4bool useCapture=false, G4String infile="none");
   ~k100_PrimaryGeneratorAction();
 
 public:
@@ -60,7 +60,7 @@ private:
   std::vector<G4double> GenerateRandomDirection();
 
   //useful variables
-  G4bool                        sourceGun; // false for GeneralParticleSource
+  G4bool                        throwCaptures; // false for GeneralParticleSource
   G4String InFile;
 
 };

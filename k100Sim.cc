@@ -58,7 +58,7 @@ void print_usage (FILE* stream, int exit_code)
   fprintf (stream, "Usage:  %s options [ inputfile(s) ]\n", program_name);
   fprintf (stream,
 	   //"\n"
-           "  -c, --customgen                    use custom particle generator \n"
+           "  -c, --customgen                    use custom particle generator for neutron captures\n"
            "  -i, --infile       <filename>      name the input nrCasacadeSim file \n"
            "  -o, --outfile       <filename>     name the output file \n"
            "  -p, --only-ncap                    restrict event output to those including ncap \n"

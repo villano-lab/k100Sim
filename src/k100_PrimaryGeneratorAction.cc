@@ -31,8 +31,8 @@
 #include "k100_EventInfo.hh"
 
 
-k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction(G4bool useGun, G4String InFile):
-sourceGun(useGun)
+k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction(G4bool useCapture, G4String InFile):
+throwCaptures(useCapture)
 {
   
   //Get the geometry
@@ -52,7 +52,7 @@ sourceGun(useGun)
   xrot = new G4RotationMatrix(row1,row2,row3);
   xrot->setRows(row1,row2,row3);
   
-  if(useGun) {
+  if(useCapture) {
     if(InFile == "none") {
       std::cout<<"No input file provided for custom particle gun. Exiting"<<std::endl;
       exit(0);
@@ -100,7 +100,7 @@ void k100_PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
        anEvent->SetEventAborted();
   }*/
 
-   if(sourceGun){
+   if(throwCaptures){
 
      // particleGun->SetParticleDefinition(G4Neutron::Definition()); 
      // //std::vector<G4double> angles = GenerateRandomDirection();
