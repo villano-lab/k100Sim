@@ -16,6 +16,7 @@
 #include "G4Event.hh"
 #include "G4ParticleGun.hh"
 #include "G4GeneralParticleSource.hh"
+#include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4ThreeVector.hh"
 #include "G4Neutron.hh"
@@ -24,13 +25,14 @@
 
 #include "Randomize.hh"
 #include <math.h>
-
+#include <iostream>
 #include "k100_PrimaryGeneratorAction.hh"
 #include "k100_DetectorConstruction.hh"
 #include "k100_EventInfo.hh"
 
-k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction(G4bool useGun):
-sourceGun(useGun)
+
+k100_PrimaryGeneratorAction::k100_PrimaryGeneratorAction(G4bool useCapture, G4String InFile):
+throwCaptures(useCapture)
 {
   
   //Get the geometry
@@ -49,6 +51,25 @@ sourceGun(useGun)
   G4ThreeVector row3 = G4ThreeVector(0,-1.0,0);
   xrot = new G4RotationMatrix(row1,row2,row3);
   xrot->setRows(row1,row2,row3);
+  
+  if(useCapture) {
+    if(InFile == "none") {
+      std::cout<<"No input file provided for custom particle gun. Exiting"<<std::endl;
+      exit(0);
+    }
+    // std::cout<<"YOLO ============ Can I do it??  ========="<<std::endl;
+    // std::cout<<"YOLO ============ I am doing it  ========="<<std::endl;
+    // nrCascadeTree = new k100_nrCascadeTree("/Users/shubhampandey/work/k100sim_analysis/combine_k100sim_nrCascade/python_code/check.root");
+    nrCascadeTree = new k100_nrCascadeTree(InFile);
+    if(!nrCascadeTree) {
+      std::cout<<"nrCascadeTree not loaded. Exiting."<<std::endl;
+      exit(0);
+    }
+    else {
+      std::cout<<"nrCascadeTree loaded successfully with total entries = "<<nrCascadeTree->tree->GetEntries()<<std::endl;
+    }
+
+  }
 
 }
 k100_PrimaryGeneratorAction::~k100_PrimaryGeneratorAction()
@@ -79,12 +100,61 @@ void k100_PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
        anEvent->SetEventAborted();
   }*/
 
-   if(sourceGun){
-     particleGun->SetParticleDefinition(G4Neutron::Definition()); 
-     std::vector<G4double> angles = GenerateRandomDirection();
-     particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
-     particleGun->SetParticleEnergy(8.0);
-     particleGun->GeneratePrimaryVertex(anEvent);
+   if(throwCaptures){
+
+     // particleGun->SetParticleDefinition(G4Neutron::Definition()); 
+     // //std::vector<G4double> angles = GenerateRandomDirection();
+     // //particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
+     // //spandey
+     // //particleGun->SetParticleEnergy(8.0);
+     // particleGun->SetParticleEnergy(2.5e-8);
+     // particleGun->SetParticlePosition(G4ThreeVector(0.0*m,0.0*m,-1.0*cm));
+     // particleGun->SetParticleMomentumDirection(G4ThreeVector(-1,0,0));
+     // particleGun->GeneratePrimaryVertex(anEvent);
+
+
+     //std::cout<<"************** CHECK: EventID = "<<anEvent->GetEventID()<<std::endl;
+     if(anEvent->GetEventID() > nrCascadeTree->tree->GetEntries()) {
+      G4cout<<"Geant4 eventID exceeds input tree eventID. Can not generate more events. Exiting."<<G4endl;
+      exit(0);
+     }
+     nrCascadeTree->tree->GetEntry(anEvent->GetEventID());
+     // std::cout<<"Number of particles to be produced in this event = "<<nrCascadeTree->nE_gamma<<std::endl;
+     // for(int i = 0; i < nrCascadeTree->nE_gamma; i++){
+     //  std::cout<<" \t i : energy :: "<<i<<" : "<<nrCascadeTree->E_gamma[i]<<std::endl;
+     // }
+
+
+     if(nrCascadeTree->nE_gamma == 0) {
+      particleGun->SetParticleDefinition(G4ParticleTable::GetParticleTable()->FindParticle("geantino"));
+      std::vector<G4double> angles = GenerateRandomDirection();
+      particleGun->SetParticlePosition(G4ThreeVector(0.0*m,0.0*m,0.0*m));
+      particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
+      particleGun->SetParticleEnergy(1.e-10);
+      particleGun->GeneratePrimaryVertex(anEvent);
+      //std::cout<<"XXXXXXX Geantino....."<<std::endl;
+      
+     } 
+     else {
+      for(int i = 0; i < nrCascadeTree->nE_gamma; i++) {
+        particleGun->SetParticleDefinition(G4Gamma::Definition());
+        std::vector<G4double> angles = GenerateRandomDirection();
+        //particleGun->SetParticlePosition(G4ThreeVector(-3.829808*mm, -46.01114*mm, 22.045949*mm));
+        particleGun->SetParticlePosition(G4ThreeVector(nrCascadeTree->x_cap *mm, nrCascadeTree->y_cap *mm, nrCascadeTree->z_cap *mm));
+        particleGun->SetParticleMomentumDirection(G4ThreeVector(angles[2]*cos(angles[0]),angles[2]*sin(angles[0]),angles[1]));
+        //particleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,0.));
+        particleGun->SetParticleEnergy(nrCascadeTree->E_gamma[i]);
+        //std::cout<<" Event : n : i : Eg : x : y : z :: "<<anEvent->GetEventID()<<" : "<<nrCascadeTree->nE_gamma<<" : "<<i<<" : "<<nrCascadeTree->E_gamma[i]<<" : "<<nrCascadeTree->x_cap<<" : "<<nrCascadeTree->y_cap<<" : "<<nrCascadeTree->z_cap<<std::endl;
+        particleGun->GeneratePrimaryVertex(anEvent);
+
+      }
+      //std::cout<<"XXXXXXXXXXX  Gamma....."<<std::endl;
+     }
+
+     //std::cout<<"XXXXXXXXXXX  HELLOOOOOOOOOOOOOOOOOO....."<<std::endl;
+
+     //particleGun->GeneratePrimaryVertex(anEvent);
+     //if(!nrCascadeTree) std::cout<<"File not"<<anEvent->GetEventID()<<std::endl;
    }
    else
    {

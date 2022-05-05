@@ -6,7 +6,7 @@
        
 
       PURPOSE: Class to specify the format for data storage and handle
-               calls to the k100_AsciiOut class, which writes the
+               calls to the k100_ROOTOut class, which writes the
 	       data.
               
 ======================================================================*/
@@ -14,7 +14,7 @@
 #ifndef k100_DataStorage_H
 #define k100_DataStorage_H 1
 
-#define ASCIIOUT 1
+//#define ROOTOUT 1
 
 
 #include "globals.hh"
@@ -27,15 +27,17 @@
 #define N_DATA 22 
 #define N_LENGTH 200000
 
-#ifdef ASCIIOUT
-class k100_AsciiOut;
-#endif
+// #ifdef ROOTOUT
+// class k100_ROOTOut;
+// #endif
 
+class k100_ROOTOut;
+class k100_AsciiOut;
 class k100_DataStorage
 {
 public:
   k100_DataStorage();
-  k100_DataStorage(G4String, G4int, G4int);
+  k100_DataStorage(G4String, G4int, G4int, G4bool);
 	
   ~k100_DataStorage();
 	
@@ -46,6 +48,7 @@ private:
   
   G4int runID, randSeed;
   G4String outfilename;
+  
 
   G4double* data;
   G4double* dataArray;
@@ -54,9 +57,12 @@ private:
   char** VariableNames;
   G4int NumDets;
 
-#ifdef ASCIIOUT
-  k100_AsciiOut* Out;
-#endif
+  G4bool rootOutFlag;
+  k100_ROOTOut* OutROOT;
+  k100_AsciiOut* OutTEXT;
+// #ifdef ROOTOUT
+//   k100_ROOTOut* Out;
+// #endif
 
 public:		
   // member functions

@@ -68,6 +68,8 @@ void k100_EventAction::BeginOfEventAction(const G4Event* evt)
                << ID << G4endl;
           }
         }
+
+        //evt->GetPrimaryVertex()->Print();
 	
 	// Periodic printing (should make this a verbosable item)
 	if ((evt->GetEventID()%1000) == 1) {
@@ -106,8 +108,13 @@ void k100_EventAction::EndOfEventAction(const G4Event* evt)
              //G4cout << "\n>>> (EndofEventAction) HCE NumColls = " << HCE->GetNumberOfCollections() << G4endl;
              if(k100_Detector->GetConstructGenericSensitiveInt()>0) {
 	       GHC = (k100_StdHitsCollection*)(HCE->GetHC(ID));
-             }      
+             } 
+
+
            }
+           else {
+             	std::cout<<"No hit collection for event = "<<evt->GetEventID()<<std::endl;
+             } 
  
            // All of the following happens only if there is a hit in the Standard Sensitive-Dets.
            G4int n_hit = -1; // Initialize it with  value of -1

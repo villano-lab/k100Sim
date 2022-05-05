@@ -39,7 +39,7 @@ private :
 
   G4bool saveOnlyNCapture;
   G4bool drawEvent, saveEvent;
-
+  
   //data output class. not used for initial encarnation
   k100_DataStorage* dataOut;
   k100_DetectorConstruction* k100_Detector;
