@@ -47,7 +47,7 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorActivateCmd->SetGuidance("Activate CDMS Detector Element.");
   DetectorActivateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   DetectorActivateCmd->SetGuidance("in order for change to take effect.");
-  DetectorActivateCmd->SetGuidance("Choices are : Zips/Towers/Veto/Shields/IceBox .");
+  DetectorActivateCmd->SetGuidance("Choices are : Zips/Towers/Veto/Shields/IceBox/NaIArray .");
   DetectorActivateCmd->SetParameterName("choice",false);
   DetectorActivateCmd->AvailableForStates(G4State_Idle);
 
@@ -55,7 +55,7 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorDeActivateCmd->SetGuidance("Deactivate CDMS Detector Element.");
   DetectorDeActivateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   DetectorDeActivateCmd->SetGuidance("in order for change to take effect.");
-  DetectorDeActivateCmd->SetGuidance("Choices are : Zip/Tower/Veto/Shields/IceBox .");
+  DetectorDeActivateCmd->SetGuidance("Choices are : Zip/Tower/Veto/Shields/IceBox/NaIArray .");
   DetectorDeActivateCmd->SetParameterName("choice",false);
   DetectorDeActivateCmd->AvailableForStates(G4State_Idle);
 
@@ -256,6 +256,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   G4String caseVeto = "Veto";
   G4String caseShields = "Shields";
   G4String caseIceBox = "IceBox";
+  G4String caseNaIArray = "NaIArray"; //spandey
   G4String caseFrame = "Frame";
   G4String caseFloor = "Floor";
   G4String caseWalls = "Walls";
@@ -285,6 +286,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseThermalNeutronBucket)   {k100_Detector->SetConstructThermalNeutronBoxBool(true);}
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(true);}
     else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(true);}
+    else if(newValue == caseNaIArray)   {k100_Detector->SetConstructNaIBool(true);} //spandey
   }
 
   if( command == DetectorDeActivateCmd ) { 
@@ -302,6 +304,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseThermalNeutronBucket)   {k100_Detector->SetConstructThermalNeutronBoxBool(false);}
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(false);}
     else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(false);}
+    else if(newValue == caseNaIArray)   {k100_Detector->SetConstructNaIBool(false);} //spandey
 
   }
 

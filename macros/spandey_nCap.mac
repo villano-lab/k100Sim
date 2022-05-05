@@ -1,0 +1,22 @@
+/gps/particle neutron
+/gps/position 0.0 1000 36.6 mm
+/gps/pos/type Point
+/gps/ang/type iso
+#/gps/ang/type beam1d
+#/gps/direction 0 -1 0
+/gps/ene/type Arb
+/gps/hist/type arb
+/gps/hist/file sources/pube_skim.dat
+#/gps/hist/file sources/neutron_capture.dat
+/gps/hist/inter Lin
+
+
+/CDMS/detector/activate Shields
+/CDMS/detector/activate IceBox
+/CDMS/detector/activate NaIArray
+/CDMS/PuBe/doPuBeGammas false
+
+/CDMS/updateGeometry
+
+/run/beamOn 1000000
+exit

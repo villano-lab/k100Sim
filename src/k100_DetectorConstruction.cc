@@ -51,6 +51,9 @@
 #include "G4LogicalVolumeStore.hh"
 #include "G4SolidStore.hh"
 
+//spandey
+#include "k100_NaIParametrization.hh"
+
 #include <vector>
 #include <ostream>
 
@@ -89,11 +92,13 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructWestReflectorBool = false;
   ConstructFrameBool = false;
   ConstructPuBeSourceAndShieldBool = false;
+  ConstructNaIArrayBool = false; //spandey
   SetConstructThermalNeutronBoxBool(false); //note, requires construct ZIP bool
   SetConstructShieldTestEnvironmentBool(false); //note, requires construct ZIP bool
   SetConstructSimpleGammaCoinBool(false); //note, requires construct ZIP bool
   SetConstructPuBeNaIBool(false); //note, requires construct ZIP bool
   SetFirstDetGe(true); //we only use the first detector in the array for now, should it be Ge?
+
 
   //
   DrawSolidDetBox = true; DrawSolidZipBool = true;
@@ -1395,6 +1400,7 @@ void k100_DetectorConstruction::ConstructEverything(G4LogicalVolume*  logicalWor
   if(ConstructFrameBool)  {ConstructFrame(physicalWorld);}
   if(ConstructPuBeSourceAndShieldBool)  {ConstructPuBeSourceAndShield(physicalWorld);}
   if(ConstructThermalNeutronBoxBool)  {ConstructThermalNeutronBox(physicalWorld);}
+  if(ConstructNaIArrayBool) {ConstructNaIArray(logicalWorld);} //spandey
 
 } // ends ConstructEverything
 
@@ -1621,10 +1627,13 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   // place rects
   G4LogicalVolume* logicRect = new G4LogicalVolume(rect,polyMat,"logicRect",0,0,0);
   panelPosition=G4ThreeVector(frame_x-5*2.54*cm,frame_y+12*2.54*cm,frame_z);
-  if(!shieldParams.addNaISouth&!shieldParams.HPGeboron) //only place south panels when NOT using NaI detectors or boron HPGe
+  if(!shieldParams.addNaISouth&!shieldParams.HPGeboron&!ConstructNaIArrayBool) //only place south panels when NOT using NaI detectors or boron HPGe
     new G4PVPlacement(0,panelPosition,"physicRect",logicRect,physicalWorld,false,0);
   panelPosition=G4ThreeVector(frame_x+25*2.54*cm,frame_y+12*2.54*cm,frame_z);
   new G4PVPlacement(0,panelPosition,"physicRect1",logicRect,physicalWorld,false,1);
+  // //spandey updating north
+  // if(!ConstructNaIArrayBool)
+  //   new G4PVPlacement(0,panelPosition,"physicRect1",logicRect,physicalWorld,false,1);
   logicRect->SetVisAttributes(polyVis);
 
  // -------------- Make NaI detector frame (and place upon request) ------------
@@ -1960,11 +1969,16 @@ void k100_DetectorConstruction::ConstructShields(G4LogicalVolume*  logicalWorld)
   //place squares
   G4LogicalVolume* logicLeadRectY = new G4LogicalVolume(rectLeadBaseY,shieldPbMat,"logicLeadRectY",0,0,0);
   G4LogicalVolume* logicLeadRectY_forNaI = new G4LogicalVolume(rectLeadBaseY_forNaI,shieldPbMat,"logicLeadRectY_forNaI",0,0,0);
+
+  //spandey
+  //if(!shieldParams.addNaISouth&!shieldParams.HPGeboron){//change lead on side with NaI detectors
   if(!shieldParams.addNaISouth&!shieldParams.HPGeboron){//change lead on side with NaI detectors
+    
     leadPosition=G4ThreeVector(frame_x-(11.25)*2.54*cm,frame_y+12*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY0",logicLeadRectY,physicalWorld,false,0);
   }
-  else if(shieldParams.addNaISouth&!shieldParams.HPGeboron){
+  else if(shieldParams.addNaISouth&!shieldParams.HPGeboron&!ConstructNaIArrayBool){
+    
     leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12+22.5-(19.0/2.0))*2.54*cm,frame_z);
     new G4PVPlacement(0,leadPosition,"physicLeadRectY_forNaI0",logicLeadRectY_forNaI,physicalWorld,false,0);
     leadPosition=G4ThreeVector(frame_x-(13.25)*2.54*cm,frame_y+(12-22.5+(19.0/2.0))*2.54*cm,frame_z);
@@ -3085,7 +3099,7 @@ void k100_DetectorConstruction::ConstructSimpleGammaCoin(G4VPhysicalVolume *worl
 	VisAttGeGammaCyl->SetForceWireframe(false);  //I want a Wireframe of the me
 	logicalGeGammaCyl->SetVisAttributes(VisAttGeGammaCyl);  
 
-	//------------------------------------------------ 
+	      //------------------------------------------------ 
         // Sensitive detectors
         //------------------------------------------------ 
     
@@ -3163,3 +3177,151 @@ void k100_DetectorConstruction::DetSizeMod(G4double R, G4double thk)
   Zip_z = thk;
   return;
 }
+
+//spandey
+void k100_DetectorConstruction::ConstructNaIArray(G4LogicalVolume*  logicalWorld) {
+
+  G4VisAttributes* superVis = new G4VisAttributes(G4Colour(0./255.,255./255.,0/255.));
+  superVis->SetForceSolid(false);
+  G4VisAttributes* mother_NaI = new G4VisAttributes(G4Colour(0./255.,255./255.,0/255.,0.2));
+  mother_NaI->SetForceSolid(false);
+  G4double NaI_tile_length = 406 *mm;
+  G4double NaI_tile_height = 57 *mm;
+  G4double NaI_tile_width = 102 *mm;
+
+  //Floor block
+  //G4double fridgeHalfHeightToBottomPlate = (12.9045+13.25+0.25)*2.54*cm;
+  G4double fridgeHalfHeightToBottomPlate = (12.9045+19.254+0.25)*2.54*cm; //modified 1/1/18 to get floor height right
+  //G4double distanceToFloorZ = fridge_z+12.9045*2.54*cm - fridgeHalfHeightToBottomPlate - 21.0*2.54*cm;
+  //G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm;
+  G4double distanceCenterToFloor = fridgeHalfHeightToBottomPlate + 21.0*2.54*cm -70.86*mm; //compensate for 70.86mm discrepancy in floor distance 1/1/18
+  G4double floorZ = fridge_z+12.9045*2.54*cm - distanceCenterToFloor;
+  
+  G4Box* NaI_tile = new G4Box("NaI_tile", 0.5 * NaI_tile_width, 0.5* NaI_tile_length, 0.5* NaI_tile_height);
+  G4LogicalVolume* NaI_tile_LV = new G4LogicalVolume(NaI_tile,naiMat,"NaI_tile_LV",0,0,0);
+  NaI_tile_LV->SetVisAttributes(superVis);
+
+  /////////////////////////
+  ///   Vertical Array  ///
+  ////////////////////////
+
+  G4Box* NaI_Mother_vertical = new G4Box("NaI_Mother_vertical", 0.5*(NaI_tile_width + 2*cm), 0.5*(NaI_tile_length + 2*cm) , 0.5*(1255 + 2*cm));
+  G4LogicalVolume* NaI_Mother_vertical_LV = new G4LogicalVolume(NaI_Mother_vertical,G4NISTair,"NaI_Mother_vertical_LV",0,0,0);
+  NaI_Mother_vertical_LV->SetVisAttributes(mother_NaI);
+  //G4ThreeVector tilePos(fridge_x + 175.1*mm, fridge_y, fridge_z);
+  G4double xposition = (-1*frame_x) + (0.5 * NaI_tile_width) + 10*cm; 
+  G4double zposition = fridge_z-19.254*2.54*cm+2.0*2.54*cm; //floorZ + 89 + (1255 .0+ 2*cm)/2;
+  zposition = zposition + 1255.0/2 - 89.0;
+  //Zposition = floorZ + 89 + (fTileHeight)/2;
+  G4ThreeVector NaI_Mother_vertical_pos(-1.0*xposition , 0, zposition);
+  new G4PVPlacement(0,NaI_Mother_vertical_pos,"NaI_Mother_vertical_placement",NaI_Mother_vertical_LV,physicalWorld,false,0);
+
+
+  G4double stack_height = 292;
+  G4double stack_width = NaI_tile_width;
+  G4double stack_length = NaI_tile_length;
+  G4int nTiles = 20;
+  k100_NaIParametrization *NaIParam = new k100_NaIParametrization(stack_height, stack_length, stack_width,
+                                                                  NaI_tile_height, NaI_tile_length, NaI_tile_width,
+                                                                  3,nTiles);
+  
+  
+
+  new G4PVParameterised("NaIArray_stack1",NaI_tile_LV,NaI_Mother_vertical_LV,kZAxis, nTiles, NaIParam);
+  //std::cout<<"Mother VOLUME x position = "<<xposition<<std::endl;
+  //G4cout<<"xxxx NaI cooredinates of first copy = "<<NaIParam->GetCoordinates(0)<<G4endl;
+
+  
+
+  /////////////////////////
+  ///   Bottom Array  ///
+  ////////////////////////
+
+  G4Box* NaI_Mother_bottom = new G4Box("NaI_Mother_bottom", 0.5*(324.0 + 2*cm), 0.5*(NaI_tile_length + 2*cm) , 
+    0.5*(NaI_tile_height + 2*cm));
+  G4LogicalVolume* NaI_Mother_bottom_LV = new G4LogicalVolume(NaI_Mother_bottom,G4NISTair,"NaI_Mother_bottom_LV",0,0,0);
+  NaI_Mother_bottom_LV->SetVisAttributes(mother_NaI);
+  //G4ThreeVector tilePos(fridge_x + 175.1*mm, fridge_y, fridge_z);
+  xposition = 0.0; 
+  zposition = fridge_z-19.254*2.54*cm+2.0*2.54*cm; //floorZ + 89 + (1255 .0+ 2*cm)/2;
+  zposition = zposition  - 166.0;
+  //std::cout<<"zposition for bottom NaI array = "<<zposition<<std::endl;
+  //Zposition = floorZ + 89 + (fTileHeight)/2;
+  G4ThreeVector NaI_Mother_bottom_pos(xposition , 0, zposition);
+  G4RotationMatrix r90Rotation;    // Rotate bottom tiles
+  r90Rotation.rotateZ(90.*deg);
+  G4Transform3D BottomRotate(r90Rotation, NaI_Mother_bottom_pos);
+  //new G4PVPlacement(0,NaI_Mother_bottom_pos,"NaI_Mother_bottom_placement",NaI_Mother_bottom_LV,physicalWorld,false,0);
+  new G4PVPlacement(BottomRotate,"NaI_Mother_bottom_placement",NaI_Mother_bottom_LV,physicalWorld,false,0);
+
+
+  
+  stack_height = NaI_tile_height;
+  stack_width = 324;
+  stack_length = NaI_tile_length;
+  nTiles = 3;
+  k100_NaIParametrization *NaIParam_bottom = new k100_NaIParametrization(stack_height, stack_length, stack_width,
+                                                                  NaI_tile_height, NaI_tile_length, NaI_tile_width,
+                                                                  1,nTiles);
+
+
+
+  new G4PVParameterised("NaIArray_stack2",NaI_tile_LV,NaI_Mother_bottom_LV,kXAxis, nTiles, NaIParam_bottom);
+
+
+
+  //------------------------------------------------ 
+  // Sensitive detectors
+  //------------------------------------------------ 
+
+  
+  // Prepare to declare sensitive detectors
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+  G4String detectorZipSDname = "NaITile";
+  G4int collID = -1; collID = SDman->GetCollectionID(detectorZipSDname);
+  k100_ZipSD* azipSD1;
+  ConstructGenericSensitiveInt=2; //?FIXME I actually forgot what role this is supposed to play 
+  azipSD1 = new k100_ZipSD(detectorZipSDname, k100CollName.size()+1);
+  k100CollName[detectorZipSDname] = k100CollName.size()+1;
+  SDman->AddNewDetector(azipSD1);
+  NaI_tile_LV->SetSensitiveDetector(azipSD1);
+
+  
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
