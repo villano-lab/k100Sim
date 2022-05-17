@@ -272,7 +272,7 @@ int main(int argc, char** argv) {
     G4cout << " Macro " << macroFileName << " is being run " << G4endl;
     UI->ApplyCommand(command+macroFileName);
   }
-  session->SessionStart();
+  //session->SessionStart();
 
 #ifdef G4VIS_USE
   delete visManager;
