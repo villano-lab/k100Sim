@@ -241,17 +241,23 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   SodiumBorateDensityFractionCmd->SetRange("borateDensityFrac > 0 && borateDensityFrac <= 1.0");
   SodiumBorateDensityFractionCmd->AvailableForStates(G4State_Idle);
 
+  BoronShieldThicknessCmd = new G4UIcmdWithADouble("/CDMS/Shield/BoronShieldThickness",this);
+  BoronShieldThicknessCmd->SetGuidance("Set the thickness of boron shield surrounding NaIArray");
+  BoronShieldThicknessCmd->SetParameterName("boronShieldThicness",true);
+  BoronShieldThicknessCmd->SetRange("boronShieldThicness > 0");
+  BoronShieldThicknessCmd->AvailableForStates(G4State_Idle);
+
 
   NbBoronVertCmd = new G4UIcmdWithAnInteger("/CDMS/Shield/NbBoronShieldVertical",this);
   NbBoronVertCmd->SetGuidance("Set number of vertical boron shields.");
   NbBoronVertCmd->SetParameterName("NbBoronVert",false);
-  NbBoronVertCmd->SetRange("NbBoronVert==1 || NbBoronVert==2");
+  NbBoronVertCmd->SetRange("NbBoronVert==0 || NbBoronVert==1 || NbBoronVert==2 || NbBoronVert==6");
   NbBoronVertCmd->AvailableForStates(G4State_Idle);
 
   NbBoronHoriCmd = new G4UIcmdWithAnInteger("/CDMS/Shield/NbBoronShieldHorizontal",this);
   NbBoronHoriCmd->SetGuidance("Set number of horizontal boron shields.");
   NbBoronHoriCmd->SetParameterName("NbBoronHori",false);
-  NbBoronHoriCmd->SetRange("NbBoronHori==1 || NbBoronHori==2");
+  NbBoronHoriCmd->SetRange("NbBoronHori==0 || NbBoronHori==1 || NbBoronHori==2 || NbBoronHori==6");
   NbBoronHoriCmd->AvailableForStates(G4State_Idle);
 
 }
@@ -493,15 +499,21 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
 
   if( command == NbBoronVertCmd) {
     G4int NbBoronVert = NbBoronVertCmd->GetNewIntValue(newValue);
-    if(NbBoronVert > 2) G4cout<<" Can not place more than two vertical shields"<<G4endl;
-    else k100_Detector->SetNbBoronShieldVert(NbBoronVert);
+    //if(NbBoronVert > 2) G4cout<<" Can not place more than two vertical shields"<<G4endl;
+    k100_Detector->SetNbBoronShieldVert(NbBoronVert);
   }
 
   if( command == NbBoronHoriCmd) {
     G4int NbBoronHori = NbBoronHoriCmd->GetNewIntValue(newValue);
-    if(NbBoronHori > 2) G4cout<<" Can not place more than two horizontal shields"<<G4endl;
-    else k100_Detector->SetNbBoronShieldHori(NbBoronHori);
+    //if(NbBoronHori > 2) G4cout<<" Can not place more than two horizontal shields"<<G4endl;
+    k100_Detector->SetNbBoronShieldHori(NbBoronHori);
   }
+
+  if( command == BoronShieldThicknessCmd) {
+    G4double thickness = BoronShieldThicknessCmd->GetNewDoubleValue(newValue);
+    k100_Detector->SetBoronShieldThickness(thickness);
+  }
+
   // Now call and update the detector
   //k100_Detector->UpdateGeometry();
 }

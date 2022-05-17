@@ -152,6 +152,7 @@ public:
   void SetSodiumBorateDensityFraction(G4double newVal) {SodiumBorateDensityFraction = newVal;}
   void SetNbBoronShieldVert(G4int newVal) {NbBoronShieldVert = newVal;}
   void SetNbBoronShieldHori(G4int newVal) {NbBoronShieldHori = newVal;}
+  void SetBoronShieldThickness(G4double newVal) { BoronShieldThickness = newVal;}
 
   G4bool GetConstructTowerBool()   {return ConstructTowerBool;}
   G4bool GetConstructZipBool()     {return ConstructZipBool;}
@@ -199,6 +200,7 @@ public:
   G4int    GetNSensitive() {return k100CollName.size();}
 
   G4double GetSodiumBorateDensityFraction() {return SodiumBorateDensityFraction;}
+  G4double GetBoronShieldThickness() {return BoronShieldThickness;}
 
 
   void SetDrawSolidDetBox(G4bool newVal)         {DrawSolidDetBox = newVal;}
@@ -228,6 +230,7 @@ private:
   G4bool ConstructNaIArrayBool;
   G4bool ConstructBoronShieldBool;
   G4double SodiumBorateDensityFraction;
+  G4double BoronShieldThickness;
 
   G4Material *zipGeMat, *zipSiMat, *towerMat, *scintMat;
   G4Material* polyMat, *mumetalMat;
