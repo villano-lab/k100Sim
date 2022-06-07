@@ -80,7 +80,7 @@ G4bool k100_ZipSD::ProcessHits(G4Step* aStep, G4TouchableHistory* /*ROhist*/)
 
   dataVector[1-1]  = 0; // Is not set in this function
   if(!strcmp(aStep->GetPreStepPoint()->GetTouchable()->GetVolume()->GetLogicalVolume()->GetName(),"NaI_tile_LV")) {
-    if(abs(aStep->GetPreStepPoint()->GetPosition().x()) < 0.5*(324.0 + 20.0) ) { // For bottom NaI array
+    if(abs(aStep->GetPreStepPoint()->GetPosition().x()) < 0.5*(406.0 + 20.0) ) { // For bottom NaI array
       dataVector[2-1] = 1000 + aStep->GetPreStepPoint()->GetTouchable()->GetReplicaNumber() + 1;
     }
     else { // For vertical NaI array
