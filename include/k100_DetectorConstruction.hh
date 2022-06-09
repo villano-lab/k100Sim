@@ -153,6 +153,8 @@ public:
   void SetNbBoronShieldVert(G4int newVal) {NbBoronShieldVert = newVal;}
   void SetNbBoronShieldHori(G4int newVal) {NbBoronShieldHori = newVal;}
   void SetBoronShieldThickness(G4double newVal) { BoronShieldThickness = newVal;}
+  void SetConstructPolyBox(G4bool newVal) {ConstructPolyBoxBool = newVal;}
+
 
   G4bool GetConstructTowerBool()   {return ConstructTowerBool;}
   G4bool GetConstructZipBool()     {return ConstructZipBool;}
@@ -182,6 +184,8 @@ public:
 
   G4int GetNbBoronShieldVert () {return NbBoronShieldVert;}
   G4int GetNbBoronShieldHori () {return NbBoronShieldHori;}
+  G4bool GetConstructPolyBox() {return ConstructPolyBoxBool;}
+
 
   G4bool GetConstructGenericGeometryBool()      {return ConstructGenericGeometryBool;}
   G4bool GetConstructThermalNeutronBoxBool()      {return ConstructThermalNeutronBoxBool;}
@@ -231,6 +235,7 @@ private:
   G4bool ConstructBoronShieldBool;
   G4double SodiumBorateDensityFraction;
   G4double BoronShieldThickness;
+  G4bool ConstructPolyBoxBool;
 
   G4Material *zipGeMat, *zipSiMat, *towerMat, *scintMat;
   G4Material* polyMat, *mumetalMat;

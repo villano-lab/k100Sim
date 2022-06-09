@@ -48,7 +48,7 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorActivateCmd->SetGuidance("Activate CDMS Detector Element.");
   DetectorActivateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   DetectorActivateCmd->SetGuidance("in order for change to take effect.");
-  DetectorActivateCmd->SetGuidance("Choices are : Zips/Towers/Veto/Shields/IceBox/NaIArray/BoronShield .");
+  DetectorActivateCmd->SetGuidance("Choices are : Zips/Towers/Veto/Shields/IceBox/NaIArray/BoronShield/PolyBox .");
   DetectorActivateCmd->SetParameterName("choice",false);
   DetectorActivateCmd->AvailableForStates(G4State_Idle);
 
@@ -56,7 +56,7 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorDeActivateCmd->SetGuidance("Deactivate CDMS Detector Element.");
   DetectorDeActivateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   DetectorDeActivateCmd->SetGuidance("in order for change to take effect.");
-  DetectorDeActivateCmd->SetGuidance("Choices are : Zip/Tower/Veto/Shields/IceBox/NaIArray/BoronShield .");
+  DetectorDeActivateCmd->SetGuidance("Choices are : Zip/Tower/Veto/Shields/IceBox/NaIArray/BoronShield/polyBox .");
   DetectorDeActivateCmd->SetParameterName("choice",false);
   DetectorDeActivateCmd->AvailableForStates(G4State_Idle);
 
@@ -283,6 +283,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   G4String caseIceBox = "IceBox";
   G4String caseNaIArray = "NaIArray"; //spandey
   G4String caseBoronShield = "BoronShield"; //spandey
+  G4String casePolyBox = "PolyBox"; //spandey
   G4String caseFrame = "Frame";
   G4String caseFloor = "Floor";
   G4String caseWalls = "Walls";
@@ -314,6 +315,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(true);}
     else if(newValue == caseNaIArray)   {k100_Detector->SetConstructNaIBool(true);} //spandey
     else if(newValue == caseBoronShield)   {k100_Detector->SetConstructBoronShieldBool(true);} //spandey
+    else if(newValue == casePolyBox)   {k100_Detector->SetConstructPolyBox(true);} //spandey
   }
 
   if( command == DetectorDeActivateCmd ) { 
@@ -333,6 +335,7 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(false);}
     else if(newValue == caseNaIArray)   {k100_Detector->SetConstructNaIBool(false);} //spandey
     else if(newValue == caseBoronShield)   {k100_Detector->SetConstructBoronShieldBool(false);} //spandey
+    else if(newValue == casePolyBox)   {k100_Detector->SetConstructPolyBox(false);} //spandey
 
   }
 

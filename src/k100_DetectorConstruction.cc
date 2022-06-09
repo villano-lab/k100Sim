@@ -94,6 +94,7 @@ k100_DetectorConstruction::k100_DetectorConstruction()
   ConstructPuBeSourceAndShieldBool = false;
   ConstructNaIArrayBool = false; //spandey
   ConstructBoronShieldBool = false; //spandey
+  ConstructPolyBoxBool = false; //spandey
   SetConstructThermalNeutronBoxBool(false); //note, requires construct ZIP bool
   SetConstructShieldTestEnvironmentBool(false); //note, requires construct ZIP bool
   SetConstructSimpleGammaCoinBool(false); //note, requires construct ZIP bool
@@ -3327,7 +3328,10 @@ void k100_DetectorConstruction::ConstructNaIArray(G4LogicalVolume*  logicalWorld
 
     G4VisAttributes* boron_shield_box_Vis = new G4VisAttributes(G4Colour(0./255.,0./255.,255./255., 0.2));
     boron_shield_box_Vis->SetForceSolid(false);
-    
+
+    G4VisAttributes* polyVis = new G4VisAttributes(G4Colour(255/255.,255/255.,255/255.,0.2));
+    polyVis->SetForceSolid(false);
+
     /////////////////////
     // vertical shield //
     ////////////////////
@@ -3390,6 +3394,21 @@ void k100_DetectorConstruction::ConstructNaIArray(G4LogicalVolume*  logicalWorld
       new G4PVPlacement(0,hollowBoxVert_pos,"hollowBoxVert_placement",hollowBoxVertLV,physicalWorld,false,0);
 
     }
+    if(ConstructPolyBoxBool && GetNbBoronShieldVert() == 6 && BoronShieldThickness == 1) {
+      G4Box *outerPolyBoxVert = new G4Box("outerPolyBoxVert",0.5*(NaI_tile_width + 3*cm + BoronShieldThickness*2.54*cm + 2.54*cm), 0.5*(NaI_tile_length + 3*cm + BoronShieldThickness*2.54*cm + 2.54*cm) , 0.5*(1255 + 3*cm + BoronShieldThickness*2.54*cm + 2.54*cm));
+      G4Box *innerPolyBoxVert = new G4Box("innerPolyBoxVert",0.5*(NaI_tile_width + 3*cm + BoronShieldThickness*2.54*cm), 0.5*(NaI_tile_length + 3*cm + BoronShieldThickness*2.54*cm) , 0.5*(1255 + 3*cm + BoronShieldThickness*2.54*cm));
+      G4SubtractionSolid *hollowPolyBoxVert = new G4SubtractionSolid("hollowPolyBoxVert",outerPolyBoxVert,innerPolyBoxVert);
+
+      G4LogicalVolume* hollowPolyBoxVertLV = new G4LogicalVolume(hollowPolyBoxVert,polyMat,"hollowPolyBoxVertLV",0,0,0);
+      hollowPolyBoxVertLV->SetVisAttributes(polyVis);
+      xposition = (-1*frame_x) + (0.5 * NaI_tile_width) + 10*cm; 
+      zposition = fridge_z-19.254*2.54*cm+2.0*2.54*cm; //floorZ + 89 + (1255 .0+ 2*cm)/2;
+      zposition = zposition + 1255.0/2 - 89.0;
+      //Zposition = floorZ + 89 + (fTileHeight)/2;
+      G4ThreeVector hollowPolyBoxVert_pos(-1.0*xposition , 0, zposition);
+      new G4PVPlacement(0,hollowPolyBoxVert_pos,"hollowPolyBoxVert_placement",hollowPolyBoxVertLV,physicalWorld,false,0);
+    }
+
     
     ///////////////////////
     // horizontal shield //
@@ -3449,6 +3468,16 @@ void k100_DetectorConstruction::ConstructNaIArray(G4LogicalVolume*  logicalWorld
       G4LogicalVolume* hollowBoxHoriLV = new G4LogicalVolume(hollowBoxHori,boronShieldMat,"hollowBoxHoriLV",0,0,0);
       hollowBoxHoriLV->SetVisAttributes(boron_shield_box_Vis);
       new G4PVPlacement(BottomRotate,"hollowBoxHori_placement",hollowBoxHoriLV,physicalWorld,false,0);
+    }
+
+    if(ConstructPolyBoxBool && GetNbBoronShieldHori() == 6 && BoronShieldThickness == 1) {
+      G4Box *outerPolyBoxHori = new G4Box("outerPolyBoxHori",0.5*(324.0 + 3*cm + BoronShieldThickness*2.54*cm + 2.54*cm), 0.5*(NaI_tile_length + 3*cm + BoronShieldThickness*2.54*cm + 2.54*cm) , 0.5*(NaI_tile_height + 3*cm + BoronShieldThickness*2.54*cm + 2.54*cm));
+      G4Box *innerPolyBoxHori = new G4Box("innerPolyBoxHori",0.5*(324.0 + 3*cm + BoronShieldThickness*2.54*cm), 0.5*(NaI_tile_length + 3*cm + BoronShieldThickness*2.54*cm) , 0.5*(NaI_tile_height + 3*cm + BoronShieldThickness*2.54*cm));
+      G4SubtractionSolid *hollowPolyBoxHori = new G4SubtractionSolid("hollowPolyBoxHori",outerPolyBoxHori,innerPolyBoxHori);
+
+      G4LogicalVolume* hollowPolyBoxHoriLV = new G4LogicalVolume(hollowPolyBoxHori,polyMat,"hollowPolyBoxHoriLV",0,0,0);
+      hollowPolyBoxHoriLV->SetVisAttributes(polyVis);
+      new G4PVPlacement(BottomRotate,"hollowPolyBoxHori_placement",hollowPolyBoxHoriLV,physicalWorld,false,0);
     }
 
  
