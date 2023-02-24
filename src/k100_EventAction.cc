@@ -70,7 +70,7 @@ void k100_EventAction::BeginOfEventAction(const G4Event* evt)
         }
 
         //evt->GetPrimaryVertex()->Print();
-	
+
 	// Periodic printing (should make this a verbosable item)
 	if ((evt->GetEventID()%1000) == 1) {
 		G4cout << "\n>>>>>> (BeginofEventAction) Event " << evt->GetEventID() << G4endl;

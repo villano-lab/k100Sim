@@ -16,6 +16,10 @@
 
 #include "G4UserRunAction.hh"
 #include "globals.hh"
+//#define NON_SD_INFO  //uncomment this line if you want to save all nCap info from the lab
+#ifdef NON_SD_INFO
+#include "g4root.hh"
+#endif
 
 class G4Run;
 

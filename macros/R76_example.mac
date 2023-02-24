@@ -1,0 +1,31 @@
+/gps/particle neutron
+/gps/position 0.0 1197.31 -565.15 mm
+/gps/pos/type Point
+/gps/ang/type iso
+/gps/ene/type Arb
+/gps/hist/type arb
+/gps/hist/file sources/pube_skim.dat
+/gps/hist/inter Lin
+
+/CDMS/Zip1/IsGe False
+/CDMS/detector/activate Walls
+/CDMS/detector/activate Floor
+/CDMS/detector/activate Frame
+/CDMS/detector/activate Shields
+/CDMS/detector/activate IceBox
+/CDMS/detector/activate NaIArray
+/CDMS/detector/activate PuBeSourceAndShield
+/CDMS/PuBe/Barrel True
+/CDMS/PuBe/doPuBeGammas false
+/CDMS/detector/activate BoronShield
+/CDMS/Shield/NbBoronShieldVertical 6  # nb of sides
+/CDMS/Shield/NbBoronShieldHorizontal 6 # nb of sides
+/CDMS/Shield/BoronShieldThickness 1
+
+
+
+/CDMS/updateGeometry
+
+#/run/k100/OFPrefix /scratch/m/mdiamond/pande230/geant4/k100Sim/NaI_boronShield_V1_H1/0000/
+/run/beamOn 10
+exit

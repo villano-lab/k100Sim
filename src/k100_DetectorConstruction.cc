@@ -2692,7 +2692,8 @@ void k100_DetectorConstruction::ConstructFrame(G4VPhysicalVolume*  world)
   G4Tubs* post = new G4Tubs("post",0,0.5*27*cm,0.5*1.735*m,0,2*pi); //with sand
   G4Tubs* sand = new G4Tubs("post",0,0.5*27*cm-0.5*2.54*cm,0.5*1.735*m,0,2*pi);
   G4LogicalVolume* logicalPost = new G4LogicalVolume(post,G4NISTAl,"logicalPost",0,0,0);
-  G4LogicalVolume* logicalSand = new G4LogicalVolume(sand,blastsand,"logicalSand",0,0,0);
+  G4LogicalVolume* logicalSand = new G4LogicalVolume(sand,blastsand,"logicalSand",0,0,0); // blast sand
+  //G4LogicalVolume* logicalSand = new G4LogicalVolume(sand,G4NISTair,"logicalSand",0,0,0); // Air
   for(int i=0;i<postPointsY.size();i++){
     G4ThreeVector postPos(postPointsX[i],postPointsY[i],floorZ+(2.0+0.25)*2.54*cm+0.5*1.735*m);
     std::ostringstream name,sand_name;
