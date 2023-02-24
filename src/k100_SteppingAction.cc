@@ -7,6 +7,8 @@
 #include "G4RunManager.hh"
 #include "G4LogicalVolume.hh"
 
+//#include "G4TrackVector.h"
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......                                                                                                                                
 
 k100_SteppingAction::k100_SteppingAction(k100_EventAction* eventAction)
@@ -22,24 +24,30 @@ k100_SteppingAction::~k100_SteppingAction()
 void k100_SteppingAction::UserSteppingAction(const G4Step* aStep)
 {
   
-  
+  if(aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName() == "nCapture") {
+    const G4TrackVector* tkV  = aStep->GetSecondary();
+    int nsc = (*tkV).size();
+    //std::cout<<"========> nCapture : nsc = "<<nsc<<std::endl;
+    // kinetic energy : aStep->GetPreStepPoint()->GetKineticEnergy()
+    G4double neutron_energy = aStep->GetPreStepPoint()->GetKineticEnergy();
+    for(int i = 0; i < nsc; i++) {
+      G4Track *tk = (*tkV)[i];
+      if(tk->GetCreatorProcess()->GetProcessName() != "nCapture") continue;
+      //std::cout<<"  ========> Daughters: "<< i <<" , PDGID: "<<tk->GetDefinition()->GetPDGEncoding()<<std::endl;
+      G4int evnt = G4RunManager::GetRunManager()->GetCurrentEvent()->GetEventID();
 
-  // // if(aStep->GetTrack()->GetDefinition()->GetPDGEncoding() == 22 && aStep->GetTrack()->GetParentID() == 0) {
-  // //   if(aStep->GetTrack()->GetNextVolume() == nullptr) {
-  // //     std::cout<<"\t \t trackID : KE : x : y : z : currentVol : NextStepVol : Edep :: "<<aStep->GetTrack()->GetTrackID()<<" : "<<aStep->GetPreStepPoint()->GetKineticEnergy()<<" : " << aStep->GetPreStepPoint()->GetPosition().x()<<" : "<< aStep->GetPreStepPoint()->GetPosition().y() << " : " << aStep->GetPreStepPoint()->GetPosition().z()  << " : "<< aStep->GetTrack()->GetVolume()->GetName() << " : NULL : " << aStep->GetTotalEnergyDeposit() <<std::endl;
-  // //   } else {
-  // //     std::cout<<"\t \t trackID : KE : x : y : z : currentVol : NextStepVol : Edep :: "<<aStep->GetTrack()->GetTrackID()<<" : "<<aStep->GetPreStepPoint()->GetKineticEnergy()<<" : " << aStep->GetPreStepPoint()->GetPosition().x()<<" : "<< aStep->GetPreStepPoint()->GetPosition().y() << " : " << aStep->GetPreStepPoint()->GetPosition().z()  << " : "<< aStep->GetTrack()->GetVolume()->GetName() << " : " <<aStep->GetTrack()->GetNextVolume()->GetName() << " : " << aStep->GetTotalEnergyDeposit() <<std::endl;
-  // //   }
+      #ifdef NON_SD_INFO
+      // For Non SD nCap info
+      G4AnalysisManager *man = G4AnalysisManager::Instance();
+      man->FillNtupleIColumn(0,evnt);
+      man->FillNtupleDColumn(1,neutron_energy);
+      man->FillNtupleIColumn(2,tk->GetDefinition()->GetPDGEncoding()%1000000);
+      man->FillNtupleDColumn(3,tk->GetKineticEnergy());
+      man->AddNtupleRow(0);
+      #endif
+    }
     
-  // // }
-
-  // // if(((aStep->GetPostStepPoint() == nullptr) || (aStep->GetTrack()->GetNextVolume() == nullptr)) &&
-  // //         (aStep->IsLastStepInVolume())) {
-  // //   std::cout<<"*************** Can you hear me??? ***************"<<std::endl;
-  // //   std::cout<<"pid : KE :: "<<aStep->GetTrack()->GetDefinition()->GetPDGEncoding()
-  // //             <<" : " <<aStep->GetPreStepPoint()->GetKineticEnergy()<<std::endl;
-  // }
-
+  } 
   
 }
 

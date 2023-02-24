@@ -17,6 +17,7 @@ class G4UIcmdWithABool;
 class G4UIcmdWithADoubleAndUnit;
 class G4UIcmdWith3VectorAndUnit;
 class G4UIcmdWithoutParameter;
+class G4UIcmdWithADouble;
 
 class k100_DetectorConstruction;
 
@@ -68,6 +69,11 @@ private:
 
   G4UIcmdWithAString*     DrawSolidBox;
   G4UIcmdWithAString*     DrawFrameBox;
+
+  G4UIcmdWithADouble* SodiumBorateDensityFractionCmd;
+  G4UIcmdWithADouble* BoronShieldThicknessCmd;
+  G4UIcmdWithAnInteger*   NbBoronVertCmd;
+  G4UIcmdWithAnInteger*   NbBoronHoriCmd;
 
 
 };

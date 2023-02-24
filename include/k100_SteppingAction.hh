@@ -5,6 +5,11 @@
 #include "globals.hh"
 #include "k100_EventAction.hh"
 
+#ifdef NON_SD_INFO
+#include "G4RunManager.hh"
+#include "g4root.hh"
+#endif
+
 class B1EventAction;
 
 class G4LogicalVolume;
@@ -27,5 +32,4 @@ class k100_SteppingAction : public G4UserSteppingAction
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......                                                                                                                                
-
 #endif

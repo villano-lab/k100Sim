@@ -11,6 +11,7 @@
 #include "G4UIcmdWith3VectorAndUnit.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithoutParameter.hh"
+#include "G4UIcmdWithADouble.hh"
 
 #include "k100_DetectorConstructionMessenger.hh"
 #include "k100_DetectorConstruction.hh"
@@ -47,7 +48,7 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorActivateCmd->SetGuidance("Activate CDMS Detector Element.");
   DetectorActivateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   DetectorActivateCmd->SetGuidance("in order for change to take effect.");
-  DetectorActivateCmd->SetGuidance("Choices are : Zips/Towers/Veto/Shields/IceBox/NaIArray .");
+  DetectorActivateCmd->SetGuidance("Choices are : Zips/Towers/Veto/Shields/IceBox/NaIArray/BoronShield/PolyBox .");
   DetectorActivateCmd->SetParameterName("choice",false);
   DetectorActivateCmd->AvailableForStates(G4State_Idle);
 
@@ -55,7 +56,7 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   DetectorDeActivateCmd->SetGuidance("Deactivate CDMS Detector Element.");
   DetectorDeActivateCmd->SetGuidance("This command MUST be applied before \"beamOn\" ");
   DetectorDeActivateCmd->SetGuidance("in order for change to take effect.");
-  DetectorDeActivateCmd->SetGuidance("Choices are : Zip/Tower/Veto/Shields/IceBox/NaIArray .");
+  DetectorDeActivateCmd->SetGuidance("Choices are : Zip/Tower/Veto/Shields/IceBox/NaIArray/BoronShield/polyBox .");
   DetectorDeActivateCmd->SetParameterName("choice",false);
   DetectorDeActivateCmd->AvailableForStates(G4State_Idle);
 
@@ -234,6 +235,30 @@ k100_DetectorConstructionMessenger::k100_DetectorConstructionMessenger(k100_Dete
   NbTowersCmd->SetRange("NbTowers>0 && NbTowers<6");
   NbTowersCmd->AvailableForStates(G4State_Idle);
 
+  SodiumBorateDensityFractionCmd = new G4UIcmdWithADouble("/CDMS/Shield/SodiumBorateDensityFraction",this);
+  SodiumBorateDensityFractionCmd->SetGuidance("Set the density fraction of Sodium Tetraborate decahydrate");
+  SodiumBorateDensityFractionCmd->SetParameterName("borateDensityFrac",true);
+  SodiumBorateDensityFractionCmd->SetRange("borateDensityFrac > 0 && borateDensityFrac <= 1.0");
+  SodiumBorateDensityFractionCmd->AvailableForStates(G4State_Idle);
+
+  BoronShieldThicknessCmd = new G4UIcmdWithADouble("/CDMS/Shield/BoronShieldThickness",this);
+  BoronShieldThicknessCmd->SetGuidance("Set the thickness of boron shield surrounding NaIArray");
+  BoronShieldThicknessCmd->SetParameterName("boronShieldThicness",true);
+  BoronShieldThicknessCmd->SetRange("boronShieldThicness > 0");
+  BoronShieldThicknessCmd->AvailableForStates(G4State_Idle);
+
+
+  NbBoronVertCmd = new G4UIcmdWithAnInteger("/CDMS/Shield/NbBoronShieldVertical",this);
+  NbBoronVertCmd->SetGuidance("Set number of vertical boron shields.");
+  NbBoronVertCmd->SetParameterName("NbBoronVert",false);
+  NbBoronVertCmd->SetRange("NbBoronVert==0 || NbBoronVert==1 || NbBoronVert==2 || NbBoronVert==6");
+  NbBoronVertCmd->AvailableForStates(G4State_Idle);
+
+  NbBoronHoriCmd = new G4UIcmdWithAnInteger("/CDMS/Shield/NbBoronShieldHorizontal",this);
+  NbBoronHoriCmd->SetGuidance("Set number of horizontal boron shields.");
+  NbBoronHoriCmd->SetParameterName("NbBoronHori",false);
+  NbBoronHoriCmd->SetRange("NbBoronHori==0 || NbBoronHori==1 || NbBoronHori==2 || NbBoronHori==6");
+  NbBoronHoriCmd->AvailableForStates(G4State_Idle);
 
 }
 
@@ -257,6 +282,8 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   G4String caseShields = "Shields";
   G4String caseIceBox = "IceBox";
   G4String caseNaIArray = "NaIArray"; //spandey
+  G4String caseBoronShield = "BoronShield"; //spandey
+  G4String casePolyBox = "PolyBox"; //spandey
   G4String caseFrame = "Frame";
   G4String caseFloor = "Floor";
   G4String caseWalls = "Walls";
@@ -287,6 +314,8 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(true);}
     else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(true);}
     else if(newValue == caseNaIArray)   {k100_Detector->SetConstructNaIBool(true);} //spandey
+    else if(newValue == caseBoronShield)   {k100_Detector->SetConstructBoronShieldBool(true);} //spandey
+    else if(newValue == casePolyBox)   {k100_Detector->SetConstructPolyBox(true);} //spandey
   }
 
   if( command == DetectorDeActivateCmd ) { 
@@ -305,6 +334,8 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
     else if(newValue == caseGPSShielding)   {k100_Detector->SetConstructShieldTestEnvironmentBool(false);}
     else if(newValue == caseHPGeCoincidence)   {k100_Detector->SetConstructSimpleGammaCoinBool(false);}
     else if(newValue == caseNaIArray)   {k100_Detector->SetConstructNaIBool(false);} //spandey
+    else if(newValue == caseBoronShield)   {k100_Detector->SetConstructBoronShieldBool(false);} //spandey
+    else if(newValue == casePolyBox)   {k100_Detector->SetConstructPolyBox(false);} //spandey
 
   }
 
@@ -462,6 +493,28 @@ void k100_DetectorConstructionMessenger::SetNewValue(G4UIcommand* command, G4Str
   if( command == NbTowersCmd ) { 
     k100_Detector->SetNbOfTowers(NbTowersCmd->GetNewIntValue(newValue));
     k100_Detector->SetNbOfZips((NbTowersCmd->GetNewIntValue(newValue))*6);
+  }
+
+  if( command == SodiumBorateDensityFractionCmd) {
+    G4double fraction = SodiumBorateDensityFractionCmd->GetNewDoubleValue(newValue);
+    k100_Detector->SetSodiumBorateDensityFraction(fraction);
+  }
+
+  if( command == NbBoronVertCmd) {
+    G4int NbBoronVert = NbBoronVertCmd->GetNewIntValue(newValue);
+    //if(NbBoronVert > 2) G4cout<<" Can not place more than two vertical shields"<<G4endl;
+    k100_Detector->SetNbBoronShieldVert(NbBoronVert);
+  }
+
+  if( command == NbBoronHoriCmd) {
+    G4int NbBoronHori = NbBoronHoriCmd->GetNewIntValue(newValue);
+    //if(NbBoronHori > 2) G4cout<<" Can not place more than two horizontal shields"<<G4endl;
+    k100_Detector->SetNbBoronShieldHori(NbBoronHori);
+  }
+
+  if( command == BoronShieldThicknessCmd) {
+    G4double thickness = BoronShieldThicknessCmd->GetNewDoubleValue(newValue);
+    k100_Detector->SetBoronShieldThickness(thickness);
   }
 
   // Now call and update the detector

@@ -45,7 +45,6 @@
 #include "G4VisExecutive.hh"
 #endif
 
-
 //The name of this program. 
 const char* program_name;
 
@@ -226,14 +225,19 @@ int main(int argc, char** argv) {
 
   //make a physics list factory
   G4PhysListFactory *g4Factory = new G4PhysListFactory();
-
+  char* physics_list = new char[50];
+  //sprintf(physics_list,"QGSP_BERT_HP");
+  sprintf(physics_list,"Shielding");
   // User Initializaton classes (mandatory)
   runManager->SetUserInitialization(new k100_DetectorConstruction());
   //runManager->SetUserInitialization(new Shielding_ComptonsUpdate);
   //try standard shielding: "Shielding_EMZ"
   //runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding_EMZ"));
   //revert back to standard to try to fix infinite loop bug: N-MISC-17-003 pg 10
-  runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding"));
+  //runManager->SetUserInitialization(g4Factory->GetReferencePhysList("Shielding"));
+  
+  runManager->SetUserInitialization(g4Factory->GetReferencePhysList(physics_list));
+  G4cout<<"Using physics list = "<<physics_list<<G4endl;
 
   // UserAction Classes============
   // event generator
@@ -272,7 +276,7 @@ int main(int argc, char** argv) {
     G4cout << " Macro " << macroFileName << " is being run " << G4endl;
     UI->ApplyCommand(command+macroFileName);
   }
-  session->SessionStart();
+  //session->SessionStart();
 
 #ifdef G4VIS_USE
   delete visManager;
