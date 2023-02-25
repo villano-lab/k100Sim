@@ -1,3 +1,47 @@
 cmake -DGeant4_DIR=/usr/local/Cellar/spack/0.17.1/opt/spack/darwin-mojave-skylake/apple-clang-10.0.1/geant4-10.7.2-bxphq6sjaajyz6isymqvwisn3knweo4l/ ~/k100Sim/
 cmake -DGeant4_DIR=/local/cdms/geant4.10.01.p02-install/lib64/Geant4-10.1.2/ /home/phys/villaa/k100_geant/k100Sim/
 make
+
+#Installing with G4 v10.7.4, ROOT 6.24.2, Ubuntu 20, gcc 9.4.0, standard=cxx14.
+
+Geant4 Install:
+
+ - Download the source code: https://geant4.web.cern.ch/download/10.7.4.html#releasenotes
+ - make a build directory.
+ - inside the build directory do:
+
+cmake -DGEANT4_USE_OPENGL_X11=ON -DGEANT4_INSTALL_DATA=ON -DCMAKE_CXX_STANDARD=14 -DCMAKE_PREFIX_PATH="/home/villaa/install/geant4/geant4-v10.7.4-install/lib/cmake/Geant4/" -DCMAKE_INSTALL_PREFIX=/home/villaa/install/geant4/geant4-v10.7.4-install /home/villaa/install/geant4/geant4-v10.7.4
+
+Note the flags, if you miss the visualization, it will not be able to do visualization, if you miss the install data flag it won't install the data (this happens at the make install step). If you miss the forcing of the cxx14 standard it will compile with a standard that might be inconsistent with ROOT. The compilation will fail, hard. 
+
+ - also inside the build directory do $make -jN 
+ - then do $make install (check that data directories are being downloaded!!)
+
+ - make sure after you're installed to set the environmental variables like:
+
+source /home/villaa/install/geant4/geant4-v10.7.4-install/bin/geant4.sh
+
+Installing ROOT:
+
+ -If cxx14 is not available for your operating system, you may have to try to install from source and force this version. For me I used an older version of ROOTprecisely so this would not happen, then I could install by binary. 
+
+ - go to here: https://root.cern/releases/release-62402/ get the Ubuntu 20 release .tar.gz. Unpack it and source the setup file like:
+
+$ wget https://root.cern/download/root_v6.26.10.Linux-centos8-x86_64-gcc8.5.tar.gz
+$ tar -xzvf root_v6.26.10.Linux-centos8-x86_64-gcc8.5.tar.gz
+$ source root/bin/thisroot.sh # also available: thisroot.{csh,fish,bat}
+
+
+ - check that it is compiled with cxx14 by doing $root-config --features and looking at the very first entry. 
+
+Compiling/installing k100Sim:
+
+ - clone it from the git repo: git clone https://github.com/villano-lab/k100Sim.git. If there has not been a release past v0.9.1, go to the branch for this version of Geant: feature/G4v10-7-4-upgrade
+
+ - make a "build" directory anywhere you like and run a cmake like:
+
+cmake -DG4VIS_USE=ON -DCMAKE_CXX_STANDARD=14 -DGeant4_DIR=/home/villaa/install/geant4/geant4-v10.7.4/lib/Geant4-10.7.4/ /home/villaa/k100Sim/
+
+ - you can grep on visualization if you want to see if vis is on or off. It should be controlled by the G4VIS_USE supplied to CMAKE. 
+
+ - use the executable in that directory "k100Sim"  
