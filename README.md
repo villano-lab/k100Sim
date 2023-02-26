@@ -5,10 +5,10 @@ to v10.7.4 and ROOT 6.24.2; both substantially advanced versions from what we st
 still not cutting edge (G4 is up to v11.1.1 and ROOT is up to v6.28.0 as of this writing). 
 
 
-#Installing with G4 v10.7.4, ROOT 6.24.2, Ubuntu 20, gcc 9.4.0, standard=cxx14.
+# Installing with G4 v10.7.4, ROOT 6.24.2, Ubuntu 20, gcc 9.4.0, standard=cxx14.
 
 
-##Geant4 Install:
+## Geant4 Install:
 
  - Download the source code: [v10.7.4](https://geant4.web.cern.ch/download/10.7.4.html#releasenotes)
  - make a build directory.
