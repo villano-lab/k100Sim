@@ -28,7 +28,7 @@ inconsistent with ROOT. The compilation will fail, hard.
 
  - make sure after you're installed to set the environmental variables like:
 
-`source /home/villaa/install/geant4/geant4-v10.7.4-install/bin/geant4.sh`
+`source /home/villaa/install/geant4/geant4-v10.7.4-install/bin/geant4.sh` <br>
 `export G4WORKDIR=/home/userrname/geant4bin`
 
 The last one is to ensure that the `make install` process puts the binaries in a central location.
