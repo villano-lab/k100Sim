@@ -47,3 +47,21 @@ source root/bin/thisroot.sh # also available: thisroot.{csh,fish,bat}
 ```
 
  - check that it is compiled with `cxx14` by doing `root-config --features` and looking at the very first entry. 
+
+## Compiling/installing k100Sim:
+
+ - clone it from the git repo like: `git clone https://github.com/villano-lab/k100Sim.git`. If there has not been a release past v0.9.1, go to the branch for this version of Geant: `feature/G4v10-7-4-upgrade`
+
+ - make a "build" directory anywhere you like and run a cmake like:
+
+```
+cmake -DG4VIS_USE=ON -DCMAKE_CXX_STANDARD=14 -DGeant4_DIR=/home/villaa/install/geant4/geant4-v10.7.4/lib/Geant4-10.7.4/ /home/villaa/k100Sim/
+```
+
+ - you can grep on visualization if you want to see if vis is on or off. It should be controlled by the `G4VIS_USE` supplied to `cmake` as above.
+
+ - use the executable in that directory `k100Sim`
+
+ - if the environmental variable `G4WORKDIR` has been set properly, it should also be available in `/home/username/geant4bin/bin/Linux-g++/`
+
+`export G4WORKDIR=/home/userrname/geant4bin`
