@@ -10,7 +10,7 @@ still not cutting edge (G4 is up to v11.1.1 and ROOT is up to v6.28.0 as of this
 
 ## Geant4 Install:
 
- - Download the source code: [v10.7.4](https://geant4.web.cern.ch/download/10.7.4.html#releasenotes)
+ - Download the source code: [v10.7.4](https://geant4.web.cern.ch/download/10.7.4.html)
  - make a build directory.
  - inside the build directory do:
 
@@ -33,3 +33,17 @@ inconsistent with ROOT. The compilation will fail, hard.
 
 The last one is to ensure that the `make install` process puts the binaries in a central location.
 It's not strictly needed and could be a different directory.
+
+## Installing ROOT:
+
+ - If `cxx14` is not available for your operating system, you may have to try to install from source and force this version. For me I used an older version of ROOT precisely so this would not happen, then I could install by binary. 
+
+ - go to here: [ROOT v6.24.2](https://root.cern/releases/release-62402/) get the Ubuntu 20 release `.tar.gz`. Unpack it and source the setup file like:
+
+```
+wget https://root.cern/download/root_v6.26.10.Linux-centos8-x86_64-gcc8.5.tar.gz
+tar -xzvf root_v6.26.10.Linux-centos8-x86_64-gcc8.5.tar.gz
+source root/bin/thisroot.sh # also available: thisroot.{csh,fish,bat}
+```
+
+ - check that it is compiled with `cxx14` by doing `root-config --features` and looking at the very first entry. 
