@@ -667,7 +667,7 @@ G4VPhysicalVolume* k100_DetectorConstruction::Construct()
   G4VisAttributes* VisAttWorld = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
   logicalWorld->SetVisAttributes(VisAttWorld);
   // Make Invisible
-  logicalWorld->SetVisAttributes(G4VisAttributes::Invisible);
+  logicalWorld->SetVisAttributes(G4VisAttributes::GetInvisible());
 
   // --------- End Construct the Physical world --------------
 
@@ -807,7 +807,7 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
     G4VisAttributes* VisAttTower1 = new G4VisAttributes(G4Colour(215/255.,215/255.,215/255.));
     VisAttTower1->SetForceSolid(false);
     logicalTower1->SetVisAttributes(VisAttTower1);  
-    //logicalTower1->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    //logicalTower1->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
     
     ConstructTowerGuts(physicalTower1);
     if(ConstructZipBool) {FillTheTower(physicalTower1,1);}
@@ -831,7 +831,7 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
     G4VisAttributes* VisAttTower2 = new G4VisAttributes(G4Colour(215/255.,215/255.,215/255.));
     VisAttTower2->SetForceSolid(false);
     logicalTower2->SetVisAttributes(VisAttTower2);  
-    logicalTower2->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalTower2->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
     
     ConstructTowerGuts(physicalTower2);
     if(ConstructZipBool) {FillTheTower(physicalTower2,2);}
@@ -855,7 +855,7 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
     G4VisAttributes* VisAttTower3 = new G4VisAttributes(G4Colour(215/255.,215/255.,215/255.));
     VisAttTower3->SetForceSolid(false);
     logicalTower3->SetVisAttributes(VisAttTower3);  
-    logicalTower3->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalTower3->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
     
     ConstructTowerGuts(physicalTower3);
     if(ConstructZipBool) {FillTheTower(physicalTower3,3);}
@@ -879,7 +879,7 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
     G4VisAttributes* VisAttTower4 = new G4VisAttributes(G4Colour(215/255.,215/255.,215/255.));
     VisAttTower4->SetForceSolid(false);
     logicalTower4->SetVisAttributes(VisAttTower4);  
-    logicalTower4->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalTower4->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
     
     ConstructTowerGuts(physicalTower4);
     if(ConstructZipBool) {FillTheTower(physicalTower4,4);}
@@ -903,7 +903,7 @@ void k100_DetectorConstruction::ConstructTower(G4VPhysicalVolume* physicalDetect
     G4VisAttributes* VisAttTower5 = new G4VisAttributes(G4Colour(215/255.,215/255.,215/255.));
     VisAttTower5->SetForceSolid(false);
     logicalTower5->SetVisAttributes(VisAttTower5);  
-    logicalTower5->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalTower5->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
     
     ConstructTowerGuts(physicalTower5);
     if(ConstructZipBool) {FillTheTower(physicalTower5,5);}
@@ -999,7 +999,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4VisAttributes* VisAttZipArr = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
     VisAttZipArr->SetForceSolid(true);
     logicalZip1Array->SetVisAttributes(VisAttZipArr);  
-    logicalZip1Array->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalZip1Array->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
 
     G4LogicalVolume* logicalZip1 = new G4LogicalVolume(solidZip, defaultMat, "Zip1_L", 0,0,0);
     logicalZip1->SetVisAttributes(VisAttZip);  
@@ -1084,7 +1084,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4VisAttributes* VisAttZipArr = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
     VisAttZipArr->SetForceSolid(true);
     logicalZip2Array->SetVisAttributes(VisAttZipArr);  
-    logicalZip2Array->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalZip2Array->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
 
     G4LogicalVolume* logicalZip2 = new G4LogicalVolume(solidZip, defaultMat, "Zip2_L", 0,0,0);
     logicalZip2->SetVisAttributes(VisAttZip);  
@@ -1116,7 +1116,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4VisAttributes* VisAttZipArr = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
     VisAttZipArr->SetForceSolid(true);
     logicalZip3Array->SetVisAttributes(VisAttZipArr);  
-    logicalZip3Array->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalZip3Array->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
 
     G4LogicalVolume* logicalZip3 = new G4LogicalVolume(solidZip, defaultMat, "Zip3_L", 0,0,0);
     logicalZip3->SetVisAttributes(VisAttZip);  
@@ -1147,7 +1147,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4VisAttributes* VisAttZipArr = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
     VisAttZipArr->SetForceSolid(true);
     logicalZip4Array->SetVisAttributes(VisAttZipArr);  
-    logicalZip4Array->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalZip4Array->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
 
     G4LogicalVolume* logicalZip4 = new G4LogicalVolume(solidZip, defaultMat, "Zip4_L", 0,0,0);
     logicalZip4->SetVisAttributes(VisAttZip);  
@@ -1178,7 +1178,7 @@ void k100_DetectorConstruction::FillTheTower(G4VPhysicalVolume* physicalTower, G
     G4VisAttributes* VisAttZipArr = new G4VisAttributes(G4Colour(204/255.,255/255.,255/255.));
     VisAttZipArr->SetForceSolid(true);
     logicalZip5Array->SetVisAttributes(VisAttZipArr);  
-    logicalZip5Array->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+    logicalZip5Array->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
 
     G4LogicalVolume* logicalZip5 = new G4LogicalVolume(solidZip, defaultMat, "Zip5_L", 0,0,0);
     logicalZip5->SetVisAttributes(VisAttZip);  
@@ -1283,7 +1283,7 @@ void k100_DetectorConstruction::ConstructTowerGuts(G4VPhysicalVolume* physicalTo
   G4LogicalVolume* cu_sdhl1 = new G4LogicalVolume(cu_sdhs,towerMat,"sdhl1");
   G4PVPlacement* cu_sdhp1 = new G4PVPlacement(0,position_sdh,"sdhp1",cu_sdhl1,physicalTower,false,0);
   cu_sdhl1->SetVisAttributes(VisAttCu3);
-  //cu_sdhl1->SetVisAttributes(G4VisAttributes::Invisible);  // Make Invisible
+  //cu_sdhl1->SetVisAttributes(G4VisAttributes::GetInvisible());  // Make Invisible
 
 
   //------------------------------------------------------------------
@@ -3001,7 +3001,7 @@ void k100_DetectorConstruction::ConstructThermalNeutronBox(G4VPhysicalVolume *wo
 	VisAttLeadCyl->SetForceWireframe(false);  //I want a Wireframe of the me
 	logicalLeadCylinder->SetVisAttributes(VisAttLeadCyl);  
 	// Make Invisible
-	//logicalLeadCylinder->SetVisAttributes(G4VisAttributes::Invisible);
+	//logicalLeadCylinder->SetVisAttributes(G4VisAttributes::GetInvisible());
 	
         //create a poly cylinder
 	G4ThreeVector polydisp = G4ThreeVector(0.0,0.0,leadThick/2.0);
@@ -3021,7 +3021,7 @@ void k100_DetectorConstruction::ConstructThermalNeutronBox(G4VPhysicalVolume *wo
 	VisAttPolyCyl->SetForceWireframe(false);  //I want a Wireframe of the me
 	logicalPolyCylinder->SetVisAttributes(VisAttPolyCyl);  
 	// Make Invisible
-	//logicalPolyCylinder->SetVisAttributes(G4VisAttributes::Invisible);
+	//logicalPolyCylinder->SetVisAttributes(G4VisAttributes::GetInvisible());
 
         return;
 }
