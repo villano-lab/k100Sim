@@ -9,7 +9,7 @@ endif()
 project(K100SIM)
 
 set(CMAKE_BUILD_TYPE None)
-#set(WITH_GEANT4_UIVIS OFF)
+#set(G4VIS_USE OFF)
 message("cmake install prefix: ${CMAKE_INSTALL_PREFIX}")
 message("source directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 set(G4WORKDIR "$ENV{G4WORKDIR}")
@@ -78,12 +78,13 @@ include_directories(${ROOT_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
 # Find Geant4 package, activating all available UI and Vis drivers by default
-# You can set WITH_GEANT4_UIVIS to OFF via the command line or ccmake/cmake-gui
+# You can set G4VIS_USE to OFF via the command line or ccmake/cmake-gui
 # to build a batch mode only executable
 #
-option(WITH_GEANT4_UIVIS "Build example with Geant4 UI and Vis drivers" ON)
-if(WITH_GEANT4_UIVIS)
+option(G4VIS_USE "Build example with Geant4 UI and Vis drivers" ON)
+if(G4VIS_USE)
   message("using visualization")
+  add_definitions(-DG4VIS_USE)
   get_directory_property(_vars_before VARIABLES)
   find_package(Geant4 REQUIRED ui_all vis_all)
   get_directory_property(_vars VARIABLES)

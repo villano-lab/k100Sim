@@ -45,7 +45,6 @@
 #include "G4VisExecutive.hh"
 #endif
 
-
 //The name of this program. 
 const char* program_name;
 
